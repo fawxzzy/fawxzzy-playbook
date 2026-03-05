@@ -27,19 +27,16 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        cache: pnpm
-        cache-dependency-path: pnpm-lock.yaml
 
-    - name: Enable Corepack and activate pnpm
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        cache: true
+        cache_dependency_path: pnpm-lock.yaml
+
+    - name: Runtime versions
       shell: bash
       run: |
-        corepack enable
-        PM=$(node -p "require('./package.json').packageManager")
-        if [[ -z "$PM" || "$PM" != pnpm@* ]]; then
-          echo "package.json#packageManager must be set to pnpm@<version>. Found: ${PM:-<unset>}"
-          exit 1
-        fi
-        corepack prepare "$PM" --activate
         node -v
         pnpm -v
 
