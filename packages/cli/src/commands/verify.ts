@@ -1,5 +1,5 @@
-import { formatHuman, formatJson, verify } from '@playbook/core';
-import { createNodeContext } from '@playbook/node';
+import { formatHuman, formatJson, verify } from '@zachariahredfield/playbook-core';
+import { createNodeContext } from '@zachariahredfield/playbook-node';
 
 export const runVerify = (cwd: string, options: { json: boolean; ci: boolean }): number => {
   const report = verify(createNodeContext({ cwd }));

@@ -30,6 +30,6 @@ jobs:
           fi
 
           cd /tmp/playbook-demo
-          if ! npx --yes playbook analyze --ci; then
+          if ! npx --yes @zachariahredfield/playbook analyze --ci; then
             echo "::warning::Demo integration analyze check failed. This workflow is informational only."
           fi

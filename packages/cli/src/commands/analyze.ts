@@ -1,5 +1,5 @@
-import { analyze, formatAnalyzeCi, formatAnalyzeHuman, formatAnalyzeJson } from '@playbook/core';
-import { createNodeContext } from '@playbook/node';
+import { analyze, formatAnalyzeCi, formatAnalyzeHuman, formatAnalyzeJson } from '@zachariahredfield/playbook-core';
+import { createNodeContext } from '@zachariahredfield/playbook-node';
 
 type AnalyzeOptions = {
   ci: boolean;
