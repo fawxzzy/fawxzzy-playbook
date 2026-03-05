@@ -1,12 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { ensureDir, listFilesRecursive } from "../lib/fs.js";
 import { info } from "../lib/output.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const templateRoot =
   process.env.PLAYBOOK_TEMPLATES_DIR ??
   // dist/commands/init.js -> ../templates/repo
-  path.resolve(import.meta.dirname, "../templates/repo");
+  path.resolve(__dirname, "../templates/repo");
 
 export const runInit = (cwd: string): void => {
   if (!fs.existsSync(templateRoot)) {
