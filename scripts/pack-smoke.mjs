@@ -1,0 +1,164 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+
+const repoRoot = path.resolve('.');
+const nodeBin = process.execPath;
+const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-pack-smoke-'));
+const tarballDir = path.join(tempRoot, 'tarballs');
+
+const run = (command, args, options = {}) =>
+  execFileSync(command, args, {
+    stdio: 'pipe',
+    encoding: 'utf8',
+    ...options
+  });
+
+const runLogged = (command, args, options = {}) =>
+  execFileSync(command, args, {
+    stdio: 'inherit',
+    ...options
+  });
+
+const ensureFile = (filePath, label) => {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`pack-smoke failed: missing ${label} at ${filePath}`);
+  }
+};
+
+const readPackedPackageJson = (tarballPath) => {
+  const raw = run('tar', ['-xOf', tarballPath, 'package/package.json']);
+  return JSON.parse(raw);
+};
+
+
+const ensureBuilt = () => {
+  const buildTargets = [
+    {
+      packageDir: 'packages/core',
+      expected: path.join(repoRoot, 'packages/core/dist/index.js')
+    },
+    {
+      packageDir: 'packages/engine',
+      expected: path.join(repoRoot, 'packages/engine/dist/index.js')
+    },
+    {
+      packageDir: 'packages/node',
+      expected: path.join(repoRoot, 'packages/node/dist/index.js')
+    },
+    {
+      packageDir: 'packages/cli',
+      expected: path.join(repoRoot, 'packages/cli/dist/main.js')
+    },
+    {
+      packageDir: 'packages/cli',
+      expected: path.join(repoRoot, 'packages/cli/dist/templates/repo')
+    }
+  ];
+
+  for (const target of buildTargets) {
+    if (!fs.existsSync(target.expected)) {
+      console.log(`[pack-smoke] building ${target.packageDir} (missing ${target.expected})`);
+      runLogged('pnpm', ['-C', target.packageDir, 'build'], { cwd: repoRoot });
+    }
+  }
+};
+
+const packPackage = (packageDir) => {
+  const output = run('pnpm', ['-C', packageDir, 'pack', '--pack-destination', tarballDir], {
+    cwd: repoRoot
+  });
+
+  const tarballName = output
+    .trim()
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .at(-1);
+
+  if (!tarballName || !tarballName.endsWith('.tgz')) {
+    throw new Error(`pack-smoke failed: unable to parse tarball name for ${packageDir}`);
+  }
+
+  const tarballPath = path.resolve(tarballDir, tarballName);
+  ensureFile(tarballPath, `${packageDir} tarball`);
+  return tarballPath;
+};
+
+const installFromTarballs = (projectDir, tarballs) => {
+  try {
+    runLogged('npm', ['install', '--no-audit', '--no-fund', ...tarballs], { cwd: projectDir });
+    console.log('[pack-smoke] install mode=npm');
+    return;
+  } catch {
+    console.log('[pack-smoke] npm install failed; falling back to local tarball extraction');
+  }
+
+  const nodeModulesDir = path.join(projectDir, 'node_modules');
+  fs.mkdirSync(nodeModulesDir, { recursive: true });
+
+  for (const tarballPath of tarballs) {
+    const pkg = readPackedPackageJson(tarballPath);
+    const [scope, name] = pkg.name.split('/');
+    const packageDir = pkg.name.startsWith('@')
+      ? path.join(nodeModulesDir, scope, name)
+      : path.join(nodeModulesDir, pkg.name);
+
+    fs.mkdirSync(packageDir, { recursive: true });
+    run('tar', ['-xzf', tarballPath, '-C', packageDir, '--strip-components=1']);
+  }
+
+  console.log('[pack-smoke] install mode=tar-extract');
+};
+
+fs.mkdirSync(tarballDir, { recursive: true });
+
+let smokePassed = false;
+try {
+  const nodeVersion = run(nodeBin, ['-v']).trim();
+  const pnpmVersion = run('pnpm', ['-v']).trim();
+  console.log(`[pack-smoke] node=${nodeVersion} pnpm=${pnpmVersion}`);
+  ensureBuilt();
+
+  const cliTarball = packPackage('packages/cli');
+  const dependencyTarballs = [
+    packPackage('packages/core'),
+    packPackage('packages/engine'),
+    packPackage('packages/node')
+  ];
+
+  const projectDir = path.join(tempRoot, 'project');
+  fs.mkdirSync(projectDir, { recursive: true });
+
+  fs.writeFileSync(
+    path.join(projectDir, 'package.json'),
+    JSON.stringify({ name: 'playbook-pack-smoke', private: true, version: '1.0.0' }, null, 2)
+  );
+
+  installFromTarballs(projectDir, [...dependencyTarballs, cliTarball]);
+
+  const installedPkgDir = path.join(projectDir, 'node_modules', '@fawxzzy', 'playbook');
+  const installedPkg = JSON.parse(fs.readFileSync(path.join(installedPkgDir, 'package.json'), 'utf8'));
+  const binPath = path.join(installedPkgDir, installedPkg.bin.playbook);
+
+  ensureFile(binPath, 'installed CLI bin target');
+
+  runLogged(nodeBin, [binPath, '--help'], { cwd: projectDir });
+  runLogged(nodeBin, [binPath, 'init'], { cwd: projectDir });
+  runLogged(nodeBin, [binPath, 'analyze'], { cwd: projectDir });
+  runLogged(nodeBin, [binPath, 'verify'], { cwd: projectDir });
+
+  ensureFile(path.join(projectDir, 'playbook.config.json'), 'playbook.config.json');
+  ensureFile(path.join(projectDir, 'docs', 'PLAYBOOK_NOTES.md'), 'docs/PLAYBOOK_NOTES.md');
+  ensureFile(path.join(projectDir, 'docs', 'PROJECT_GOVERNANCE.md'), 'docs/PROJECT_GOVERNANCE.md');
+
+  smokePassed = true;
+  console.log('[pack-smoke] passed');
+} finally {
+  if (smokePassed) {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  } else {
+    console.log(`[pack-smoke] retained temp dir for debugging: ${tempRoot}`);
+  }
+}

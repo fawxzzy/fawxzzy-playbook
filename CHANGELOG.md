@@ -8,6 +8,7 @@
 - Removed legacy `.eslintignore` and rely on flat-config `ignores` in `eslint.config.cjs`.
 - Added `pnpm.supportedArchitectures` in the root `package.json` to lock Linux x64 glibc Rollup optional native packages deterministically.
 - Added a Linux-only Rollup native resolution sanity check in `.github/actions/playbook-ci/action.yml` before `pnpm verify`.
+- Added a `pack:smoke` CI check that packs local tarballs and verifies install + `init`/`analyze`/`verify` against the packaged CLI artifact.
 
 ### WHY
 
