@@ -25,7 +25,7 @@ function resolveTemplatesRepoDir(): string {
 program
   .command("init")
   .description("Initialize playbook docs/config")
-  .action(() => runInit({ projectDir: process.cwd(), templatesRepoDir: resolveTemplatesRepoDir() }));
+  .action(() => runInit(process.cwd()));
 
 program
   .command("analyze")
