@@ -1,6 +1,6 @@
 {
   "name": "@zachariahredfield/playbook",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "bin": {
     "playbook": "./dist/cli.js"
@@ -17,12 +17,15 @@
     "playbook": "node dist/cli.js"
   },
   "dependencies": {
-    "@playbook/core": "workspace:*",
-    "@playbook/engine": "workspace:*",
-    "@playbook/node": "workspace:*",
+    "@zachariahredfield/playbook-core": "workspace:*",
+    "@zachariahredfield/playbook-engine": "workspace:*",
+    "@zachariahredfield/playbook-node": "workspace:*",
     "commander": "^13.1.0"
   },
   "devDependencies": {
     "tsup": "^8.4.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

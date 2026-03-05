@@ -1,3 +1,3 @@
-import { loadConfig } from '@playbook/engine';
+import { loadConfig } from '@zachariahredfield/playbook-engine';
 
 export const readConfig = (repoRoot: string) => loadConfig(repoRoot);

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { generateArchitectureDiagrams } from '@playbook/engine';
+import { generateArchitectureDiagrams } from '@zachariahredfield/playbook-engine';
 
 type DiagramOptions = {
   repo: string;

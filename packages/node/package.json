@@ -1,6 +1,6 @@
 {
-  "name": "@playbook/node",
-  "version": "0.1.0",
+  "name": "@zachariahredfield/playbook-node",
+  "version": "0.1.1",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,5 +13,8 @@
   },
   "devDependencies": {
     "tsup": "^8.4.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
