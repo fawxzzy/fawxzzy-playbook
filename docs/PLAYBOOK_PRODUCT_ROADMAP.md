@@ -255,6 +255,7 @@ Progress (current)
 - [x] Smoke test script and automated tests are present
 - [x] pnpm policy explicitly documented and enforced as the toolchain standard
 - [x] pnpm version governance consolidated to `packageManager` as the authoritative source
+- [x] Lockfile determinism hardened with `pnpm.supportedArchitectures` (`linux`/`darwin`/`win32`, `x64`, `glibc`) so Rollup optional native deps are captured for CI Linux installs.
 - [ ] `examples/demo-repo/` ships as an onboarding path with intentional architecture/doc/governance drift and meaningful analysis output
 - [ ] GitHub Action path finalized for `uses: playbook/verify` with verify + architecture + governance checks
 - [ ] npm package distribution live with publish pipeline, versioning strategy, and installable Playbook CLI

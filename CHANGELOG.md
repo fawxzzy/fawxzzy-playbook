@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### WHAT
+
+- Removed legacy `.eslintignore` and rely on flat-config `ignores` in `eslint.config.cjs`.
+- Added `pnpm.supportedArchitectures` in the root `package.json` to lock Linux x64 glibc Rollup optional native packages deterministically.
+- Added a Linux-only Rollup native resolution sanity check in `.github/actions/playbook-ci/action.yml` before `pnpm verify`.
+
+### WHY
+
+- Prevent CI/local failures caused by missing `@rollup/rollup-linux-x64-gnu` under frozen lockfile installs.
+- Eliminate ESLint v9 flat-config warnings caused by `.eslintignore`.
+
 ## v0.1.1
 
 ### WHAT
