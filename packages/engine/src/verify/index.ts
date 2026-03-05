@@ -3,6 +3,7 @@ import { getChangedFiles } from '../git/diff.js';
 import { resolveDiffBase } from '../git/base.js';
 import type { VerifyReport } from '../report/types.js';
 import { loadPlugins } from '../plugins/loadPlugins.js';
+import { requireNotesFileWhenGovernanceExists } from "./rules/requireNotesFileWhenGovernanceExists.js";
 import {
   getRegisteredRules,
   registerRule,
@@ -11,9 +12,13 @@ import {
 import type { PlaybookRule } from '../plugins/pluginTypes.js';
 import { requireNotesOnChanges } from './rules/requireNotesOnChanges.js';
 
-const coreRules = (config: ReturnType<typeof loadConfig>['config']): PlaybookRule[] => [
+const coreRules = (config: ReturnType<typeof loadConfig>["config"]): PlaybookRule[] => [
   {
-    id: 'requireNotesOnChanges',
+    id: "requireNotesFileWhenGovernanceExists",
+    run: ({ repoRoot }) => requireNotesFileWhenGovernanceExists(repoRoot)
+  },
+  {
+    id: "requireNotesOnChanges",
     run: ({ changedFiles }) => requireNotesOnChanges(changedFiles, config.verify.rules.requireNotesOnChanges)
   }
 ];
