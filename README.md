@@ -2,7 +2,7 @@
 
 AI-aware engineering governance for modern repositories.
 
-![CI](https://github.com/ZachariahRedfield/playbook/actions/workflows/ci.yml/badge.svg) ![Version](https://img.shields.io/badge/version-v0.1.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+![CI](https://github.com/ZachariahRedfield/playbook/actions/workflows/ci.yml/badge.svg) [![Playbook Diagrams Check](https://github.com/ZachariahRedfield/playbook/actions/workflows/playbook-diagrams-check.yml/badge.svg)](https://github.com/ZachariahRedfield/playbook/actions/workflows/playbook-diagrams-check.yml) ![Version](https://img.shields.io/badge/version-v0.1.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 Playbook is a governance product that is **language-agnostic, agent-agnostic, and platform-agnostic**.
 
