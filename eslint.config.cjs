@@ -19,4 +19,12 @@ module.exports = [
       ...tsPlugin.configs.recommended.rules,
     },
   },
+
+  {
+    files: ["**/*.d.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+
 ];
