@@ -1,5 +1,8 @@
 # Playbook Notes
 
+- WHAT changed: Removed `cache: pnpm` and `cache-dependency-path: pnpm-lock.yaml` from the `Setup Node.js` step in `.github/actions/playbook-ci/action.yml`.
+- WHY it changed: `actions/setup-node` expects a `pnpm` executable to already exist when pnpm caching is enabled, but this workflow intentionally activates deterministic pnpm (`pnpm@10.0.0`) later via Corepack.
+
 - WHAT changed: Replaced `tsup` build steps in `packages/core`, `packages/engine`, and `packages/node` with `pnpm exec tsc -p tsconfig.build.json`, updating each package to emit both ESM JavaScript and declaration files directly into `dist/`.
 - WHY it changed: Removing tsup from these packages eliminates Rollup optional native module resolution (`@rollup/rollup-linux-x64-gnu`) from CI build paths while keeping stable `dist/index.js` and `dist/index.d.ts` entry artifacts.
 
