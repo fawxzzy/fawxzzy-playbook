@@ -32,8 +32,9 @@ export const resolveSessionMergeInputs = (
     }
 
     if (hasGlobCharacters(value)) {
+      const globOptions = { cwd, dot: true } as Record<string, unknown>;
       const matches = fs
-        .globSync(value, { cwd, windowsPathsNoEscape: true, dot: true })
+        .globSync(value, globOptions)
         .map((match) => path.resolve(cwd, match))
         .filter((match) => fs.existsSync(match) && fs.statSync(match).isFile())
         .sort((a, b) => a.localeCompare(b));
