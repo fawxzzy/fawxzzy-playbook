@@ -42,9 +42,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       env:
         NPM_CONFIG_OPTIONAL: "true"
-        npm_config_optional: "true"
         PNPM_CONFIG_OPTIONAL: "true"
-        pnpm_config_optional: "true"
       run: |
         echo "==> Running Playbook CI"
         if ! pnpm install --config.optional=true ${{ inputs.install-args }}; then
