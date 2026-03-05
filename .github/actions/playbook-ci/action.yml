@@ -28,10 +28,12 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
 
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        run_install: false
+    - name: Setup pnpm via Corepack
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        corepack enable
+        corepack prepare "$(node -p \"require('./package.json').packageManager\")" --activate
 
     - name: Resolve pnpm store path
       shell: bash

@@ -22,8 +22,8 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      - name: Activate pnpm
-        run: corepack prepare pnpm@10.0.0 --activate
+      - name: Activate pnpm from packageManager
+        run: corepack prepare "$(node -p \"require('./package.json').packageManager\")" --activate
 
       - name: Verify pnpm version
         run: pnpm -v
