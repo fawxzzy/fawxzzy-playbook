@@ -26,11 +26,6 @@ jobs:
 
       - name: Install dependencies (frozen lockfile)
         run: pnpm install --frozen-lockfile
-        
-      - name: Show tool versions
-        run: |
-          node --version
-          pnpm --version
           
       - name: Build workspace
         run: pnpm -w build
