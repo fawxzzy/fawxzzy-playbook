@@ -1,44 +1,20 @@
 # Playbook — AI Governance for Software Engineering
 
-![CI](https://github.com/ZachariahRedfield/playbook/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/ZachariahRedfield/playbook/actions/workflows/ci.yml/badge.svg)](https://github.com/ZachariahRedfield/playbook/actions/workflows/ci.yml) ![Version](https://img.shields.io/badge/version-v0.1.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green) ![Node](https://img.shields.io/badge/node-%3E%3D22-339933)
 
-Playbook is a lightweight governance layer that helps teams keep AI-assisted software work aligned with real engineering standards.
+Playbook is a lightweight governance layer that keeps AI-assisted software changes aligned with real engineering standards.
 
-## Intro
+## Demo
 
-Playbook's core flow is:
+![Playbook demo](docs/demo.gif)
 
-**AI → Playbook → Repository**
+To generate the demo GIF without screen recording, install [VHS](https://github.com/charmbracelet/vhs) and run:
 
-Playbook sits between AI-generated changes and your codebase, ensuring work:
-
-- follows architecture expectations
-- captures engineering knowledge as changes happen
-- keeps documentation synchronized with the code that actually shipped
-
-## What Playbook Does (v0.1.0)
-
-Playbook currently provides four commands:
-
-- `playbook init` — scaffolds Playbook docs, config, and workflow templates into a repository.
-- `playbook analyze` — inspects repository signals and appends architecture suggestions to `docs/ARCHITECTURE.md`.
-- `playbook verify` — runs deterministic governance rules against git diff changes.
-- `playbook doctor` — validates local setup and reports configuration issues.
-
-## Example CI Failure Output
-
-```text
-✖ Verification failed
-Base: origin/main
-
-[requireNotesOnChanges] Code changes require a notes update.
-Evidence: src/foo.ts
-Fix: Update docs/PLAYBOOK_NOTES.md with a note describing WHAT changed and WHY.
+```bash
+vhs docs/demo.tape
 ```
 
-## Usage
-
-### Using Playbook in another repo
+## Quickstart (consumer repo)
 
 ```bash
 npx playbook init
@@ -46,33 +22,16 @@ npx playbook analyze
 npx playbook verify
 ```
 
-> npm package publishing is coming soon. For now, run Playbook from this monorepo during development.
+> npm publishing is coming soon.
 
-### Developing Playbook (this repo)
+### Try from source (today)
 
 ```bash
+git clone https://github.com/ZachariahRedfield/playbook.git
+cd playbook
 pnpm install
 pnpm build
-pnpm test
-node scripts/smoke-test.mjs
+pnpm -C packages/cli playbook init
+pnpm -C packages/cli playbook analyze
+pnpm -C packages/cli playbook verify
 ```
-
-## Roadmap
-
-- **v0.2**
-  - architecture boundary rules
-- **v0.3**
-  - smarter repo analysis
-- **Future**
-  - organization-level governance
-
-## GitHub Topics
-
-Suggested repository topics:
-
-- `ai`
-- `devtools`
-- `governance`
-- `ci`
-- `architecture`
-- `documentation`
