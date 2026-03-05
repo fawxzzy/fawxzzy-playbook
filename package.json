@@ -12,6 +12,7 @@
     "lint": "eslint \"{packages,tools,scripts,templates}/**/*.{ts,tsx,js,jsx}\" --max-warnings=0",
     "smoke": "pnpm -r build && node scripts/smoke-test.mjs",
     "smoke:ci": "pnpm -r build && node scripts/smoke-test.mjs",
+    "pack:smoke": "node scripts/pack-smoke.mjs",
     "test": "pnpm -r test",
     "sync:templates": "node scripts/sync-templates.mjs",
     "verify": "pnpm lint && pnpm test && pnpm smoke:ci",

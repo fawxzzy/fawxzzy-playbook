@@ -97,3 +97,9 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: pnpm smoke:ci
+
+    - name: Pack smoke (CI)
+      if: inputs.run-smoke == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: pnpm pack:smoke
