@@ -27,8 +27,6 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        cache: pnpm
-        cache-dependency-path: pnpm-lock.yaml
 
     - name: Setup deterministic pnpm with Corepack
       shell: bash
