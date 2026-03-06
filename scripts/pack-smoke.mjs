@@ -135,7 +135,13 @@ try {
   runLogged(nodeBin, [binPath, 'analyze'], { cwd: projectDir });
   runLogged(nodeBin, [binPath, 'verify'], { cwd: projectDir });
 
-  ensureFile(path.join(projectDir, 'playbook.config.json'), 'playbook.config.json');
+  const legacyConfig = path.join(projectDir, 'playbook.config.json');
+  const modernConfig = path.join(projectDir, '.playbook', 'config.json');
+  if (!fs.existsSync(legacyConfig) && !fs.existsSync(modernConfig)) {
+    throw new Error(
+      'pack-smoke failed: missing playbook config file (expected playbook.config.json or .playbook/config.json)'
+    );
+  }
   ensureFile(path.join(projectDir, 'docs', 'PLAYBOOK_NOTES.md'), 'docs/PLAYBOOK_NOTES.md');
   ensureFile(path.join(projectDir, 'docs', 'PROJECT_GOVERNANCE.md'), 'docs/PROJECT_GOVERNANCE.md');
 
