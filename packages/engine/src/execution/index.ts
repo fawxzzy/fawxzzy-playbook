@@ -82,6 +82,33 @@ export const applyExecutionPlan = async (
   return executor.apply(tasks, { repoRoot, dryRun: options.dryRun });
 };
 
+export const selectPlanTasks = (tasks: PlanTask[], selectedTaskIds: string[] | undefined): PlanTask[] => {
+  if (!selectedTaskIds) {
+    return tasks;
+  }
+
+  const normalizedIds = selectedTaskIds.filter((id) => id.trim().length > 0);
+  const uniqueIds = [...new Set(normalizedIds)];
+
+  if (uniqueIds.length === 0) {
+    throw new Error('No task ids were provided. Supply at least one --task <task-id>.');
+  }
+
+  const availableTaskIds = new Set(tasks.map((task) => task.id));
+  const unknownTaskIds = uniqueIds.filter((id) => !availableTaskIds.has(id));
+  if (unknownTaskIds.length > 0) {
+    throw new Error(`Unknown task id(s): ${unknownTaskIds.join(', ')}.`);
+  }
+
+  const selectedIdSet = new Set(uniqueIds);
+  const selectedTasks = tasks.filter((task) => selectedIdSet.has(task.id));
+  if (selectedTasks.length === 0) {
+    throw new Error('No matching tasks were selected from the plan artifact.');
+  }
+
+  return selectedTasks;
+};
+
 export const parsePlanArtifact = (payload: unknown): { tasks: PlanTask[] } => {
   if (!payload || typeof payload !== 'object') {
     throw new Error('Invalid plan payload: expected an object envelope.');

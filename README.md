@@ -40,6 +40,8 @@ npx playbook verify
 npx playbook plan --json > .playbook/plan.json
 # optional review/edit gate on .playbook/plan.json
 npx playbook apply --from-plan .playbook/plan.json
+# optional exact task selection from reviewed artifact:
+npx playbook apply --from-plan .playbook/plan.json --task <stable-task-id>
 npx playbook verify
 # optional convenience path:
 npx playbook fix --yes

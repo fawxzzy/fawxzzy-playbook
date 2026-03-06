@@ -7,6 +7,8 @@ Examples:
 - `playbook apply`
 - `playbook apply --json`
 - `playbook apply --from-plan .playbook/plan.json`
+- `playbook apply --from-plan .playbook/plan.json --task <task-id>`
+- `playbook apply --from-plan .playbook/plan.json --task <task-a> --task <task-b>`
 
 Contract rules:
 
@@ -20,6 +22,9 @@ Serializable execution contract:
 
 - `--from-plan` executes a previously exported `playbook plan --json` payload without recomputing intent.
 - Plan payload must declare `schemaVersion: "1.0"` and `command: "plan"`.
+- `--task` selection is exact and deterministic by stable `task.id` (no fuzzy matching by text/path/rule).
+- Repeated `--task` ids are deduplicated deterministically, and selected tasks preserve original artifact order.
+- Unknown `--task` ids fail clearly; invalid selection does not fall back to applying all tasks.
 - Every task must include `id`, `ruleId`, `file`, `action`, `autoFix`.
 - Handler contract is explicit: handlers must return `applied`, `skipped`, or `unsupported`; thrown errors are reported as `failed` and contract violations are treated as failures.
 - `applied` handler results must include changed files and a non-empty summary; `skipped`/`unsupported` handler results must include a non-empty message.
@@ -29,6 +34,13 @@ Serializable execution contract:
 `apply` is the execution step in the canonical remediation loop: `verify -> plan -> apply -> verify`.
 
 Use `--from-plan` when you need automation-safe execution from a reviewed artifact, so execution does not recompute intent at apply time.
+
+Exact Task Selection pattern:
+
+1. `playbook plan --json > .playbook/plan.json`
+2. Review stable task ids in `.playbook/plan.json`
+3. Apply only reviewed ids with `playbook apply --from-plan .playbook/plan.json --task <stable-task-id>`
+4. Run `playbook verify` after apply to validate repository state
 
 ## JSON example
 ```bash
