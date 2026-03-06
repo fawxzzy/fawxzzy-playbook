@@ -1,0 +1,59 @@
+name: Playbook Remediation Example
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_apply:
+        description: Run apply using the reviewed plan artifact from the plan job.
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github
+        with:
+          mode: verify
+
+  plan:
+    name: plan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github
+        with:
+          mode: plan
+          plan-artifact-name: playbook-plan
+
+  apply:
+    name: apply
+    runs-on: ubuntu-latest
+    needs: plan
+    if: github.event_name == 'workflow_dispatch' && inputs.run_apply == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      # In production, gate this step behind approval/review before apply.
+      - name: Download reviewed plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: playbook-plan
+          path: .playbook
+
+      - uses: ./.github
+        with:
+          mode: apply
+          plan-artifact: .playbook/plan.json
+
+      - uses: ./.github
+        with:
+          mode: verify
