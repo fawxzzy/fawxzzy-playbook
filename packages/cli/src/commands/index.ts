@@ -180,6 +180,16 @@ export const commandRegistry: RegisteredCommand[] = [
     }
   },
   {
+    name: 'context',
+    description: 'Print deterministic CLI and architecture context for tools and agents',
+    run: async ({ cwd, format, quiet }) => {
+      const { runContext } = await import('./context.js');
+      return runContext(cwd, { format, quiet });
+    }
+  },
+
+
+  {
     name: 'schema',
     description: 'Print JSON Schemas for Playbook CLI command outputs',
     run: async ({ cwd, commandArgs, format, quiet }) => {
