@@ -100,6 +100,13 @@ try {
     throw new Error('smoke-test failed: expected rules --json to include verify and analyze arrays');
   }
 
+  const explainJson = runWithStatus(nodeBin, [cliPath, 'explain', 'notes.missing', '--json'], { cwd: projectDir });
+  const explainJsonResult = JSON.parse(explainJson.stdout);
+
+  if (explainJsonResult.rule?.id !== 'notes.missing') {
+    throw new Error('smoke-test failed: expected explain notes.missing --json to include rule.id=notes.missing');
+  }
+
   const statusJsonHealthy = runWithStatus(nodeBin, [cliPath, 'status', '--json'], { cwd: projectDir });
   const statusJsonHealthyResult = JSON.parse(statusJsonHealthy.stdout);
 
