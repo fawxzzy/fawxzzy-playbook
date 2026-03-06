@@ -1,6 +1,6 @@
 const JSON_SCHEMA_DRAFT = 'https://json-schema.org/draft/2020-12/schema' as const;
 
-export type CliSchemaCommand = 'rules' | 'explain' | 'index' | 'verify' | 'plan';
+export type CliSchemaCommand = 'rules' | 'explain' | 'index' | 'verify' | 'plan' | 'context';
 
 export type JsonSchema = {
   [key: string]: unknown;
@@ -183,6 +183,50 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
         }
       }
     }
+  },
+  context: {
+    $schema: JSON_SCHEMA_DRAFT,
+    title: 'PlaybookContextOutput',
+    type: 'object',
+    additionalProperties: false,
+    required: ['schemaVersion', 'command', 'architecture', 'workflow', 'repositoryIntelligence', 'cli'],
+    properties: {
+      schemaVersion: { type: 'string' },
+      command: { const: 'context' },
+      architecture: { const: 'modular-monolith' },
+      workflow: {
+        type: 'array',
+        items: { type: 'string' },
+        minItems: 3,
+        maxItems: 3
+      },
+      repositoryIntelligence: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['artifact', 'commands'],
+        properties: {
+          artifact: { const: '.playbook/repo-index.json' },
+          commands: {
+            type: 'array',
+            items: { type: 'string' },
+            minItems: 4,
+            maxItems: 4
+          }
+        }
+      },
+      cli: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['commands'],
+        properties: {
+          commands: {
+            type: 'array',
+            items: { type: 'string' },
+            minItems: 1
+          }
+        }
+      }
+    }
   }
 };
 
@@ -193,7 +237,8 @@ export const getCliSchemas = (): Record<CliSchemaCommand, JsonSchema> => ({
   explain: cliSchemas.explain,
   index: cliSchemas.index,
   verify: cliSchemas.verify,
-  plan: cliSchemas.plan
+  plan: cliSchemas.plan,
+  context: cliSchemas.context
 });
 
 export const getCliSchema = (command: CliSchemaCommand): JsonSchema => cliSchemas[command];

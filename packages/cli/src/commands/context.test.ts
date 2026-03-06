@@ -1,0 +1,37 @@
+import { describe, expect, it, vi } from 'vitest';
+import { ExitCode } from '../lib/cliContract.js';
+import { listRegisteredCommands } from './index.js';
+import { runContext } from './context.js';
+
+describe('runContext', () => {
+  it('prints JSON output with required fields', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runContext('/repo', { format: 'json', quiet: false });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0])) as Record<string, unknown>;
+
+    expect(payload.schemaVersion).toBe('1.0');
+    expect(payload.command).toBe('context');
+    expect(payload.architecture).toBe('modular-monolith');
+    expect(payload.workflow).toEqual(['verify', 'plan', 'apply']);
+
+    const repositoryIntelligence = payload.repositoryIntelligence as Record<string, unknown>;
+    expect(repositoryIntelligence.artifact).toBe('.playbook/repo-index.json');
+    expect(repositoryIntelligence.commands).toEqual(['index', 'query', 'ask', 'explain']);
+
+    const cli = payload.cli as Record<string, unknown>;
+    expect(Array.isArray(cli.commands)).toBe(true);
+    expect(cli.commands).toContain('context');
+
+    logSpy.mockRestore();
+  });
+
+  it('registers the context command', () => {
+    const command = listRegisteredCommands().find((entry) => entry.name === 'context');
+
+    expect(command).toBeDefined();
+    expect(command?.description).toBe('Print deterministic CLI and architecture context for tools and agents');
+  });
+});

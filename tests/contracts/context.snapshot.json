@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "command": "context",
+  "architecture": "modular-monolith",
+  "workflow": [
+    "verify",
+    "plan",
+    "apply"
+  ],
+  "repositoryIntelligence": {
+    "artifact": ".playbook/repo-index.json",
+    "commands": [
+      "index",
+      "query",
+      "ask",
+      "explain"
+    ]
+  },
+  "cli": {
+    "commands": [
+      "demo",
+      "init",
+      "analyze",
+      "verify",
+      "plan",
+      "apply",
+      "fix",
+      "doctor",
+      "status",
+      "upgrade",
+      "diagram",
+      "explain",
+      "context",
+      "schema",
+      "rules",
+      "index",
+      "ask",
+      "query",
+      "session"
+    ]
+  }
+}
