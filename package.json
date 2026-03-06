@@ -25,7 +25,8 @@
     "pack:check": "node scripts/check-pack.mjs",
     "pack:cli": "pnpm -C packages/cli pack --out ../../packages/cli/fawxzzy-playbook-%v.tgz",
     "docs:merge": "node scripts/docs-merge.mjs",
-    "test:cli": "node scripts/cli-smoke.mjs"
+    "test:cli": "node scripts/cli-smoke.mjs",
+    "test:update-snapshots": "UPDATE_CONTRACT_SNAPSHOTS=1 pnpm -C packages/cli test -- cliContracts.test.ts"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

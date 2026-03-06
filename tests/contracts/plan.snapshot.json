@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "command": "plan",
+  "ok": true,
+  "exitCode": 0,
+  "verify": {
+    "ok": true,
+    "summary": {
+      "failures": 0,
+      "warnings": 2
+    },
+    "failures": [],
+    "warnings": [
+      {
+        "id": "config-missing",
+        "message": "playbook.config.json not found; using defaults."
+      },
+      {
+        "id": "base-selection",
+        "message": "Repository is not a git work tree; skipping diff-based verification checks."
+      }
+    ]
+  },
+  "remediation": {
+    "status": "not_needed",
+    "totalSteps": 0,
+    "unresolvedFailures": 0,
+    "reason": "No verify failures were detected."
+  },
+  "tasks": []
+}

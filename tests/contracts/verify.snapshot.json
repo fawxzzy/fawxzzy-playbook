@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "command": "verify",
+  "ok": true,
+  "exitCode": 0,
+  "summary": "Verification passed.",
+  "findings": [
+    {
+      "id": "verify.warning.base-selection",
+      "level": "warning",
+      "message": "Repository is not a git work tree; skipping diff-based verification checks."
+    },
+    {
+      "id": "verify.warning.config-missing",
+      "level": "warning",
+      "message": "playbook.config.json not found; using defaults."
+    }
+  ],
+  "nextActions": []
+}
