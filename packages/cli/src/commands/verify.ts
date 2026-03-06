@@ -67,7 +67,12 @@ export const runVerify = async (
 
   const policyFailureIds = new Set(policyEvaluation.map((policy) => policy.failureId));
   const policyViolations: Array<Omit<PolicyEvaluation, 'failureId'>> = policyEvaluation
-    .map(({ failureId: _failureId, ...violation }: PolicyEvaluation) => violation)
+    .map((policy: PolicyEvaluation) => ({
+      policyId: policy.policyId,
+      ruleId: policy.ruleId,
+      message: policy.message,
+      remediation: policy.remediation
+    }))
     .sort((left: Omit<PolicyEvaluation, 'failureId'>, right: Omit<PolicyEvaluation, 'failureId'>) => {
       const idDiff = left.policyId.localeCompare(right.policyId);
       if (idDiff !== 0) {
