@@ -30,7 +30,7 @@ jobs:
       - name: Activate pnpm from packageManager
         shell: bash
         run: |
-          PM="$(node -p "require('./package.json').packageManager")"
+          PM=$(node -e "console.log(require(process.env.GITHUB_WORKSPACE + '/package.json').packageManager)")
           corepack enable
           corepack prepare "$PM" --activate
 
