@@ -78,6 +78,18 @@ try {
 
   run(nodeBin, [cliPath, 'init'], { cwd: projectDir });
   run(nodeBin, [cliPath, 'analyze'], { cwd: projectDir });
+
+  const analyzeJson = runWithStatus(nodeBin, [cliPath, 'analyze', '--json', '--explain'], { cwd: projectDir });
+  const analyzeJsonResult = JSON.parse(analyzeJson.stdout);
+
+  const noSignalsRecommendation = Array.isArray(analyzeJsonResult.findings)
+    ? analyzeJsonResult.findings.find((finding) => finding.id === 'analyze.recommendation.analyze-no-signals')
+    : undefined;
+
+  if (!noSignalsRecommendation) {
+    throw new Error('smoke-test failed: expected analyze --json --explain to include analyze.recommendation.analyze-no-signals finding');
+  }
+
   run(nodeBin, [cliPath, 'verify'], { cwd: projectDir });
   run(nodeBin, [cliPath, 'status'], { cwd: projectDir });
 
