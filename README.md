@@ -109,6 +109,78 @@ Or view the generated diagrams here:
 
 This ensures architecture documentation always reflects the actual repository structure.
 
+
+## Using Playbook with GitHub Actions
+
+Playbook includes an official composite action that supports deterministic CI automation for the canonical flow:
+
+`verify -> plan -> review -> apply -> verify`
+
+The action lives at `./.github/action.yml` in this repository and accepts:
+
+- `mode`: `verify | plan | apply`
+- `plan-artifact`: required for `mode: apply`
+- `repo-path`: optional, defaults to `.`
+
+### Verify on pull requests
+
+```yaml
+name: Playbook Verify
+on: [pull_request]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: playbook/action@v1
+        with:
+          mode: verify
+```
+
+### Plan workflow (artifact upload)
+
+```yaml
+name: Playbook Plan
+on: [workflow_dispatch]
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: playbook/action@v1
+        with:
+          mode: plan
+          plan-artifact-name: playbook-plan
+```
+
+### Apply reviewed plan artifact
+
+```yaml
+name: Playbook Apply
+on: [workflow_dispatch]
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: playbook-plan
+          path: .playbook
+      - uses: playbook/action@v1
+        with:
+          mode: apply
+          plan-artifact: .playbook/plan.json
+      - uses: playbook/action@v1
+        with:
+          mode: verify
+```
+
+A full local example is available at `.github/workflows/playbook-action-example.yml`.
+
 ## Trust and community
 
 - [CHANGELOG.md](CHANGELOG.md)

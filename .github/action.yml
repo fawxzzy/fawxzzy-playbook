@@ -1,0 +1,66 @@
+name: Playbook Action
+description: Run deterministic Playbook verify/plan/apply workflows in CI.
+
+inputs:
+  mode:
+    description: Execution mode (verify, plan, apply).
+    required: true
+  plan-artifact:
+    description: Path to a plan JSON artifact. Required for apply mode.
+    required: false
+    default: ""
+  repo-path:
+    description: Repository path to run Playbook in.
+    required: false
+    default: "."
+  playbook-version:
+    description: Version of @fawxzzy/playbook to install.
+    required: false
+    default: "latest"
+  node-version:
+    description: Node.js version to use.
+    required: false
+    default: "22"
+  verify-args:
+    description: Additional arguments passed to `playbook verify`.
+    required: false
+    default: "--ci"
+  plan-artifact-name:
+    description: Name used when uploading the plan artifact in plan mode.
+    required: false
+    default: "playbook-plan"
+
+outputs:
+  plan-path:
+    description: Path to the generated plan artifact for plan mode.
+    value: ${{ steps.run.outputs.plan_path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Install Playbook CLI
+      shell: bash
+      run: npm install --global @fawxzzy/playbook@${{ inputs.playbook-version }}
+
+    - name: Run Playbook workflow mode
+      id: run
+      shell: bash
+      run: ${{ github.action_path }}/scripts/run-playbook-action.sh
+      env:
+        INPUT_MODE: ${{ inputs.mode }}
+        INPUT_PLAN_ARTIFACT: ${{ inputs.plan-artifact }}
+        INPUT_REPO_PATH: ${{ inputs.repo-path }}
+        INPUT_VERIFY_ARGS: ${{ inputs.verify-args }}
+
+    - name: Upload Playbook plan artifact
+      if: ${{ inputs.mode == 'plan' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.plan-artifact-name }}
+        path: ${{ steps.run.outputs.plan_path }}
+        if-no-files-found: error
