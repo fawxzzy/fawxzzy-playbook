@@ -23,7 +23,7 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}
         run: |
-          PM="$(node -p "require(process.env.GITHUB_WORKSPACE + '/package.json').packageManager")"
+          PM=$(node -e "console.log(require(process.env.GITHUB_WORKSPACE + '/package.json').packageManager)")
           if [[ -z "$PM" || "$PM" != pnpm@* ]]; then
             echo "Invalid or missing packageManager in package.json (expected pnpm@...). Got: '$PM'"
             exit 1
