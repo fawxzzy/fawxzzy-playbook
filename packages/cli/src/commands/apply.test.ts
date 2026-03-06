@@ -121,6 +121,87 @@ describe('runApply', () => {
     expect(parsePlanArtifact).not.toHaveBeenCalled();
   });
 
+
+  it('supports selecting a single task from --from-plan via exact task id', async () => {
+    const { runApply } = await import('./apply.js');
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-select-'));
+    const planPath = path.join(tmpRoot, 'plan.json');
+    fs.writeFileSync(planPath, JSON.stringify({ schemaVersion: '1.0', command: 'plan', tasks: [] }));
+
+    parsePlanArtifact.mockReturnValue({
+      tasks: [
+        { id: 'task-1', ruleId: 'one', file: null, action: 'first', autoFix: true },
+        { id: 'task-2', ruleId: 'two', file: null, action: 'second', autoFix: false }
+      ]
+    });
+    loadVerifyRules.mockResolvedValue([]);
+    applyExecutionPlan.mockResolvedValue({ results: [], summary: { applied: 0, skipped: 0, unsupported: 0, failed: 0 } });
+
+    await runApply(tmpRoot, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json', tasks: ['task-2'] });
+
+    expect(applyExecutionPlan).toHaveBeenCalledWith(
+      tmpRoot,
+      [{ id: 'task-2', ruleId: 'two', file: null, action: 'second', autoFix: false }],
+      { dryRun: false, handlers: {} }
+    );
+  });
+
+  it('fails clearly when --task is used without --from-plan', async () => {
+    const { runApply } = await import('./apply.js');
+
+    await expect(runApply('/repo', { format: 'json', ci: false, quiet: false, tasks: ['task-1'] })).rejects.toThrow(
+      'The --task flag requires --from-plan so task selection is tied to a reviewed artifact.'
+    );
+    expect(generatePlanContract).not.toHaveBeenCalled();
+  });
+
+
+  it('supports selecting multiple task ids with deduplication while preserving artifact order', async () => {
+    const { runApply } = await import('./apply.js');
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-multi-select-'));
+    fs.writeFileSync(path.join(tmpRoot, 'plan.json'), JSON.stringify({ schemaVersion: '1.0', command: 'plan', tasks: [] }));
+
+    parsePlanArtifact.mockReturnValue({
+      tasks: [
+        { id: 'task-1', ruleId: 'one', file: null, action: 'first', autoFix: true },
+        { id: 'task-2', ruleId: 'two', file: null, action: 'second', autoFix: true },
+        { id: 'task-3', ruleId: 'three', file: null, action: 'third', autoFix: true }
+      ]
+    });
+    loadVerifyRules.mockResolvedValue([]);
+    applyExecutionPlan.mockResolvedValue({ results: [], summary: { applied: 0, skipped: 0, unsupported: 0, failed: 0 } });
+
+    await runApply(tmpRoot, {
+      format: 'json',
+      ci: false,
+      quiet: false,
+      fromPlan: 'plan.json',
+      tasks: ['task-3', 'task-1', 'task-3']
+    });
+
+    expect(applyExecutionPlan).toHaveBeenCalledWith(
+      tmpRoot,
+      [
+        { id: 'task-1', ruleId: 'one', file: null, action: 'first', autoFix: true },
+        { id: 'task-3', ruleId: 'three', file: null, action: 'third', autoFix: true }
+      ],
+      { dryRun: false, handlers: {} }
+    );
+  });
+
+  it('fails clearly when task selection includes unknown task ids', async () => {
+    const { runApply } = await import('./apply.js');
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-unknown-task-'));
+    fs.writeFileSync(path.join(tmpRoot, 'plan.json'), JSON.stringify({ schemaVersion: '1.0', command: 'plan', tasks: [] }));
+
+    parsePlanArtifact.mockReturnValue({ tasks: [{ id: 'task-1', ruleId: 'one', file: null, action: 'first', autoFix: true }] });
+
+    await expect(
+      runApply(tmpRoot, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json', tasks: ['task-missing'] })
+    ).rejects.toThrow('Unknown task id(s): task-missing.');
+    expect(applyExecutionPlan).not.toHaveBeenCalled();
+  });
+
   it('fails clearly when --from-plan envelope is invalid', async () => {
     const { runApply } = await import('./apply.js');
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-invalid-envelope-'));

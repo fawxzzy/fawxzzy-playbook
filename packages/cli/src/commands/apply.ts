@@ -9,6 +9,7 @@ type ApplyOptions = {
   ci: boolean;
   quiet: boolean;
   fromPlan?: string;
+  tasks?: string[];
 };
 
 type ApplyResult = {
@@ -65,6 +66,29 @@ const loadPlanFromFile = (cwd: string, fromPlan: string): { tasks: PlanTask[] } 
   return parsePlanArtifact(payload);
 };
 
+
+const selectPlanTasks = (tasks: PlanTask[], selectedTaskIds: string[] | undefined): PlanTask[] => {
+  if (!selectedTaskIds) {
+    return tasks;
+  }
+
+  const normalizedIds = selectedTaskIds.filter((id) => id.trim().length > 0);
+  const uniqueIds = [...new Set(normalizedIds)];
+
+  if (uniqueIds.length === 0) {
+    throw new Error('No task ids were provided. Supply at least one --task <task-id>.');
+  }
+
+  const availableTaskIds = new Set(tasks.map((task) => task.id));
+  const unknownTaskIds = uniqueIds.filter((id) => !availableTaskIds.has(id));
+  if (unknownTaskIds.length > 0) {
+    throw new Error(`Unknown task id(s): ${unknownTaskIds.join(', ')}.`);
+  }
+
+  const selectedTaskIdsSet = new Set(uniqueIds);
+  return tasks.filter((task) => selectedTaskIdsSet.has(task.id));
+};
+
 const renderTextApply = (result: ApplyJsonResult): void => {
   console.log('Apply');
   console.log('────────');
@@ -87,18 +111,23 @@ const renderTextApply = (result: ApplyJsonResult): void => {
 };
 
 export const runApply = async (cwd: string, options: ApplyOptions): Promise<number> => {
+  if ((options.tasks?.length ?? 0) > 0 && !options.fromPlan) {
+    throw new Error('The --task flag requires --from-plan so task selection is tied to a reviewed artifact.');
+  }
+
   const plan = options.fromPlan ? loadPlanFromFile(cwd, options.fromPlan) : generatePlanContract(cwd);
+  const selectedTasks = selectPlanTasks(plan.tasks, options.tasks);
   const verifyRules = await loadVerifyRules(cwd);
 
   const handlers: Record<string, NonNullable<(typeof verifyRules)[number]['fix']>> = {};
-  for (const task of plan.tasks) {
+  for (const task of selectedTasks) {
     const pluginRule = verifyRules.find((rule) => rule.id === task.ruleId);
     if (pluginRule?.fix) {
       handlers[task.ruleId] = pluginRule.fix;
     }
   }
 
-  const execution = await applyExecutionPlan(cwd, plan.tasks, { dryRun: false, handlers });
+  const execution = await applyExecutionPlan(cwd, selectedTasks, { dryRun: false, handlers });
 
   const exitCode = execution.summary.failed > 0 ? ExitCode.Failure : ExitCode.Success;
   const payload: ApplyJsonResult = {

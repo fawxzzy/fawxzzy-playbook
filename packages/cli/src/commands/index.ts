@@ -22,6 +22,22 @@ const parseOptionValue = (allArgs: string[], name: string): string | undefined =
   return index >= 0 && allArgs[index + 1] ? String(allArgs[index + 1]) : undefined;
 };
 
+const parseOptionValues = (allArgs: string[], name: string): string[] | undefined => {
+  const values: string[] = [];
+  for (let index = 0; index < allArgs.length; index += 1) {
+    if (allArgs[index] !== name) {
+      continue;
+    }
+
+    const value = allArgs[index + 1];
+    if (value) {
+      values.push(String(value));
+    }
+  }
+
+  return values.length > 0 ? values : undefined;
+};
+
 export const commandRegistry: RegisteredCommand[] = [
   {
     name: 'init',
@@ -66,7 +82,13 @@ export const commandRegistry: RegisteredCommand[] = [
     description: 'Execute deterministic auto-fixable plan tasks',
     run: async ({ cwd, commandArgs, ci, format, quiet }) => {
       const { runApply } = await import('./apply.js');
-      return runApply(cwd, { ci, format, quiet, fromPlan: parseOptionValue(commandArgs, '--from-plan') });
+      return runApply(cwd, {
+        ci,
+        format,
+        quiet,
+        fromPlan: parseOptionValue(commandArgs, '--from-plan'),
+        tasks: parseOptionValues(commandArgs, '--task')
+      });
     }
   },
   {

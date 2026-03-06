@@ -3,7 +3,7 @@ import type { Rule } from '../src/execution/types.js';
 import { FixExecutor, HandlerResolver } from '../src/execution/fixExecutor.js';
 import { PlanGenerator } from '../src/execution/planGenerator.js';
 import { RuleRunner } from '../src/execution/ruleRunner.js';
-import { parsePlanArtifact } from '../src/execution/index.js';
+import { parsePlanArtifact, selectPlanTasks } from '../src/execution/index.js';
 
 describe('execution pipeline units', () => {
   it('RuleRunner aggregates findings from all rules', () => {
@@ -78,6 +78,25 @@ describe('execution pipeline units', () => {
       { id: 'task-2', ruleId: 'B', file: null, action: 'second', autoFix: false },
       { id: 'task-1', ruleId: 'A', file: 'docs/PLAYBOOK_NOTES.md', action: 'first', autoFix: true }
     ]);
+  });
+
+
+  it('selectPlanTasks supports exact task-id filtering with deduplication and preserved order', () => {
+    const tasks = [
+      { id: 'task-1', ruleId: 'A', file: null, action: 'first', autoFix: true },
+      { id: 'task-2', ruleId: 'B', file: null, action: 'second', autoFix: true },
+      { id: 'task-3', ruleId: 'C', file: null, action: 'third', autoFix: false }
+    ];
+
+    expect(selectPlanTasks(tasks, ['task-3'])).toEqual([tasks[2]]);
+    expect(selectPlanTasks(tasks, ['task-3', 'task-1', 'task-3'])).toEqual([tasks[0], tasks[2]]);
+  });
+
+  it('selectPlanTasks fails clearly on unknown or empty task selections', () => {
+    const tasks = [{ id: 'task-1', ruleId: 'A', file: null, action: 'first', autoFix: true }];
+
+    expect(() => selectPlanTasks(tasks, ['task-missing'])).toThrow('Unknown task id(s): task-missing.');
+    expect(() => selectPlanTasks(tasks, [])).toThrow('No task ids were provided. Supply at least one --task <task-id>.');
   });
 
   it('parsePlanArtifact fails on invalid envelopes', () => {
