@@ -1,0 +1,10 @@
+{
+  "command": "explain",
+  "target": "architecture",
+  "type": "architecture",
+  "explanation": {
+    "architecture": "modular-monolith",
+    "structure": "Feature modules are isolated and commonly organized under src/features.",
+    "reasoning": "modular-monolith architecture organizes code into isolated feature modules under src/features. Indexed framework: node. Indexed modules: features."
+  }
+}

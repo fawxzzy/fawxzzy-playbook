@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "command": "rules",
+  "verify": [
+    {
+      "id": "notes.missing",
+      "description": "Require docs/PLAYBOOK_NOTES.md so governance changes are recorded."
+    },
+    {
+      "id": "notes.empty",
+      "description": "Require notes entries when docs/PLAYBOOK_NOTES.md exists."
+    },
+    {
+      "id": "requireNotesOnChanges",
+      "description": "Require notes updates whenever source files change."
+    },
+    {
+      "id": "verify.rule.tests.required",
+      "description": "Require tests when adding CLI commands or verify rules."
+    }
+  ],
+  "analyze": [
+    {
+      "id": "analyze-no-signals",
+      "description": "Warn when no framework or database stack signals are detected."
+    },
+    {
+      "id": "analyze-run-init",
+      "description": "Recommend initializing governance docs for repositories missing a baseline."
+    },
+    {
+      "id": "analyze-run-verify",
+      "description": "Recommend running verify after analyze before opening a PR."
+    }
+  ]
+}

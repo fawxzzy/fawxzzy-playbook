@@ -150,6 +150,7 @@ Other documentation such as `docs/PROJECT_GOVERNANCE.md` may be present dependin
 ## CLI command contract patterns
 
 - Pattern: CLI Command Contract — Playbook CLI commands that produce JSON must maintain stable output contracts so AI agents and automation can rely on deterministic fields.
+- Pattern: CLI Snapshot Contract Testing — `packages/cli/test/cliContracts.test.ts` snapshots deterministic JSON payloads for `rules --json`, `explain <target> --json`, `index --json`, `verify --json`, and `plan --json` into `tests/contracts/*.snapshot.json`; run `pnpm test:update-snapshots` only when contract changes are intentional.
 - Pattern: CLI Smoke Testing — All CLI commands should be exercised by an automated smoke test to prevent runtime regressions.
 - Rule: CLI Business Logic Location — CLI commands must remain thin wrappers around engine functionality.
 - Pattern: Demo Alignment — The Playbook core repository must guarantee that commands used by the demo repository remain stable and testable.

@@ -1,0 +1,10 @@
+{
+  "command": "index",
+  "ok": true,
+  "indexFile": ".playbook/repo-index.json",
+  "framework": "node",
+  "architecture": "modular-monolith",
+  "modules": [
+    "features"
+  ]
+}
