@@ -11,6 +11,7 @@ import {
 } from '../plugins/pluginRegistry.js';
 import type { PlaybookRule } from '../plugins/pluginTypes.js';
 import { requireNotesOnChanges } from './rules/requireNotesOnChanges.js';
+import { requireTestsForNewCommands } from './rules/requireTestsForNewCommands.js';
 
 const coreRules = (config: ReturnType<typeof loadConfig>["config"]): PlaybookRule[] => [
   {
@@ -20,6 +21,10 @@ const coreRules = (config: ReturnType<typeof loadConfig>["config"]): PlaybookRul
   {
     id: "requireNotesOnChanges",
     run: ({ changedFiles }) => requireNotesOnChanges(changedFiles, config.verify.rules.requireNotesOnChanges)
+  },
+  {
+    id: "verify.rule.tests.required",
+    run: ({ repoRoot, changedFiles }) => requireTestsForNewCommands(repoRoot, changedFiles)
   }
 ];
 
