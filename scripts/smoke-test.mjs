@@ -93,6 +93,12 @@ try {
   run(nodeBin, [cliPath, 'verify'], { cwd: projectDir });
   run(nodeBin, [cliPath, 'status'], { cwd: projectDir });
 
+  const rulesJson = runWithStatus(nodeBin, [cliPath, 'rules', '--json'], { cwd: projectDir });
+  const rulesJsonResult = JSON.parse(rulesJson.stdout);
+
+  if (!Array.isArray(rulesJsonResult.verify) || !Array.isArray(rulesJsonResult.analyze)) {
+    throw new Error('smoke-test failed: expected rules --json to include verify and analyze arrays');
+  }
 
   const statusJsonHealthy = runWithStatus(nodeBin, [cliPath, 'status', '--json'], { cwd: projectDir });
   const statusJsonHealthyResult = JSON.parse(statusJsonHealthy.stdout);

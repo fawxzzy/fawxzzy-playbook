@@ -120,6 +120,15 @@ export const commandRegistry: RegisteredCommand[] = [
     }
   },
   {
+    name: 'rules',
+    description: 'List loaded verify and analyze rules',
+    run: async ({ cwd, explain, format, quiet }) => {
+      const { runRules } = await import('./rules.js');
+      return runRules(cwd, { explain, format, quiet });
+    }
+  },
+
+  {
     name: 'session',
     description: 'Import, merge, and cleanup session snapshots',
     run: async ({ cwd, commandArgs, format, quiet }) => {
