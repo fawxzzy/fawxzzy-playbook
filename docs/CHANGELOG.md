@@ -4,6 +4,8 @@
 
 ### Added
 
+- WHAT: Added Knowledge Distillation Engine architecture direction to roadmap. WHY: Clarifies how repository intelligence, context compression, and the repository learning loop combine into a recursive knowledge compression system for engineering governance.
+
 - Simplified primary CI validation by consolidating repository contract checks to `pnpm -r build`, `pnpm test`, and `node packages/cli/dist/main.js verify --json`, making `playbook verify` the canonical CI gate for product correctness.
 - Added `.github/workflows/maintenance.yml` as an optional scheduled/manual automation-maintenance workflow for `pnpm agents:update`, `pnpm agents:check`, and `node packages/cli/dist/main.js docs audit --json`.
 
