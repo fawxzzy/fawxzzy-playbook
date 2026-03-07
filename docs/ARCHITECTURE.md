@@ -48,6 +48,40 @@ The plan/execution pipeline is deterministic by contract:
 
 Deterministic JSON output is treated as a public interface for CI, tooling, and agents.
 
+
+## Safe Repository Mutation Model
+
+Playbook provides a deterministic mutation engine with built-in safety guarantees for repository changes. Repository content is always treated as untrusted input, and policy enforcement occurs before any mutation is allowed.
+
+Core guardrails in the mutation engine:
+
+- **Repo Root Security Boundary**: all reads and writes must resolve within the repository root.
+- **Remediation Plan Validation**: plans are schema-validated and invariant-checked before execution.
+- **Evidence-Linked Plans**: each task must map back to deterministic findings and file-level evidence.
+- **Secret Redaction in Logs**: execution and diagnostic logs must avoid leaking secrets or sensitive values.
+- **CI Artifact Verification**: automation flows verify remediation artifacts and command contracts in CI.
+- **Signed Supply Chain Artifacts**: release and security artifacts are signed and verifiable for provenance integrity.
+
+The engine enforces policy gates before `apply`, ensuring that only approved and validated plan tasks can mutate repository state.
+
+## Future Direction: Playbook Agents
+
+Playbook's `verify -> plan -> apply` architecture is intentionally designed to enable safe integration with automated agents over time.
+
+Conceptual control flow:
+
+AI reasoning layer
+↓
+Playbook query/analysis layer
+↓
+Playbook remediation planning
+↓
+policy validation
+↓
+controlled apply execution
+
+Agents should never write directly to the repository. All mutations must pass through the Playbook remediation pipeline so changes remain deterministic, reviewable, and policy-enforced.
+
 ## Rule: Playbook Analyzes but Does Not Author
 
 Playbook provides structured analysis, diagnostics, and recommendations about repository state and development workflows.
