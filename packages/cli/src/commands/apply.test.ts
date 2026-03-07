@@ -106,7 +106,7 @@ describe('runApply', () => {
     const { runApply } = await import('./apply.js');
 
     await expect(runApply('/repo', { format: 'json', ci: false, quiet: false, fromPlan: 'missing-plan.json' })).rejects.toThrow(
-      'Unable to read plan file at /repo/missing-plan.json:'
+      /Unable to read plan file at .*missing-plan\.json:/
     );
     expect(generatePlanContract).not.toHaveBeenCalled();
   });

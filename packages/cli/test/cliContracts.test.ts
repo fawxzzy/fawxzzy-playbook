@@ -9,6 +9,10 @@ const cliEntry = path.join(repoRoot, 'packages', 'cli', 'dist', 'main.js');
 const snapshotDir = path.join(repoRoot, 'tests', 'contracts');
 const shouldUpdateSnapshots = process.env.UPDATE_CONTRACT_SNAPSHOTS === '1';
 
+function normalizeLineEndings(text: string): string {
+  return text.replace(/\r\n/g, '\n');
+}
+
 type CommandContract = {
   file: string;
   args: readonly string[];
@@ -203,7 +207,7 @@ describe('CLI JSON contract snapshots', () => {
         }
 
         const expectedJson = fs.readFileSync(snapshotPath, 'utf8');
-        expect(actualJson).toBe(expectedJson);
+        expect(normalizeLineEndings(actualJson)).toBe(normalizeLineEndings(expectedJson));
       }
     } finally {
       fs.rmSync(fixtureRepo, { recursive: true, force: true });
