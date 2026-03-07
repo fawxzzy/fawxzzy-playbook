@@ -66,6 +66,10 @@ describe('runAsk', () => {
       modeInstruction: 'Respond with complete explanations, contextual details, and clear reasoning.',
       answer: 'Architecture: modular-monolith',
       reason: 'Derived from repository index architecture signal. Rule registry signals in the index: requireNotesOnChanges.',
+      repoContext: {
+        enabled: false,
+        sources: []
+      },
       context: {
         architecture: 'modular-monolith',
         framework: 'nextjs',

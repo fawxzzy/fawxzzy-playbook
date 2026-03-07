@@ -136,7 +136,7 @@ export const commandMetadata: CommandMetadata[] = [
     description: 'Answer repository questions from machine-readable intelligence context',
     category: 'Repository intelligence',
     productFacing: true,
-    example: 'playbook ask "where should a new feature live?" --json',
+    example: 'playbook ask "where should a new feature live?" --repo-context --json',
     machineReadable: true
   },
   {

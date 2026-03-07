@@ -4,6 +4,10 @@
 
 ### Added
 
+- WHAT: Added `playbook ask --repo-context` to inject trusted repository intelligence into ask prompts using Playbook-managed artifacts (`.playbook/repo-index.json` and AI contract metadata), with deterministic missing-index remediation guidance. WHY: Grounds AI repository answers in deterministic Playbook artifacts instead of broad ad-hoc repository inference.
+
+- WHAT: Updated AGENTS/README/command docs to position repo-aware ask in the preferred AI ladder (`ai-context -> ai-contract -> context -> index/query/explain/ask --repo-context -> verify/plan/apply`). WHY: Keeps AI operating-contract guidance aligned with command behavior and reduces agent drift.
+
 - WHAT: Added `playbook ask --mode <normal|concise|ultra>` with deterministic mode contracts and CLI/test/doc updates, including mode-aware output shaping and mode instruction metadata in JSON responses. WHY: Improves AI-assisted developer ergonomics by letting users tune answer density for onboarding (`normal`) or fast decisions (`concise`/`ultra`).
 
 - Docs: added a future-facing Automation Synthesis capability track to the product roadmap, documented long-term architecture alignment for synthesis stages (triggering through rollback), and introduced `docs/AUTOMATION_SYNTHESIS_VISION.md` as the product-aligned design reference.

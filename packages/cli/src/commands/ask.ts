@@ -1,4 +1,5 @@
 import { answerRepositoryQuestion } from '@zachariahredfield/playbook-engine';
+import { loadAskRepoContext } from '../ai/repoContext.js';
 import { getResponseModeInstruction, parseResponseMode, type ResponseMode } from '../ai/responseModes.js';
 import { ExitCode } from '../lib/cliContract.js';
 
@@ -6,6 +7,7 @@ type AskOptions = {
   format: 'text' | 'json';
   quiet: boolean;
   mode?: string;
+  repoContext?: boolean;
 };
 
 type AskResult = {
@@ -15,6 +17,10 @@ type AskResult = {
   modeInstruction: string;
   answer: string;
   reason: string;
+  repoContext: {
+    enabled: boolean;
+    sources: string[];
+  };
   context: {
     architecture: string;
     framework: string;
@@ -81,6 +87,9 @@ Options:
                              normal   Full explanation (default)
                              concise  Compressed but informative
                              ultra    Maximum compression
+  --repo-context             Inject trusted repository intelligence into ask context
+                             using Playbook-managed artifacts (for example
+                             .playbook/repo-index.json and .playbook/ai-contract.json)
   --help                     Show help`);
 };
 
@@ -100,7 +109,11 @@ export const runAsk = async (cwd: string, commandArgs: string[], options: AskOpt
 
   try {
     const mode = parseResponseMode(options.mode);
-    const answer = answerRepositoryQuestion(cwd, questionArg);
+    const repoContext = loadAskRepoContext({ cwd, enabled: options.repoContext ?? false });
+    const enrichedQuestion = repoContext.enabled
+      ? `${repoContext.promptContext}\n\nUser question: ${questionArg}`
+      : questionArg;
+    const answer = answerRepositoryQuestion(cwd, enrichedQuestion);
     const modeInstruction = getResponseModeInstruction(mode);
     const answerForMode = formatAnswerForMode(answer.answer, answer.reason, mode);
 
@@ -111,6 +124,10 @@ export const runAsk = async (cwd: string, commandArgs: string[], options: AskOpt
       modeInstruction,
       answer: answerForMode,
       reason: answer.reason,
+      repoContext: {
+        enabled: repoContext.enabled,
+        sources: repoContext.sources
+      },
       context: answer.context
     };
 

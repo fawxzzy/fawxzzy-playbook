@@ -26,7 +26,7 @@ Do not hand-edit entries inside the managed markers.
 | `index` | Generate machine-readable repository intelligence index | Current (implemented) | `playbook index --json` |
 | `query` | Query machine-readable repository intelligence from .playbook/repo-index.json | Current (implemented) | `playbook query modules --json` |
 | `deps` | Print module dependency graph from .playbook/repo-index.json | Current (implemented) | `playbook deps workouts --json` |
-| `ask` | Answer repository questions from machine-readable intelligence context | Current (implemented) | `playbook ask "where should a new feature live?" --json` |
+| `ask` | Answer repository questions from machine-readable intelligence context | Current (implemented) | `playbook ask "where should a new feature live?" --repo-context --json` |
 | `explain` | Explain rules, modules, or architecture from repository intelligence | Current (implemented) | `playbook explain architecture --json` |
 <!-- PLAYBOOK:DOCS_COMMAND_STATUS_END -->
 
@@ -62,6 +62,32 @@ If docs and implementation disagree, treat implementation as source of truth and
 
 
 Command reference: [`playbook docs audit`](docs.md).
+
+
+## Repo-aware ask (`playbook ask --repo-context`)
+
+`playbook ask` supports `--repo-context` to inject trusted Playbook-managed repository intelligence into ask context.
+
+- Uses deterministic artifacts (`.playbook/repo-index.json`) and AI contract metadata for context hydration.
+- Does **not** trigger broad ad-hoc repository crawling.
+- Requires `playbook index` when `.playbook/repo-index.json` is missing.
+
+Deterministic missing-index guidance:
+
+```text
+Repository context is not available yet.
+Run `playbook index` to generate .playbook/repo-index.json and retry.
+```
+
+Examples:
+
+```bash
+playbook ask "where should a new feature live?" --repo-context
+playbook ask "how does auth work?" --repo-context --mode concise
+playbook ask "what modules are affected by this?" --repo-context --json
+```
+
+In JSON mode, ask keeps the existing answer payload and adds `repoContext` metadata with `enabled` and `sources` fields so callers can audit provenance.
 
 ## AI Response Modes for `playbook ask`
 

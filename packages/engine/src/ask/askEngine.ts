@@ -15,6 +15,19 @@ const toModuleNames = (modules: string[] | RepositoryModule[]): string[] => {
   return (modules as RepositoryModule[]).map((moduleEntry) => moduleEntry.name);
 };
 
+
+const ASK_USER_QUESTION_PREFIX = 'User question:';
+
+const extractUserQuestion = (question: string): string => {
+  const markerIndex = question.lastIndexOf(ASK_USER_QUESTION_PREFIX);
+  if (markerIndex === -1) {
+    return question;
+  }
+
+  const extracted = question.slice(markerIndex + ASK_USER_QUESTION_PREFIX.length).trim();
+  return extracted.length > 0 ? extracted : question;
+};
+
 type AskContext = {
   architecture: string;
   framework: string;
@@ -33,7 +46,7 @@ export type AskEngineResult = {
   };
 };
 
-const normalizeQuestion = (question: string): string => question.trim().toLowerCase();
+const normalizeQuestion = (question: string): string => extractUserQuestion(question).trim().toLowerCase();
 
 const gatherContext = (projectRoot: string): AskContext => {
   const architecture = queryRepositoryIndex(projectRoot, 'architecture').result as string;
@@ -60,13 +73,14 @@ const formatRulesHint = (rules: string[]): string => {
 const includesAny = (question: string, values: string[]): boolean => values.some((value) => question.includes(value));
 
 export const answerRepositoryQuestion = (projectRoot: string, question: string): AskEngineResult => {
-  const normalizedQuestion = normalizeQuestion(question);
+  const userQuestion = extractUserQuestion(question);
+  const normalizedQuestion = normalizeQuestion(userQuestion);
   const context = gatherContext(projectRoot);
 
   if (normalizedQuestion.includes('where') && includesAny(normalizedQuestion, ['feature', 'features'])) {
     if (context.architecture === 'modular-monolith') {
       return {
-        question,
+        question: userQuestion,
         answer: 'Recommended location: src/features/<feature>',
         reason:
           'Playbook detected modular-monolith architecture with feature boundaries under src/features. ' +
@@ -80,7 +94,7 @@ export const answerRepositoryQuestion = (projectRoot: string, question: string):
     }
 
     return {
-      question,
+      question: userQuestion,
       answer: 'Recommended location: src/<feature>',
       reason: `Playbook did not detect a modular-monolith layout. ${formatRulesHint(context.rules)}`,
       context: {
@@ -93,7 +107,7 @@ export const answerRepositoryQuestion = (projectRoot: string, question: string):
 
   if (normalizedQuestion.includes('architecture')) {
     return {
-      question,
+      question: userQuestion,
       answer: `Architecture: ${context.architecture}`,
       reason: `Derived from repository index architecture signal. ${formatRulesHint(context.rules)}`,
       context: {
@@ -106,7 +120,7 @@ export const answerRepositoryQuestion = (projectRoot: string, question: string):
 
   if (includesAny(normalizedQuestion, ['module', 'modules'])) {
     return {
-      question,
+      question: userQuestion,
       answer: context.modules.length > 0 ? `Modules: ${context.modules.join(', ')}` : 'Modules: none',
       reason: `Derived from repository index module graph. ${formatRulesHint(context.rules)}`,
       context: {
@@ -118,7 +132,7 @@ export const answerRepositoryQuestion = (projectRoot: string, question: string):
   }
 
   return {
-    question,
+    question: userQuestion,
     answer: 'Playbook cannot answer this question yet.',
     reason: 'Suggested commands:\nplaybook query modules\nplaybook query architecture',
     context: {
