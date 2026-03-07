@@ -8,6 +8,20 @@ AI-aware engineering governance for modern repositories.
 
 Playbook is a governance CLI for repositories that keeps checks deterministic for both humans and AI agents. It helps teams inspect current policy status, understand active rules, and apply safe fixes with confidence.
 
+## Shared core, project-local intelligence
+
+Playbook uses a **shared core + project-local Playbook state** integration model:
+
+- The Playbook product (CLI/engine/contracts) is shared core.
+- Installing Playbook in a consumer repository creates **project-local Playbook state** (config, index/artifacts, plans, and repository-specific extensions), not a fork by default.
+- Repository observations stay local/private by default.
+- Reusable patterns and product improvements are promoted upstream intentionally (docs/roadmap/rules), not via hidden mutation.
+
+Pattern: **private-first by default**. Standard Playbook usage does not imply automatic upstream content export.
+
+Pattern: **config/plugins/rule packs over forks** for project-specific customization.
+
+
 ## Quick Start
 
 Use one surface for each need:
@@ -129,6 +143,8 @@ node packages/cli/dist/main.js docs audit --json
 ```
 
 Preferred AI operating ladder: `ai-context -> context -> query/ask/explain -> verify/plan/apply`.
+
+Future app-integration direction: app or dashboard actions should use a trusted **server-side Playbook API/runtime or library layer** for validated operations instead of executing arbitrary browser-side CLI commands directly.
 
 Pattern: `playbook ai-context` is the preferred agent bootstrap command for Playbook-aware AI workflows.
 Pattern: `.playbook/ai-contract.json` is the canonical AI-operability handshake artifact for Playbook-enabled repositories.
