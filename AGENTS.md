@@ -90,9 +90,11 @@ Recommended authority order:
 
 Canonical machine-safe flow:
 
-`verify -> explain -> plan -> apply -> verify`
+`verify -> plan -> apply -> verify`
 
-Use this sequence for deterministic diagnosis and remediation.
+Use this sequence for deterministic remediation.
+
+Diagnostic augmentation: add `explain <rule-id>` between `verify` and `plan` when findings need rule-level interpretation before planning changes.
 
 ## Repository intelligence workflow
 
