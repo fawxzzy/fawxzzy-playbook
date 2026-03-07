@@ -39,6 +39,13 @@ Every remediation plan must include deterministic links to:
 - affected files
 - deterministic reasoning
 
+
+## Rule: Deterministic Execution
+
+All repository mutations must occur through the `verify -> plan -> apply` execution pipeline.
+
+Direct mutation outside the execution engine is considered unsafe.
+
 ## Rule: Secure Defaults
 
 When a security property cannot be verified, Playbook must fail closed or warn loudly.

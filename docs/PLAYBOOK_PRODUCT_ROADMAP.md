@@ -456,6 +456,22 @@ Key product pillars:
 
 Security is a first-class product program for Playbook and is implemented as deterministic, automated process—not manual review.
 
+### Deterministic Mutation Architecture
+
+Playbook is evolving toward a deterministic and secure repository mutation engine, not just a command runner. The canonical mutation workflow is:
+
+`verify -> plan -> approval -> apply -> verify`
+
+This execution pipeline preserves both automation and control:
+
+- `verify` identifies structural, architectural, or policy failures in deterministic rule output.
+- `plan` generates evidence-linked remediation proposals tied to concrete findings.
+- `approval` provides a policy and review checkpoint for humans and/or CI before writes occur.
+- `apply` executes only validated remediation tasks from the approved plan contract.
+- final `verify` confirms repository health after mutations are applied.
+
+Playbook intentionally separates analysis (`verify`), planning (`plan`), and execution (`apply`) so automated repository changes remain reviewable, policy-gated, and reproducible.
+
 ### 1️⃣ Execution Safety (Highest Priority)
 
 Secure the core lifecycle:
