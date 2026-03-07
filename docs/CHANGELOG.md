@@ -4,6 +4,20 @@
 
 ### Added
 
+- WHAT: Hardened Cosign keyless verification by adding `--certificate-identity-regexp "https://github.com/.+"` and `--certificate-oidc-issuer https://token.actions.githubusercontent.com` to SBOM verify step. WHY: Cosign keyless verification requires explicit trusted identity and issuer, otherwise verification fails even with a valid bundle.
+
+- WHAT: Migrated SBOM signing/verification to Cosign v3 bundle flow (`cosign sign-blob --bundle` and `cosign verify-blob --bundle`) and updated security policy gating to require `artifacts/sbom.sigstore.json`. WHY: `--output-signature` is deprecated in Cosign v3 bundle mode and can fail CI despite valid artifacts.
+
+- WHAT: Pinned Cosign installer to `sigstore/cosign-installer@v4.0.0` (with explicit `cosign-release`) and added an in-pipeline `cosign verify-blob` step after signing SBOM artifacts. WHY: Avoids mutable action tag drift and fails CI if signature generation/verification breaks or artifact integrity is compromised.
+
+- WHAT: Replaced npm-based Cosign invocation in the security workflow with the official `sigstore/cosign-installer@v4` + `cosign sign-blob` sequence while retaining keyless signing permissions. WHY: Cosign is a standalone CLI and must be installed explicitly in GitHub Actions for reliable signing.
+
+- WHAT: Hardened SBOM generation in security CI by adding CycloneDX `--ignore-npm-errors`, pinned output to spec v1.5, and added an Anchore SBOM scan stage against `artifacts/sbom.json`. WHY: Prevents pnpm workspace false-failures from npm tree warnings while improving automated supply-chain vulnerability detection.
+
+- WHAT: Hardened the security workflow checkout strategy by setting `actions/checkout@v4` to `fetch-depth: 0` before gitleaks and documented CI diff-scanner history guarantees in `docs/SECURITY_PRINCIPLES.md`. WHY: Prevents shallow-history PR scan failures like `fatal: ambiguous argument "<sha>^..<sha>"` while keeping secret scanning deterministic.
+
+- WHAT: Added an automated Security Program baseline across roadmap/principles/CI/runtime guardrails with repo-boundary validation, remediation plan policy checks, secret-redacted apply errors, security regression tests, and a dedicated `security.yml` pipeline for audit, secret scanning, SBOM, signing, provenance, and policy gating. WHY: Makes Playbook security continuous and deterministic across runtime and release workflows rather than manual spot checks.
+
 - Docs: captured deterministic engineering reasoning loop insight and interface/runtime governance pattern across `docs/PLAYBOOK_IMPROVEMENTS.md` and `docs/PLAYBOOK_PRODUCT_ROADMAP.md`.
 
 - Docs: captured repository memory system direction and the conversation-to-knowledge pipeline in `docs/PLAYBOOK_IMPROVEMENTS.md`, with roadmap alignment notes for durable engineering memory in `docs/PLAYBOOK_PRODUCT_ROADMAP.md`.
