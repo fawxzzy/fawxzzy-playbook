@@ -15,6 +15,52 @@ Primary flow:
 
 `CLI -> engine (+ node adapter) -> repository`
 
+## Canonical integration model: shared core, local intelligence
+
+Playbook has two distinct architecture surfaces that must not be conflated:
+
+1. **Playbook core product (shared engine):** the reusable CLI + engine + contracts shipped by the Playbook project.
+2. **Consumer-repo integration (project-local Playbook state):** repository-local configuration, intelligence artifacts, plans, and optional extensions generated/owned by the consuming repository.
+
+Rule: **Installing Playbook into another repository creates project-local Playbook state, not a Playbook fork by default.**
+
+Project-local Playbook state typically includes:
+
+- `playbook.config.json` (or `.playbook/config.json`) for local policy/configuration.
+- `.playbook/repo-index.json` and other generated intelligence artifacts.
+- `.playbook/plan.json` and similar remediation artifacts.
+- repository-specific rules/extensions used by that repository.
+
+Playbook core remains shared; repository-local state remains owned by the consuming project.
+
+## Promotion boundary: local observations vs upstream product learnings
+
+Playbook intentionally separates repository observations from core product evolution.
+
+- **Local by default:** project-specific findings, architectural context, and rule outcomes stay in the consumer repository.
+- **No hidden upstream mutation:** local command execution must not automatically mutate Playbook core.
+- **Intentional upstream promotion:** generalized patterns, reusable rules, and product-level gaps should be promoted upstream deliberately through docs/roadmap/rule proposals and reviewed implementation.
+
+Failure mode to avoid: treating project-specific customization as a core fork, which creates drift, duplicate fixes, and unclear ownership.
+
+Preferred extension strategy for consuming repositories:
+
+- configuration and policy tuning
+- plugin-style extension points (as available)
+- repository rule packs
+
+Pattern: **prefer config/plugins/rule packs over core forks** unless a fork is unavoidable.
+
+## Privacy and trust model
+
+Playbook operates as **private-first by default**:
+
+- scanning/indexing happens locally in the repository context
+- generated artifacts remain local unless users explicitly export/share them
+- no automatic upstream code/content export is implied by standard command usage
+
+Any future export, sync, telemetry, or cloud-backed intelligence behavior must be explicit and opt-in.
+
 ## CLI command architecture
 
 - CLI command handlers live in `packages/cli/src/commands/`.
@@ -81,6 +127,18 @@ policy validation
 controlled apply execution
 
 Agents should never write directly to the repository. All mutations must pass through the Playbook remediation pipeline so changes remain deterministic, reviewable, and policy-enforced.
+
+## Future direction: embeddable runtime/API for app-integrated actions
+
+For internal dashboards, CI control planes, admin panels, and product-integrated tooling, Playbook should expose server-side/library integration surfaces over time.
+
+Design direction:
+
+- expose validated server-side actions for capabilities such as `index`, `query`, `ask`, `explain`, and remediation orchestration
+- keep repository mutations behind policy-checked server/runtime boundaries
+- avoid browser-side arbitrary command execution as the default integration path
+
+Pattern: app-integrated Playbook actions should call a **server-side API/runtime** (or trusted library surface) rather than executing raw CLI commands directly from browser clients.
 
 ## Rule: Playbook Analyzes but Does Not Author
 

@@ -188,6 +188,47 @@ Key capabilities in this direction include:
 - Durable engineering memory direction (`.playbook/memory/*`) to preserve decisions, rationale, and investigation history as queryable repository intelligence for richer AI reasoning.
 - Playbook command surfaces already implement a reusable deterministic engineering reasoning loop (`observe -> understand -> diagnose -> plan -> act -> verify -> learn`) that should remain the core execution model across CLI, CI, and future interface layers.
 
+## Integration Architecture Direction: shared core, local intelligence
+
+Canonical model for downstream adoption:
+
+- **Shared core product/engine:** Playbook CLI/engine/contracts remain the reusable upstream product surface.
+- **Project-local Playbook state:** each consuming repository owns its own local Playbook state (`playbook.config.json` / `.playbook/*` index/artifacts/plans and repository-specific rules/extensions).
+- **Installing Playbook is not a fork by default:** adding Playbook to a repository creates local integration state built on shared core.
+
+### Private-first intelligence model
+
+- scanning/indexing/artifacts remain local by default
+- no automatic upstream code/content sharing
+- any export/sync/cloud/telemetry behavior is future work and must be explicit + opt-in
+
+### Intentional upstream promotion workflow
+
+- repository-specific observations stay local to the consuming repo
+- reusable patterns, generalized rules, and product gaps are promoted upstream intentionally
+- downstream usage informs Playbook through explicit docs/roadmap/rule promotion workflows, not hidden mutation
+
+### Extension model preference
+
+Pattern: **config/plugins/rule packs over forks** for project-specific customization.
+
+Failure mode: treating per-project customization as core forks causes drift, duplicate fixes, and unclear ownership boundaries.
+
+### Embeddable runtime/API direction (future)
+
+For app-integrated actions (internal dashboards, CI control planes, admin/dev panels), Playbook should expose server-side/library surfaces over time.
+
+- browser clients should call validated server endpoints/actions
+- avoid raw browser-side arbitrary command execution as the default model
+- retain deterministic governance and policy checks server-side
+
+### Follow-up implementation checklist (roadmap slices)
+
+- [ ] publish a consumer-repo integration contract doc that defines project-local Playbook state boundaries
+- [ ] add a lightweight config/plugin/rule-pack architecture note with extension examples
+- [ ] draft first server-side library/API design stub for embedded `ask`/`query`/`explain` workflows
+- [ ] define explicit opt-in export/sync/telemetry policy language before any cloud-backed intelligence behavior
+
 Rule: **Playbook analyzes but does not author.**
 
 Playbook provides structured analysis, diagnostics, and recommendations but does not automatically rewrite pull requests or developer intent. Its role is to provide architectural intelligence rather than replace the developer.
