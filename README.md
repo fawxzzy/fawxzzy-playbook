@@ -69,8 +69,11 @@ npx playbook verify
 
 - `index`
 - `query`
+- `deps`
 - `ask`
 - `explain`
+
+For the complete command inventory (including utility commands), see [docs/commands/README.md](docs/commands/README.md).
 
 Run `npx playbook index` to generate a deterministic machine-readable repository intelligence artifact at `.playbook/repo-index.json`.
 
@@ -101,12 +104,16 @@ Example AI-first flow:
 
 ```bash
 playbook ai-context
+playbook context
 playbook query modules
 playbook ask "where should a new feature live?"
+playbook explain architecture
 playbook verify
 playbook plan
 playbook apply
 ```
+
+`playbook context` is recommended in the AI bootstrap ladder for broader repository and CLI context before query/ask/explain.
 
 Inside this repository, use the local built CLI entrypoint for branch-accurate validation:
 

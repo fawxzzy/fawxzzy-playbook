@@ -119,11 +119,13 @@ Current implemented product-facing command/artifact set:
 - `ai-context`
 - repository intelligence (`index`, `query`, `deps`, `ask`, `explain`)
 
-## Roadmap framing (future-state)
+## Roadmap framing (current baseline + future enhancements)
 
-The following items are planned and should be treated as future-state roadmap work:
+Current baseline:
 
-- **AI Repository Intelligence (`playbook ai-context`, `index`, `query`, `deps`, `ask`, `explain`)**: implemented command surface for deterministic AI bootstrap and repository intelligence workflows.
+- **AI Repository Intelligence (`playbook ai-context`, `index`, `query`, `deps`, `ask`, `explain`)** is implemented and available for deterministic AI bootstrap and repository intelligence workflows.
+
+Future roadmap work should focus on enhancement quality (schema hardening, richer index coverage, CI artifact workflows, and contract durability), not on introducing these commands.
 
 
 Establish Playbook as a trusted governance tool in the developer ecosystem.
@@ -173,9 +175,9 @@ playbook plan
 playbook apply
 playbook-demo (discoverable via `playbook demo`)
 
-Next planned command:
+Next enhancement focus:
 
-playbook index
+Harden and extend repository-intelligence contracts (`index`, `query`, `deps`, `ask`, `explain`) for long-lived automation and CI portability.
 
 AI-Aware Engineering Guardrails
 
@@ -247,7 +249,7 @@ Near-Term Productization Milestones
 
 Progress (current): AI bootstrap and repository intelligence commands (`ai-context`, `index`, `query`, `deps`, `ask`, `explain`) are implemented with deterministic JSON-oriented contracts for AI-operable workflows.
 
-### Future milestone: AI Repository Intelligence (planned)
+### AI Repository Intelligence milestone (implemented baseline, enhancement track)
 
 - [x] Add `playbook index` command to emit `.playbook/repo-index.json`.
 - [x] Include deterministic repository metadata: module boundaries, internal dependencies, detected framework/runtime signals, and documented architecture contracts.
@@ -613,22 +615,22 @@ Every feature must answer one question:
 How do we keep AI-generated code aligned with architecture?
 
 
-## Phase: AI Repository Intelligence (Future)
+## Phase: AI Repository Intelligence (Current + Next Enhancements)
 
-This phase is planned and intentionally not implemented in the current stabilization window.
+This phase is now implemented in the current product baseline.
 
-Planned feature: `playbook index`
+Implemented baseline: `playbook index` (paired with `query`, `deps`, `ask`, `explain`, and `ai-context`).
 
 - Command intent: generate a machine-readable repository intelligence artifact for AI-safe repository understanding.
-- Planned output path: `.playbook/repo-index.json`.
-- Planned index coverage:
+- Output path: `.playbook/repo-index.json`.
+- Current index coverage:
   - modules
   - dependencies
   - database schema
   - framework
   - architecture contracts
 - Product purpose: enable AI agents to safely understand repository structure and constraints before making code changes.
-- Scope note: this roadmap phase documents intent only; index generation is not part of the current implementation scope.
+- Next enhancements: richer intelligence coverage, schema hardening, and stronger CI artifact workflows.
 
 ## Phase: AI-Operable Repository Platform (Loop 1 Complete)
 
@@ -720,5 +722,5 @@ Pattern: **AI Anchor Drift**.
 Command-state rule for current roadmap framing:
 
 - New command additions must update README, roadmap, command reference, demo docs, and changelog.
-- `index` is the next planned command after `plan`, `apply`, `diagram`, `doctor`, and `playbook-demo`.
+- `index` and the AI repository-intelligence surface are implemented; roadmap items should track enhancement quality and automation durability rather than command existence.
 - When docs and implementation disagree, code is source of truth.

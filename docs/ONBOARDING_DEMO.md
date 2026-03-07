@@ -18,6 +18,20 @@ The demo repo is part of product adoption strategy:
 
 `playbook-demo` is now an active product artifact and is exposed directly through `playbook demo` (deterministic text/JSON onboarding contract).
 
+## Optional AI-aware path (advanced)
+
+For AI-assisted onboarding or agent bootstrap scenarios, the repository-intelligence surface is available:
+
+```bash
+playbook ai-context --json
+playbook index --json
+playbook query modules --json
+playbook ask "where should a new feature live?" --json
+playbook explain architecture --json
+```
+
+This is an advanced path that complements (not replaces) the primary onboarding narrative centered on `analyze`, `verify`, and `plan`.
+
 ## Rule: Demo Terminology Sync
 
 Whenever the main product changes command framing, output language, or architecture positioning, revalidate the demo repository in the same phase or immediately after.
