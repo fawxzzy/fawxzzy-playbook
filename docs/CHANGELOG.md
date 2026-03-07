@@ -20,6 +20,9 @@
 - Documentation updates aligning Playbook with an AI-first repository workflow.
 
 - WHAT: Added a shared managed-docs generator (`scripts/update-managed-docs.mjs`) and wired `pnpm docs:update`/`pnpm docs:check` (plus `agents:*` aliases) so both `AGENTS.md` and `docs/commands/README.md` are generated from shared command metadata. WHY: Prevents command-surface documentation drift by making stale managed sections fail deterministic checks.
+
+- WHAT: Hardened CLI contract tests for cross-platform determinism by normalizing CRLF/LF snapshot comparisons and removing POSIX-only path assumptions in `apply` missing-plan assertions. WHY: Keeps strict JSON and error-contract coverage intact while preventing Windows-vs-Unix newline/path formatting from causing false negatives.
+
 - WHAT: Enhanced `playbook session cleanup` with an explicit knowledge hygiene pipeline (`--hygiene`) that normalizes, deduplicates, truncates, prunes junk placeholders, and emits structured cleanup reports (including `--json-report`). WHY: Reduces session junk accretion while preserving deterministic, auditable local-first behavior.
 
 - WHAT: Synced product-state docs to the current command surface by adding an authoritative command index (`docs/commands/README.md`), aligning README/CLI reference/demo docs/roadmap language around `analyze`, `verify`, `rules`, `doctor`, `diagram`, `plan`, `apply`, the implemented AI/repository-intelligence surface (`ai-context`, `index`, `query`, `deps`, `ask`, `explain`), and the `playbook-demo` artifact. WHY: Prevents AI/human command-surface drift and keeps roadmap + onboarding + command docs consistent with implemented behavior.
