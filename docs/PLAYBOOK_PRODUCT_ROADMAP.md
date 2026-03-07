@@ -601,6 +601,9 @@ Current capabilities:
 - Emit stable machine-readable PR analysis output for automation
 - Export deterministic GitHub-ready PR review comment markdown via formatter mode (`--format github-comment`) without introducing new analysis logic
 - Standardize analyze-pr output selection through a single formatter layer (`--format text|json|github-comment`) so new presentation paths replace superseded ad-hoc branches
+- Wire GitHub Actions PR transport to post/update one sticky Playbook summary comment using the canonical `--format github-comment` formatter output (marker: `<!-- playbook:analyze-pr-comment -->`)
+- Treat index generation as an explicit prerequisite in CI (`playbook index` producer before `analyze-pr` consumer) to avoid artifact-readiness drift
+- Treat PR diff base as an explicit CI contract (`--base origin/${{ github.base_ref }}` + `fetch-depth: 0`) instead of implicit environment inference
 
 Playbook should analyze PRs but not author them.
 

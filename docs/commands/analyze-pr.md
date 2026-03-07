@@ -24,6 +24,19 @@ It returns deterministic review/report data for automation, including changed fi
 
 `--format <text|json|github-comment>` is a presentation/export selector over the same deterministic analysis contract. `--json` remains canonical analysis data; `github-comment` is deterministic markdown rendering for CI workflows.
 
+GitHub Actions PR-comment integration should treat `analyze-pr --format github-comment` as the only markdown producer and only transport/post it. The repository workflow posts a single sticky Playbook comment marked with `<!-- playbook:analyze-pr-comment -->` and updates that comment on reruns to avoid duplicates.
+
+Producer/consumer contract note: `playbook analyze-pr` requires `.playbook/repo-index.json` and must be preceded by `playbook index`; creating `.playbook/` alone does not satisfy the artifact prerequisite. CI should run artifact producers before consumers (index first, then analyze-pr/query/impact).
+
+CI diff-base contract note: in pull_request automation, pass an explicit base ref (for example `--base origin/${{ github.base_ref }}`) and ensure checkout uses full history (`fetch-depth: 0`) so diff-based analysis can resolve base/head deterministically.
+
+Shell integration notes for GitHub Actions transport:
+
+- Shell commands copied into GitHub Actions `run:` blocks must be rechecked for escaping; log-safe or JSON-escaped commands may fail in bash.
+- Prefer multiline `run: |` blocks for commands with nested quoting.
+- Prefer `node -e "console.log(...)"` over deeply nested `node -p` expressions when populating GitHub Actions env vars.
+- When reading `packageManager` from `package.json`, split version with `${PM#pnpm@}` before passing to `pnpm/action-setup`.
+
 ## Scope contract
 
 Pattern: `playbook analyze-pr` composes local diff context with indexed repository intelligence to produce deterministic pull request analysis.

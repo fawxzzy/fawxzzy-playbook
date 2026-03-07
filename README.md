@@ -250,6 +250,10 @@ Use `playbook analyze-pr` for deterministic, machine-readable change analysis fr
 - `playbook analyze-pr --json` remains the canonical deterministic analysis contract for automation.
 - `playbook analyze-pr --format <text|json|github-comment>` selects presentation only over that contract.
 - `playbook analyze-pr --format github-comment` renders the same deterministic analysis contract as a GitHub-ready PR comment markdown export.
+- GitHub Actions transport now posts that formatter output to PRs as one sticky Playbook summary comment (`<!-- playbook:analyze-pr-comment -->`) that is updated on reruns instead of duplicated.
+- The workflow layer is transport-only: it does not rebuild analysis or formatting outside `analyze-pr --format github-comment`.
+- The workflow runs `playbook index` before `analyze-pr` because `.playbook/` directory creation alone is not sufficient; `analyze-pr` consumes `.playbook/repo-index.json`.
+- In CI pull_request workflows, pass an explicit diff base (for example `--base origin/${{ github.base_ref }}`) and use full-history checkout (`fetch-depth: 0`) for deterministic diff resolution.
 
 ```bash
 npx playbook index
