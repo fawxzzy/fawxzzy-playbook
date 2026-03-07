@@ -231,7 +231,55 @@ Risk model signals should include:
 Expected outcome:
 - safer prioritization of change sequencing and rollout planning.
 
-PHASE 6 — AI EXECUTION LAYER (PLAYBOOK AGENT RUNTIME)
+PHASE 6 — AI REPOSITORY CONTRACT
+
+Goal:
+Define a deterministic, machine-readable AI interaction contract that repositories expose before agent runtime execution is introduced.
+
+Primary capability:
+- `.playbook/ai-contract.json`
+
+The AI Contract specifies how AI systems should interact with a Playbook-governed repository.
+
+Contract fields include:
+- AI runtime used
+- repository workflow
+- repository intelligence sources
+- remediation workflow rules
+
+Example contract:
+
+```json
+{
+  "ai_runtime": "playbook",
+  "workflow": [
+    "playbook index",
+    "playbook query",
+    "playbook plan",
+    "playbook apply",
+    "playbook verify"
+  ],
+  "intelligence_sources": [
+    ".playbook/repo-index.json",
+    "docs/ARCHITECTURE.md"
+  ],
+  "rules": {
+    "no_direct_code_edits": true,
+    "use_remediation_workflow": true
+  }
+}
+```
+
+AI-operable repository signal:
+- Repositories containing `.playbook/ai-contract.json` are treated as AI-operable through Playbook governance.
+- AI systems should consult this contract before making or proposing code changes.
+
+This phase formalizes Playbook's repository-to-AI protocol, ensuring AI behavior is deterministic and governance-aware.
+
+Future standardization direction:
+- Publish `docs/AI_CONTRACT_SPEC.md` as a public AI Contract specification for AI-operable repositories.
+
+PHASE 7 — AI EXECUTION RUNTIME (PLAYBOOK AGENT)
 
 Goal:
 Introduce **Playbook Agent** as an AI execution runtime for repositories.
@@ -241,6 +289,15 @@ New command:
 
 Vision:
 Instead of AI systems directly editing code without guardrails, Playbook Agent orchestrates deterministic repository workflows so every proposal runs through repository intelligence and remediation contracts.
+
+Agent contract relationship:
+- Playbook Agent consumes `.playbook/ai-contract.json` to determine repository workflow and operating rules.
+
+Example agent bootstrap flow:
+1. AI system enters repository.
+2. Detects `.playbook/ai-contract.json`.
+3. Loads Playbook workflow/intelligence/remediation rules from the contract.
+4. Executes the deterministic `plan -> apply -> verify` loop.
 
 Example:
 - `playbook agent "add pagination to workouts API"`
@@ -257,7 +314,7 @@ Deterministic AI execution loop:
 
 This phase defines Playbook as an AI governance and execution runtime, not only a repository rule checker.
 
-PHASE 7 — AUTONOMOUS REPOSITORY MAINTENANCE
+PHASE 8 — AUTONOMOUS REPOSITORY MAINTENANCE
 
 Goal:
 Extend Playbook Agent into recurring and CI-driven repository maintenance modes.
