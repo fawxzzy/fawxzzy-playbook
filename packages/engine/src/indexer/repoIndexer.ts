@@ -2,16 +2,24 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { loadConfig } from '../config/load.js';
 import { getCoreRules } from '../rules/coreRules.js';
+import { scanWorkspaceDeps } from '../diagrams/scanWorkspaceDeps.js';
+
+export type RepositoryModule = {
+  name: string;
+  dependencies: string[];
+};
 
 export type RepositoryIndex = {
   schemaVersion: '1.0';
   framework: string;
   language: string;
   architecture: string;
-  modules: string[];
+  modules: RepositoryModule[];
   database: string;
   rules: string[];
 };
+
+const IMPORT_RE = /from\s+['\"]([^'\"]+)['\"]|import\(['\"]([^'\"]+)['\"]\)|import\s+['\"]([^'\"]+)['\"]/g;
 
 const readPackageJson = (projectRoot: string): { dependencies?: Record<string, string>; devDependencies?: Record<string, string> } | undefined => {
   const packageJsonPath = path.join(projectRoot, 'package.json');
@@ -65,7 +73,7 @@ const detectArchitecture = (projectRoot: string): string => {
   return defaultArchitecture;
 };
 
-const detectModules = (projectRoot: string): string[] => {
+const detectModuleNames = (projectRoot: string): string[] => {
   const srcPath = path.join(projectRoot, 'src');
   if (!fs.existsSync(srcPath)) {
     return [];
@@ -76,6 +84,102 @@ const detectModules = (projectRoot: string): string[] => {
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
+};
+
+const listModuleFiles = (moduleRoot: string): string[] => {
+  if (!fs.existsSync(moduleRoot)) {
+    return [];
+  }
+
+  const files: string[] = [];
+  const stack = [moduleRoot];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current) {
+      continue;
+    }
+
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const child = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(child);
+        continue;
+      }
+
+      if (entry.isFile() && /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(entry.name)) {
+        files.push(child);
+      }
+    }
+  }
+
+  return files.sort((a, b) => a.localeCompare(b));
+};
+
+const detectModuleDependenciesFromSrc = (projectRoot: string, moduleNames: string[]): RepositoryModule[] => {
+  const srcPath = path.join(projectRoot, 'src');
+  const moduleSet = new Set(moduleNames);
+
+  return moduleNames.map((moduleName) => {
+    const dependencies = new Set<string>();
+    const moduleFiles = listModuleFiles(path.join(srcPath, moduleName));
+
+    for (const filePath of moduleFiles) {
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const matches = Array.from(fileContent.matchAll(IMPORT_RE));
+
+      for (const match of matches) {
+        const specifier = match[1] ?? match[2] ?? match[3];
+        if (!specifier) {
+          continue;
+        }
+
+        let candidateModule: string | undefined;
+
+        if (specifier.startsWith('.')) {
+          const resolvedTarget = path.resolve(path.dirname(filePath), specifier);
+          const relativeToSrc = path.relative(srcPath, resolvedTarget);
+          if (!relativeToSrc.startsWith('..')) {
+            candidateModule = relativeToSrc.split(path.sep)[0];
+          }
+        } else if (specifier.startsWith('@/')) {
+          candidateModule = specifier.slice(2).split('/')[0];
+        } else if (specifier.startsWith('src/')) {
+          candidateModule = specifier.slice(4).split('/')[0];
+        }
+
+        if (!candidateModule || candidateModule === moduleName || !moduleSet.has(candidateModule)) {
+          continue;
+        }
+
+        dependencies.add(candidateModule);
+      }
+    }
+
+    return {
+      name: moduleName,
+      dependencies: Array.from(dependencies).sort((a, b) => a.localeCompare(b))
+    };
+  });
+};
+
+const detectModules = (projectRoot: string): RepositoryModule[] => {
+  const workspaceGraph = scanWorkspaceDeps(projectRoot);
+  if (workspaceGraph.workspaces.length > 0) {
+    const depMap = new Map(workspaceGraph.workspaces.map((workspace) => [workspace.name, new Set<string>()]));
+    for (const edge of workspaceGraph.edges) {
+      depMap.get(edge.from)?.add(edge.to);
+    }
+
+    return workspaceGraph.workspaces
+      .map((workspace) => ({
+        name: workspace.name,
+        dependencies: Array.from(depMap.get(workspace.name) ?? []).sort((a, b) => a.localeCompare(b))
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  const moduleNames = detectModuleNames(projectRoot);
+  return detectModuleDependenciesFromSrc(projectRoot, moduleNames);
 };
 
 const detectDatabase = (projectRoot: string): string => {

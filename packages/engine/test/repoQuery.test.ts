@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { queryRepositoryIndex } from '../src/query/repoQuery.js';
+import { queryDependencies } from '../src/query/dependencies.js';
 
 const createRepo = (name: string): string => fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`));
 
@@ -20,15 +21,23 @@ describe('queryRepositoryIndex', () => {
       framework: 'nextjs',
       language: 'typescript',
       architecture: 'modular-monolith',
-      modules: ['users', 'workouts'],
+      modules: [
+        { name: 'users', dependencies: [] },
+        { name: 'workouts', dependencies: ['users'] }
+      ],
       database: 'supabase',
       rules: ['requireNotesOnChanges']
     });
 
     expect(queryRepositoryIndex(repo, 'architecture')).toEqual({ field: 'architecture', result: 'modular-monolith' });
-    expect(queryRepositoryIndex(repo, 'modules')).toEqual({ field: 'modules', result: ['users', 'workouts'] });
+    expect(queryRepositoryIndex(repo, 'modules')).toEqual({
+      field: 'modules',
+      result: [
+        { name: 'users', dependencies: [] },
+        { name: 'workouts', dependencies: ['users'] }
+      ]
+    });
   });
-
 
   it('normalizes natural language query field requests to supported fields', () => {
     const repo = createRepo('playbook-repo-query-natural-language');
@@ -37,12 +46,47 @@ describe('queryRepositoryIndex', () => {
       framework: 'node',
       language: 'typescript',
       architecture: 'modular-monolith',
-      modules: ['api', 'worker'],
+      modules: [{ name: 'api', dependencies: [] }],
       database: 'none',
       rules: ['notes.missing']
     });
 
-    expect(queryRepositoryIndex(repo, 'list modules')).toEqual({ field: 'modules', result: ['api', 'worker'] });
+    expect(queryRepositoryIndex(repo, 'list modules')).toEqual({ field: 'modules', result: [{ name: 'api', dependencies: [] }] });
+  });
+
+  it('returns dependencies query payloads', () => {
+    const repo = createRepo('playbook-repo-query-dependencies');
+    writeRepoIndex(repo, {
+      schemaVersion: '1.0',
+      framework: 'node',
+      language: 'typescript',
+      architecture: 'modular-monolith',
+      modules: [
+        { name: 'auth', dependencies: [] },
+        { name: 'workouts', dependencies: ['auth'] }
+      ],
+      database: 'none',
+      rules: []
+    });
+
+    expect(queryDependencies(repo)).toEqual({
+      schemaVersion: '1.0',
+      command: 'query',
+      type: 'dependencies',
+      module: null,
+      dependencies: [
+        { name: 'auth', dependencies: [] },
+        { name: 'workouts', dependencies: ['auth'] }
+      ]
+    });
+
+    expect(queryDependencies(repo, 'workouts')).toEqual({
+      schemaVersion: '1.0',
+      command: 'query',
+      type: 'dependencies',
+      module: 'workouts',
+      dependencies: ['auth']
+    });
   });
 
   it('throws deterministic errors for unsupported fields', () => {
@@ -60,6 +104,21 @@ describe('queryRepositoryIndex', () => {
     expect(() => queryRepositoryIndex(repo, 'docs')).toThrow(
       'playbook query: unsupported field "docs". Supported fields: architecture, framework, language, modules, database, rules.'
     );
+  });
+
+  it('throws deterministic errors for unknown dependency modules', () => {
+    const repo = createRepo('playbook-repo-query-unknown-module');
+    writeRepoIndex(repo, {
+      schemaVersion: '1.0',
+      framework: 'node',
+      language: 'javascript',
+      architecture: 'modular-monolith',
+      modules: [{ name: 'api', dependencies: [] }],
+      database: 'none',
+      rules: []
+    });
+
+    expect(() => queryDependencies(repo, 'worker')).toThrow('playbook query dependencies: unknown module "worker".');
   });
 
   it('throws deterministic errors when index file is missing', () => {

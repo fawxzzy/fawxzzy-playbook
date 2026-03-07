@@ -19,7 +19,10 @@ const writeRepoIndex = (repo: string): void => {
         framework: 'nextjs',
         language: 'typescript',
         architecture: 'modular-monolith',
-        modules: ['users', 'workouts'],
+        modules: [
+          { name: 'auth', dependencies: [] },
+          { name: 'workouts', dependencies: ['auth'] }
+        ],
         database: 'supabase',
         rules: ['requireNotesOnChanges']
       },
@@ -38,7 +41,7 @@ describe('runQuery', () => {
     const exitCode = await runQuery(repo, ['modules'], { format: 'text', quiet: false });
 
     expect(exitCode).toBe(ExitCode.Success);
-    expect(logSpy.mock.calls.map((call) => String(call[0]))).toEqual(['Modules', '───────', 'users', 'workouts']);
+    expect(logSpy.mock.calls.map((call) => String(call[0]))).toEqual(['Modules', '───────', 'auth: none', 'workouts: auth']);
 
     logSpy.mockRestore();
   });
@@ -55,10 +58,46 @@ describe('runQuery', () => {
     expect(payload).toEqual({
       command: 'query',
       field: 'modules',
-      result: ['users', 'workouts']
+      result: [
+        { name: 'auth', dependencies: [] },
+        { name: 'workouts', dependencies: ['auth'] }
+      ]
     });
 
     logSpy.mockRestore();
+  });
+
+  it('prints dependency query JSON output', async () => {
+    const repo = createRepo('playbook-cli-query-dependencies');
+    writeRepoIndex(repo);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runQuery(repo, ['dependencies', 'workouts'], { format: 'json', quiet: false });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload).toEqual({
+      schemaVersion: '1.0',
+      command: 'query',
+      type: 'dependencies',
+      module: 'workouts',
+      dependencies: ['auth']
+    });
+
+    logSpy.mockRestore();
+  });
+
+  it('fails dependency query for unknown module', async () => {
+    const repo = createRepo('playbook-cli-query-dependencies-missing');
+    writeRepoIndex(repo);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const exitCode = await runQuery(repo, ['dependencies', 'missing'], { format: 'text', quiet: false });
+
+    expect(exitCode).toBe(ExitCode.Failure);
+    expect(errorSpy).toHaveBeenCalledWith('playbook query dependencies: unknown module "missing".');
+
+    errorSpy.mockRestore();
   });
 
   it('fails with clear error for unsupported fields', async () => {
@@ -75,7 +114,6 @@ describe('runQuery', () => {
 
     errorSpy.mockRestore();
   });
-
 
   it('fails when required field argument is missing', async () => {
     const repo = createRepo('playbook-cli-query-args');

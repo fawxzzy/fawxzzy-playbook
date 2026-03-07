@@ -25,7 +25,7 @@ describe('analyze repository index', () => {
       framework: string;
       language: string;
       architecture: string;
-      modules: string[];
+      modules: Array<{ name: string; dependencies: string[] }>;
       database: string;
       rules: string[];
     };
@@ -35,7 +35,7 @@ describe('analyze repository index', () => {
       framework: 'node',
       language: 'typescript',
       architecture: 'modular-monolith',
-      modules: ['features'],
+      modules: [{ name: 'features', dependencies: [] }],
       database: 'none'
     });
     expect(index.rules.length).toBeGreaterThan(0);
@@ -58,7 +58,7 @@ describe('analyze repository index', () => {
       framework: string;
       language: string;
       architecture: string;
-      modules: string[];
+      modules: Array<{ name: string; dependencies: string[] }>;
       database: string;
       rules: string[];
     };
