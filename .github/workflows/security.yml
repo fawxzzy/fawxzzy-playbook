@@ -56,11 +56,12 @@ jobs:
         with:
           sbom: artifacts/sbom.json
 
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v4
+
       - name: Step 4 — Artifact Signing (Cosign)
-        env:
-          COSIGN_EXPERIMENTAL: "true"
         run: |
-          pnpm dlx @sigstore/cosign sign-blob --yes artifacts/sbom.json --output-signature artifacts/signature.cosign
+          cosign sign-blob --yes artifacts/sbom.json --output-signature artifacts/signature.cosign
 
       - name: Step 5 — Provenance Attestation
         run: |

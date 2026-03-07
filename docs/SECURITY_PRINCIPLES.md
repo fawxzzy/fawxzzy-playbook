@@ -63,3 +63,11 @@ Note: gitleaks partial-scan/no-leaks output does not mean the job passed; git-hi
 - `npm ls` may report `ELSPROBLEMS` for devDependency trees that are not actual install issues.
 - Playbook CI uses CycloneDX spec `v1.5` for SBOM artifacts.
 - SBOM artifacts are written to `artifacts/sbom.json` during CI.
+
+
+## Cosign Signing Requirements in CI
+
+- Cosign is a standalone CLI, not an npm package.
+- CI must install cosign using `sigstore/cosign-installer`.
+- SBOM artifacts are signed with `cosign sign-blob`.
+- GitHub Actions keyless signing requires `permissions: id-token: write`.

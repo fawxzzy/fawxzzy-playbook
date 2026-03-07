@@ -4,6 +4,8 @@
 
 ### Added
 
+- WHAT: Replaced npm-based Cosign invocation in the security workflow with the official `sigstore/cosign-installer@v4` + `cosign sign-blob` sequence while retaining keyless signing permissions. WHY: Cosign is a standalone CLI and must be installed explicitly in GitHub Actions for reliable signing.
+
 - WHAT: Hardened SBOM generation in security CI by adding CycloneDX `--ignore-npm-errors`, pinned output to spec v1.5, and added an Anchore SBOM scan stage against `artifacts/sbom.json`. WHY: Prevents pnpm workspace false-failures from npm tree warnings while improving automated supply-chain vulnerability detection.
 
 - WHAT: Hardened the security workflow checkout strategy by setting `actions/checkout@v4` to `fetch-depth: 0` before gitleaks and documented CI diff-scanner history guarantees in `docs/SECURITY_PRINCIPLES.md`. WHY: Prevents shallow-history PR scan failures like `fatal: ambiguous argument "<sha>^..<sha>"` while keeping secret scanning deterministic.
