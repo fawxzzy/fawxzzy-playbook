@@ -200,6 +200,48 @@ Key capabilities in this direction include:
 - Durable engineering memory direction (`.playbook/memory/*`) to preserve decisions, rationale, and investigation history as queryable repository intelligence for richer AI reasoning.
 - Playbook command surfaces already implement a reusable deterministic engineering reasoning loop (`observe -> understand -> diagnose -> plan -> act -> verify -> learn`) that should remain the core execution model across CLI, CI, and future interface layers.
 
+## Product Direction: Knowledge Distillation Engine
+
+Playbook is also evolving toward a **Knowledge Distillation Engine** for software engineering.
+
+This direction unifies repository intelligence, context compression, and the repository learning loop under one recursive pattern-recognition and compression model. The intent is to extract reusable engineering knowledge from repeated repository signals while preserving Playbook's core execution loop (`observe -> understand -> diagnose -> plan -> act -> verify -> learn`).
+
+Recursive knowledge cycle:
+
+`observe -> detect repetition -> extract patterns -> generalize rules -> compress knowledge -> reuse knowledge`
+
+Repository evidence used for distillation includes:
+
+- source code
+- repository structure
+- dependency graphs
+- documentation
+- pull request diffs
+- verification findings
+- remediation plans
+- apply history
+- CI failures
+- rule violations
+
+Architecture principle:
+
+Atomic knowledge units are **layer-relative** rather than globally fixed.
+
+Intelligence layers:
+
+- **syntax layer** -> tokens, AST nodes
+- **structure layer** -> modules, dependencies, ownership
+- **behavior layer** -> failures, fixes, remediation actions
+- **semantic layer** -> rules, doctrines, invariants
+- **compressed layer** -> minimal representations that explain many signals
+
+Pattern: Intelligence via Recursive Compression.
+Pattern: Layer-Relative Knowledge Units.
+Pattern: Human-Reviewed Knowledge Promotion.
+Rule: Compression Must Preserve Explanatory Power.
+Failure Mode: Premature Canonicalization.
+Failure Mode: Compression Without Semantics.
+
 ## Integration Architecture Direction: shared core, local intelligence
 
 ### Consumer Integration Contract
@@ -359,7 +401,7 @@ Use a layered phase model so each phase compounds directly on the previous one:
 9. **Phase 9 — Autonomous Maintenance (Policy-Gated)**  
    Recurring maintenance execution modes with approval and policy controls.
 10. **Phase 10 — Repository Learning Loop (Human-Reviewed)**  
-   Pattern detection and candidate improvements from repeated findings/remediations/query usage.
+   Pattern detection and candidate improvements from repeated findings/remediations/query usage, including pattern mining from repeated findings, remediation clustering, candidate rule synthesis, invariant discovery, engineering doctrine promotion, and memory compaction. Outputs remain candidate knowledge artifacts until human review promotes them to enforced governance.
 
 Reasoning for reordering:
 - Separates repository understanding (read runtime) from repository mutation (change runtime).
@@ -460,6 +502,16 @@ AI Efficiency & Context Compression
 Goal:
 
 Reduce AI token usage and latency when performing repository changes.
+
+Compression in this phase is not only token-efficiency work; it is also the transformation of repository signals into reusable knowledge artifacts that improve repeated reasoning quality.
+
+Examples of compressed artifacts:
+
+- module digests
+- rule clusters
+- repeated remediation patterns
+- architecture invariants
+- repository knowledge graph nodes
 
 Key mechanisms:
 
