@@ -42,7 +42,9 @@ For `dependencies`, the command can return either the full module dependency gra
 
 For `impact`, the command returns modules that depend on a target module, including transitive dependents (`playbook query impact <module>`).
 
-For `risk`, the command returns a deterministic architectural risk estimate for changing a module (`playbook query risk <module>`). `impact` answers “what breaks if this changes?” while `risk` answers “how dangerous is this module to modify?”
+For `risk`, the command returns a deterministic architectural risk estimate for changing a module (`playbook query risk <module>`). `impact` answers “what breaks if this changes?” while `risk` answers “how dangerous is this module to modify?”.
+
+Like all query subcommands, `risk` requires a generated index (`playbook index`) and returns deterministic failures for non-indexed modules.
 
 `playbook query` never modifies repository files and never reruns repository analysis.
 

@@ -154,3 +154,12 @@ CI validates the current repository state, not a published version.
 
 Implementation:
 node packages/cli/dist/main.js <command>
+
+- Pattern: Index-backed query validation
+  For every query subcommand contract, include one known indexed target success, one or more non-indexed deterministic failures, and `--json` validation from the built CLI artifact.
+
+- Pattern: Contract-backed scoring inputs
+  Deterministic scoring surfaces should source each material signal from persisted artifacts/contracts over heuristic attribution when possible.
+
+- Failure Mode: False precision from heuristic inputs
+  Stable output formatting can hide weak internal attribution. Persist module-scoped verify attribution as first-class contract data to keep risk scores explainable and automation-safe.
