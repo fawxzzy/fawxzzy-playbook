@@ -25,6 +25,7 @@ declare module "@zachariahredfield/playbook-engine" {
   export const queryDocsCoverage: (...args: any[]) => any;
   export const queryRuleOwners: (...args: any[]) => any;
   export const queryModuleOwners: (...args: any[]) => any;
+  export const runDocsAudit: (...args: any[]) => any;
   export type DependenciesQueryResult = any;
   export type ImpactQueryResult = any;
   export type RiskQueryResult = any;

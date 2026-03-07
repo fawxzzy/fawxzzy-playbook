@@ -59,3 +59,11 @@
 - WHAT: CI installs dependencies with `pnpm install --frozen-lockfile`. WHY: Enforces deterministic installs and prevents lockfile drift.
 - WHAT: Verify diff-base selection falls back to `HEAD~1` when `merge-base(main, HEAD) == HEAD`. WHY: Prevents empty diffs after commits on `main`, so the notes-on-changes gate still evaluates real changes.
 - WHAT: Smoke testing validates the built CLI (`packages/cli/dist/main.js`) and exercises `init` + `verify` behavior. WHY: Confirms shipped CLI behavior end-to-end, not only typechecks/unit tests.
+
+## Unreleased
+
+### Added
+
+- Added `playbook docs audit` with deterministic checks for required doc anchors, single-roadmap policy, idea leakage, responsibility boundaries, archive hygiene, and cleanup de-duplication reporting.
+- Added JSON schema support for `playbook docs audit --json` via `playbook schema docs`.
+- Integrated docs audit into Playbook CI and agent-facing validation guidance.

@@ -363,3 +363,14 @@ improve architecture analysis
 contribute to the ecosystem
 
 Playbook aims to become a community-driven governance platform.
+
+
+## Documentation governance validation
+
+For documentation/governance changes, include:
+
+```bash
+node packages/cli/dist/main.js docs audit --ci --json
+```
+
+This keeps documentation architecture checks executable in local and CI workflows.

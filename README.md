@@ -61,6 +61,7 @@ npx playbook verify
 - `doctor`
 - `diagram`
 - `rules`
+- `docs`
 - `schema`
 - `context`
 - `ai-context`
@@ -78,7 +79,7 @@ For the complete command inventory (including utility commands), see [docs/comma
 
 Run `npx playbook index` to generate a deterministic machine-readable repository intelligence artifact at `.playbook/repo-index.json`.
 
-Use `playbook schema` to retrieve the JSON Schema contracts for command outputs (`rules`, `explain`, `index`, `verify`, `plan`, `context`, `ai-context`, `ai-contract`) so CI and agents can validate payloads.
+Use `playbook schema` to retrieve the JSON Schema contracts for command outputs (`rules`, `explain`, `index`, `verify`, `plan`, `context`, `ai-context`, `ai-contract`, `docs`) so CI and agents can validate payloads.
 
 ## Playbook Context
 
@@ -124,6 +125,7 @@ Inside this repository, use the local built CLI entrypoint for branch-accurate v
 pnpm -r build
 node packages/cli/dist/main.js ai-context --json
 node packages/cli/dist/main.js context --json
+node packages/cli/dist/main.js docs audit --json
 ```
 
 Preferred AI operating ladder: `ai-context -> context -> query/ask/explain -> verify/plan/apply`.

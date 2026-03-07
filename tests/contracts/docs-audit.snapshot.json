@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "command": "docs audit",
+  "ok": false,
+  "status": "fail",
+  "summary": {
+    "errors": 6,
+    "warnings": 0,
+    "checksRun": 6
+  },
+  "findings": [
+    {
+      "ruleId": "docs.required-anchor.missing",
+      "level": "error",
+      "message": "Required documentation anchor is missing.",
+      "path": "docs/PLAYBOOK_PRODUCT_ROADMAP.md"
+    },
+    {
+      "ruleId": "docs.required-anchor.missing",
+      "level": "error",
+      "message": "Required documentation anchor is missing.",
+      "path": "docs/PLAYBOOK_IMPROVEMENTS.md"
+    },
+    {
+      "ruleId": "docs.required-anchor.missing",
+      "level": "error",
+      "message": "Required documentation anchor is missing.",
+      "path": "docs/ARCHITECTURE.md"
+    },
+    {
+      "ruleId": "docs.required-anchor.missing",
+      "level": "error",
+      "message": "Required documentation anchor is missing.",
+      "path": "docs/PLAYBOOK_DEV_WORKFLOW.md"
+    },
+    {
+      "ruleId": "docs.required-anchor.missing",
+      "level": "error",
+      "message": "Required documentation anchor is missing.",
+      "path": "docs/index.md"
+    },
+    {
+      "ruleId": "docs.required-anchor.missing",
+      "level": "error",
+      "message": "Required documentation anchor is missing.",
+      "path": "docs/archive/"
+    }
+  ]
+}

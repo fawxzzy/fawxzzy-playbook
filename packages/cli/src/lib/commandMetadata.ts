@@ -59,6 +59,14 @@ export const commandMetadata: CommandMetadata[] = [
     machineReadable: false
   },
   {
+    name: 'docs',
+    description: 'Audit documentation governance surfaces and contracts',
+    category: 'Repository tools',
+    productFacing: true,
+    example: 'playbook docs audit --json',
+    machineReadable: true
+  },
+  {
     name: 'rules',
     description: 'List loaded verify and analyze rules',
     category: 'Repository tools',

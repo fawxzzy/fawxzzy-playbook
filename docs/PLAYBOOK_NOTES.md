@@ -200,3 +200,13 @@ Workspace filters rely on package names that may change or be incorrectly guesse
 
 - Future feature: `playbook query impact`
   Add deterministic change blast-radius analysis for a target module.
+
+## Documentation governance patterns
+
+- Pattern: Documentation governance should be executable through Playbook commands rather than enforced only through prose.
+- Pattern: `playbook docs audit` turns documentation architecture into a deterministic repository contract.
+- Rule: Playbook repositories should have a single strategic roadmap and a separate improvement backlog.
+- Rule: Idea/planning content belongs in approved planning surfaces, not scattered across runtime or workflow docs.
+- Pattern: AI working inside the Playbook repo should run docs audit alongside other branch-accurate local CLI validations.
+- Failure Mode: Documentation responsibility drift occurs when roadmap, backlog, workflow, and notes content begin overlapping again.
+- Failure Mode: Cleanup guidance becomes duplicated when one-off migration docs remain active after governance rules have been formalized.
