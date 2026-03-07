@@ -4,6 +4,8 @@
 
 ### Added
 
+- WHAT: Migrated SBOM signing/verification to Cosign v3 bundle flow (`cosign sign-blob --bundle` and `cosign verify-blob --bundle`) and updated security policy gating to require `artifacts/sbom.sigstore.json`. WHY: `--output-signature` is deprecated in Cosign v3 bundle mode and can fail CI despite valid artifacts.
+
 - WHAT: Pinned Cosign installer to `sigstore/cosign-installer@v4.0.0` (with explicit `cosign-release`) and added an in-pipeline `cosign verify-blob` step after signing SBOM artifacts. WHY: Avoids mutable action tag drift and fails CI if signature generation/verification breaks or artifact integrity is compromised.
 
 - WHAT: Replaced npm-based Cosign invocation in the security workflow with the official `sigstore/cosign-installer@v4` + `cosign sign-blob` sequence while retaining keyless signing permissions. WHY: Cosign is a standalone CLI and must be installed explicitly in GitHub Actions for reliable signing.

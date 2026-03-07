@@ -63,13 +63,15 @@ jobs:
 
       - name: Step 4 — Artifact Signing (Cosign)
         run: |
-          cosign sign-blob --yes artifacts/sbom.json --output-signature artifacts/signature.cosign
-
+          cosign sign-blob \
+            --yes \
+            --bundle artifacts/sbom.sigstore.json \
+            artifacts/sbom.json
 
       - name: Verify SBOM signature
         run: |
           cosign verify-blob \
-            --signature artifacts/signature.cosign \
+            --bundle artifacts/sbom.sigstore.json \
             artifacts/sbom.json
 
       - name: Step 5 — Provenance Attestation
@@ -88,7 +90,7 @@ jobs:
       - name: Step 6 — Security Policy Gate
         run: |
           test -f artifacts/sbom.json
-          test -f artifacts/signature.cosign
+          test -f artifacts/sbom.sigstore.json
           test -f artifacts/provenance.json
 
       - name: Security Regression Tests

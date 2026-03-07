@@ -73,5 +73,8 @@ Note: gitleaks partial-scan/no-leaks output does not mean the job passed; git-hi
 - SBOM artifacts are signed with Sigstore keyless signing using GitHub OIDC.
 - Cosign is a standalone CLI, not an npm package.
 - CI must install cosign using `sigstore/cosign-installer`.
-- SBOM artifacts are signed with `cosign sign-blob`.
+- Cosign v3 uses the `--bundle` format for artifact signing.
+- `--output-signature` and `--output-certificate` are deprecated in Cosign v3 bundle workflows.
+- Playbook CI signs SBOM artifacts with `cosign sign-blob --bundle`.
+- Playbook CI verifies SBOM artifacts with `cosign verify-blob --bundle`.
 - GitHub Actions keyless signing requires `permissions: id-token: write`.
