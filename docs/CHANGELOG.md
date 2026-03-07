@@ -4,6 +4,7 @@
 
 ### Added
 
+- Fixed PR-comment workflow artifact ordering by running `node packages/cli/dist/main.js index --json` before `analyze-pr --format github-comment`, enforcing producer→consumer contract readiness for `.playbook/repo-index.json`.
 - Hardened `.github/workflows/analyze-pr-comment.yml` shell setup by replacing fragile escaped `node -p` quoting with `node -e` packageManager extraction plus `${PM#pnpm@}` version split for `pnpm/action-setup`, preventing bash parse failures in GitHub Actions `run:` blocks.
 - Added a dedicated GitHub Actions workflow (`.github/workflows/analyze-pr-comment.yml`) that runs on pull requests, generates canonical PR-summary markdown via `node packages/cli/dist/main.js analyze-pr --format github-comment`, and posts/updates a single sticky Playbook comment using marker `<!-- playbook:analyze-pr-comment -->` (transport-only, no duplicate formatter logic).
 - Added deterministic `playbook query test-hotspots` repository-intelligence output to detect test inefficiency candidates (including broad retrieval followed by narrow filtering) with stable hotspot contracts and safety classifications; MVP reports findings only and does not auto-refactor.
@@ -115,6 +116,7 @@
 
 ### Added
 
+- Fixed PR-comment workflow artifact ordering by running `node packages/cli/dist/main.js index --json` before `analyze-pr --format github-comment`, enforcing producer→consumer contract readiness for `.playbook/repo-index.json`.
 - Hardened `.github/workflows/analyze-pr-comment.yml` shell setup by replacing fragile escaped `node -p` quoting with `node -e` packageManager extraction plus `${PM#pnpm@}` version split for `pnpm/action-setup`, preventing bash parse failures in GitHub Actions `run:` blocks.
 - Added deterministic `playbook query test-hotspots` repository-intelligence output to detect test inefficiency candidates (including broad retrieval followed by narrow filtering) with stable hotspot contracts and safety classifications; MVP reports findings only and does not auto-refactor.
 - Added `playbook analyze-pr` as deterministic, local-first pull request intelligence that composes local git diff context with `.playbook/repo-index.json`, indexed impact/risk/docs/ownership intelligence, and structured review guidance output (`--json`).

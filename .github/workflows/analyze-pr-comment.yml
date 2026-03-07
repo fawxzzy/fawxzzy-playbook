@@ -47,11 +47,11 @@ jobs:
       - name: Build workspace packages
         run: pnpm -r build
 
-      - name: Generate canonical GitHub comment markdown
+      - name: Generate Playbook index and canonical GitHub comment markdown
         if: github.event.pull_request.head.repo.full_name == github.repository
         shell: bash
         run: |
-          mkdir -p .playbook
+          node packages/cli/dist/main.js index --json
           node packages/cli/dist/main.js analyze-pr --format github-comment > .playbook/analyze-pr-comment.md
 
       - name: Post sticky Playbook PR comment
