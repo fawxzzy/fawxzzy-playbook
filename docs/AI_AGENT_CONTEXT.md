@@ -70,3 +70,14 @@ If docs disagree with implementation, treat code as source of truth and realign 
 - Rule: Repo-internal CI must execute the built CLI directly, not through `npx`.
 - Pattern: Separate internal CLI execution (`node packages/cli/dist/main.js ...`) from consumer-install execution (`npx --yes @fawxzzy/playbook ...`).
 - Failure Mode: `npx could not determine executable to run` indicates package/bin resolution failure, not necessarily a command implementation bug.
+
+## Documentation governance validation
+
+When documentation, governance, or command-surface files change in the Playbook repository, run:
+
+```bash
+pnpm -r build
+node packages/cli/dist/main.js docs audit --json
+```
+
+Pattern: AI working inside the Playbook repo should run docs audit alongside other branch-accurate local CLI validations.

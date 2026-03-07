@@ -118,6 +118,10 @@ const commandRunners: Record<string, (context: CommandContext) => Promise<number
       quiet
     });
   },
+  docs: async ({ cwd, commandArgs, ci, format, quiet }) => {
+    const { runDocs } = await import('./docs.js');
+    return runDocs(cwd, commandArgs, { ci, format, quiet });
+  },
   diagram: async ({ cwd, commandArgs, format, quiet }) => {
     const { runDiagram } = await import('./diagram.js');
     return runDiagram(cwd, {
@@ -191,6 +195,7 @@ const commandOrder = [
   'context',
   'ai-context',
   'ai-contract',
+  'docs',
   'schema',
   'rules',
   'index',

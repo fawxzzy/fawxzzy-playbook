@@ -12,7 +12,7 @@ const shouldUpdateSnapshots = process.env.UPDATE_CONTRACT_SNAPSHOTS === '1';
 type CommandContract = {
   file: string;
   args: readonly string[];
-  schemaCommand: 'rules' | 'explain' | 'index' | 'verify' | 'plan' | 'context' | 'ai-context' | 'ai-contract';
+  schemaCommand: 'rules' | 'explain' | 'index' | 'verify' | 'plan' | 'context' | 'ai-context' | 'ai-contract' | 'docs';
 };
 
 const commandContracts: readonly CommandContract[] = [
@@ -25,6 +25,7 @@ const commandContracts: readonly CommandContract[] = [
   { file: 'context.snapshot.json', args: ['context', '--json'], schemaCommand: 'context' },
   { file: 'ai-context.snapshot.json', args: ['ai-context', '--json'], schemaCommand: 'ai-context' },
   { file: 'ai-contract.snapshot.json', args: ['ai-contract', '--json'], schemaCommand: 'ai-contract' },
+  { file: 'docs-audit.snapshot.json', args: ['docs', 'audit', '--json'], schemaCommand: 'docs' },
 ] as const;
 
 function createContractFixtureRepo(): string {

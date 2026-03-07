@@ -17,6 +17,7 @@ Do not hand-edit entries inside the managed markers.
 | `apply` | Execute deterministic auto-fixable plan tasks | Current (implemented) | `playbook apply --from-plan .playbook/plan.json` |
 | `doctor` | Repository health entry point for architecture, governance, and issues | Current (implemented) | `playbook doctor --fix --dry-run` |
 | `diagram` | Generate deterministic architecture Mermaid diagrams | Current (implemented) | `playbook diagram --repo . --out docs/ARCHITECTURE_DIAGRAMS.md` |
+| `docs` | Audit documentation governance surfaces and contracts | Current (implemented) | `playbook docs audit --json` |
 | `rules` | List loaded verify and analyze rules | Current (implemented) | `playbook rules --json` |
 | `schema` | Print JSON Schemas for Playbook CLI command outputs | Current (implemented) | `playbook schema verify --json` |
 | `context` | Print deterministic CLI and architecture context for tools and agents | Current (implemented) | `playbook context --json` |
@@ -58,3 +59,6 @@ When command/workflow state changes, update these surfaces in the same change (o
 Pattern: **AI Anchor Drift**.
 
 If docs and implementation disagree, treat implementation as source of truth and realign docs.
+
+
+Command reference: [`playbook docs audit`](docs.md).

@@ -659,3 +659,9 @@ Pattern: Branch-Accurate Command Validation
 
 Future enhancement:
 - introduce `playbook self-test` as a system-level validation entrypoint that exercises key commands and contracts against fixture repositories.
+
+## Documentation governance contract
+
+- Deliver deterministic documentation governance through `playbook docs audit` for humans, CI, and AI.
+- Maintain a single strategic roadmap (`docs/PLAYBOOK_PRODUCT_ROADMAP.md`) and separate improvements backlog (`docs/PLAYBOOK_IMPROVEMENTS.md`).
+- Keep cleanup/migration guidance out of long-lived policy docs once governance is command-enforced.

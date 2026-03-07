@@ -122,6 +122,10 @@ At minimum for command-surface changes:
 - `pnpm agents:update`
 - `pnpm agents:check`
 
+When documentation/governance surfaces are touched, also run:
+
+- `node packages/cli/dist/main.js docs audit --json`
+
 Add targeted smoke/contract tests when command behavior or output contracts change.
 
 ## Documentation expectations
@@ -148,6 +152,7 @@ Copy-pastable governance bullets:
 - Pattern: `.playbook/ai-contract.json` is the canonical AI-operability handshake artifact for Playbook-enabled repositories.
 - Pattern: `ai-context -> ai-contract -> context -> query/ask/explain -> verify/plan/apply` is the preferred AI operating ladder.
 - Failure Mode: Agent drift occurs when AI tools bypass Playbook command outputs and reason directly from stale or incomplete file inspection.
+- Pattern: AI working inside the Playbook repo should run docs audit alongside other branch-accurate local CLI validations.
 
 ## Managed command surface
 
@@ -173,6 +178,8 @@ Do not hand-edit entries inside the managed markers.
   - Example: `playbook doctor --fix --dry-run`
 - `diagram`: Generate deterministic architecture Mermaid diagrams
   - Example: `playbook diagram --repo . --out docs/ARCHITECTURE_DIAGRAMS.md`
+- `docs`: Audit documentation governance surfaces and contracts
+  - Example: `playbook docs audit --json`
 - `rules`: List loaded verify and analyze rules
   - Example: `playbook rules --json`
 - `schema`: Print JSON Schemas for Playbook CLI command outputs
@@ -222,6 +229,7 @@ Do not hand-edit entries inside the managed markers.
 | `apply` | `playbook apply --from-plan .playbook/plan.json` |
 | `doctor` | `playbook doctor --fix --dry-run` |
 | `diagram` | `playbook diagram --repo . --out docs/ARCHITECTURE_DIAGRAMS.md` |
+| `docs` | `playbook docs audit --json` |
 | `rules` | `playbook rules --json` |
 | `schema` | `playbook schema verify --json` |
 | `context` | `playbook context --json` |

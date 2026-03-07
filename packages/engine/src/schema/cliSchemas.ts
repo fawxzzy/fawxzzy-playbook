@@ -1,6 +1,6 @@
 const JSON_SCHEMA_DRAFT = 'https://json-schema.org/draft/2020-12/schema' as const;
 
-export type CliSchemaCommand = 'rules' | 'explain' | 'index' | 'verify' | 'plan' | 'context' | 'ai-context' | 'ai-contract' | 'query';
+export type CliSchemaCommand = 'rules' | 'explain' | 'index' | 'verify' | 'plan' | 'context' | 'ai-context' | 'ai-contract' | 'query' | 'docs';
 
 export type JsonSchema = {
   [key: string]: unknown;
@@ -304,7 +304,45 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
     }
   },
 
-
+  docs: {
+    $schema: JSON_SCHEMA_DRAFT,
+    title: 'PlaybookDocsAuditOutput',
+    type: 'object',
+    additionalProperties: false,
+    required: ['schemaVersion', 'command', 'ok', 'status', 'summary', 'findings'],
+    properties: {
+      schemaVersion: { const: '1.0' },
+      command: { const: 'docs audit' },
+      ok: { type: 'boolean' },
+      status: { enum: ['pass', 'warn', 'fail'] },
+      summary: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['errors', 'warnings', 'checksRun'],
+        properties: {
+          errors: { type: 'integer' },
+          warnings: { type: 'integer' },
+          checksRun: { type: 'integer' }
+        }
+      },
+      findings: {
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['ruleId', 'level', 'message', 'path'],
+          properties: {
+            ruleId: { type: 'string' },
+            level: { enum: ['error', 'warning'] },
+            message: { type: 'string' },
+            path: { type: 'string' },
+            suggestedDestination: { type: 'string' },
+            recommendation: { enum: ['historical keep', 'merge into workflow', 'archive', 'delete after migration'] }
+          }
+        }
+      }
+    }
+  },
   query: {
     $schema: JSON_SCHEMA_DRAFT,
     title: 'PlaybookQueryOutput',
@@ -623,6 +661,7 @@ export const getCliSchemas = (): Record<CliSchemaCommand, JsonSchema> => ({
   context: cliSchemas.context,
   'ai-context': cliSchemas['ai-context'],
   'ai-contract': cliSchemas['ai-contract'],
+  docs: cliSchemas.docs,
   query: cliSchemas.query
 });
 
