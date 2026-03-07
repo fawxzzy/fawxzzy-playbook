@@ -160,9 +160,10 @@ Example AI-first flow:
 ```bash
 playbook ai-context
 playbook context
+playbook index
 playbook query modules
-playbook ask "where should a new feature live?"
-playbook ask "how does auth work?" --mode concise
+playbook ask "where should a new feature live?" --repo-context
+playbook ask "how does auth work?" --repo-context --mode concise
 playbook ask "how do I fix this rule violation?" --mode ultra
 playbook explain architecture
 playbook verify
@@ -181,7 +182,7 @@ node packages/cli/dist/main.js context --json
 node packages/cli/dist/main.js docs audit --json
 ```
 
-Preferred AI operating ladder: `ai-context -> context -> query/ask/explain -> verify/plan/apply`.
+Preferred AI operating ladder: `ai-context -> ai-contract -> context -> index/query/explain/ask --repo-context -> verify/plan/apply`.
 
 Future app-integration direction: app or dashboard actions should use a trusted **server-side Playbook API/runtime or library layer** for validated operations instead of executing arbitrary browser-side CLI commands directly.
 
@@ -189,7 +190,7 @@ Pattern: `playbook ai-context` is the preferred agent bootstrap command for Play
 Pattern: `.playbook/ai-contract.json` is the canonical AI-operability handshake artifact for Playbook-enabled repositories.
 Rule: AI agents should prefer Playbook commands over broad repository inference when command coverage exists.
 Rule: Inside the Playbook repo, use local built CLI entrypoints to reflect current branch behavior.
-Pattern: `ai-context -> context -> query/ask/explain -> verify/plan/apply` is the preferred AI operating ladder.
+Pattern: `ai-context -> ai-contract -> context -> index/query/explain/ask --repo-context -> verify/plan/apply` is the preferred AI operating ladder.
 Failure Mode: Agent drift occurs when AI tools bypass Playbook command outputs and reason directly from stale or incomplete file inspection.
 
 ### Querying Repository Intelligence
@@ -205,12 +206,31 @@ playbook query docs-coverage
 playbook query rule-owners
 playbook ask "where should a new feature live?"
 playbook ask "what modules exist?" --json
-playbook ask "how does auth work?" --mode concise
+playbook ask "how does auth work?" --repo-context --mode concise
 playbook ask "how do I fix this rule violation?" --mode ultra
 playbook explain workouts
 playbook explain PB001
 playbook explain architecture
 ```
+
+### Repo-aware ask (`playbook ask --repo-context`)
+
+Use `--repo-context` when asking repository-shape or architecture questions.
+
+- It injects trusted Playbook-managed artifacts (for example `.playbook/repo-index.json` and AI contract metadata) into ask context.
+- It avoids broad ad-hoc repository file inference.
+- It requires repository intelligence from `playbook index` first.
+
+Examples:
+
+```bash
+playbook index
+playbook ask "where should a new feature live?" --repo-context
+playbook ask "how does auth work?" --repo-context --mode concise
+playbook ask "what modules are affected by this?" --repo-context --json
+```
+
+If `.playbook/repo-index.json` is missing, ask returns deterministic remediation guidance to run `playbook index` and retry.
 
 ### AI Response Modes (`playbook ask --mode`)
 
@@ -224,7 +244,7 @@ Examples:
 
 ```bash
 playbook ask "how does auth work?"
-playbook ask "how does auth work?" --mode concise
+playbook ask "how does auth work?" --repo-context --mode concise
 playbook ask "how do I fix this rule violation?" --mode ultra
 ```
 

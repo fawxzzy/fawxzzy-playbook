@@ -172,6 +172,7 @@ Current baseline:
 
 - **AI Repository Intelligence (`playbook ai-context`, `playbook ai-contract`, `index`, `query`, `deps`, `ask`, `explain`)** is implemented and available for deterministic AI bootstrap and repository intelligence workflows.
 - `playbook ask` now supports deterministic response modes (`--mode normal|concise|ultra`) to match explanation depth to developer workflow speed.
+- `playbook ask --repo-context` now hydrates ask prompts from trusted Playbook artifacts (`.playbook/repo-index.json` + AI contract metadata) instead of broad ad-hoc repository inference.
 
 Future roadmap work should focus on enhancement quality (schema hardening, richer index coverage, CI artifact workflows, and contract durability), not on introducing these commands.
 
@@ -247,6 +248,9 @@ For app-integrated actions (internal dashboards, CI control planes, admin/dev pa
 - [ ] publish a consumer-repo integration contract doc that defines project-local Playbook state boundaries
 - [ ] add a lightweight config/plugin/rule-pack architecture note with extension examples
 - [ ] draft first server-side library/API design stub for embedded `ask`/`query`/`explain` workflows
+- [ ] add `ask --module <name>` scoped repo-context hydration
+- [ ] add `ask --diff-context` for change-scoped intelligence prompts
+- [ ] expose ask context-source provenance contract in JSON for app/agent integrations
 - [ ] define explicit opt-in export/sync/telemetry policy language before any cloud-backed intelligence behavior
 
 ### Storage/runtime hygiene follow-up checklist
