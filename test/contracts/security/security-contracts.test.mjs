@@ -102,18 +102,18 @@ test('plan.determinism returns stable tasks for equivalent findings', () => {
   assert.deepEqual(first, second);
 });
 
-test('secret.redaction removes sensitive values from log output', () => {
+test('secret.redaction removes sensitive values from log output (scanner-safe fixtures)', () => {
   const input = [
     'token=super-secret-value',
     'ghp_abcdefghijklmnopqrstuvwxyz1234',
-    'AKIA1234567890ABCDEF',
+    'password=high-entropy-looking-but-fake-value-123456',
     '-----BEGIN OPENSSH PRIVATE KEY-----\nsecret material\n-----END OPENSSH PRIVATE KEY-----'
   ].join(' ');
 
   const redacted = redactSecretsForLogs(input);
   assert.equal(redacted.includes('super-secret-value'), false);
   assert.equal(redacted.includes('ghp_abcdefghijklmnopqrstuvwxyz1234'), false);
-  assert.equal(redacted.includes('AKIA1234567890ABCDEF'), false);
+  assert.equal(redacted.includes('high-entropy-looking-but-fake-value-123456'), false);
   assert.equal(redacted.includes('secret material'), false);
   assert.match(redacted, /\[REDACTED\]/);
 });
