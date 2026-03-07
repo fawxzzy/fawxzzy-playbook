@@ -33,7 +33,7 @@ const writeRepositoryIndex = (cwd: string): { indexPath: string; result: IndexRe
       indexFile: INDEX_RELATIVE_PATH,
       framework: index.framework,
       architecture: index.architecture,
-      modules: index.modules
+      modules: index.modules.map((moduleEntry: { name: string }) => moduleEntry.name)
     }
   };
 };

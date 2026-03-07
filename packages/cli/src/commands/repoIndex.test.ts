@@ -34,7 +34,7 @@ describe('runIndex', () => {
 
     const indexPayload = JSON.parse(fs.readFileSync(indexFile, 'utf8'));
     expect(indexPayload.schemaVersion).toBe('1.0');
-    expect(indexPayload.modules).toEqual(['features']);
+    expect(indexPayload.modules).toEqual([{ name: 'features', dependencies: [] }]);
 
     logSpy.mockRestore();
   });

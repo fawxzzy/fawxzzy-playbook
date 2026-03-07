@@ -1,4 +1,11 @@
-import { queryRepositoryIndex, SUPPORTED_QUERY_FIELDS, type RepositoryQueryField } from '@zachariahredfield/playbook-engine';
+import {
+  queryDependencies,
+  queryRepositoryIndex,
+  SUPPORTED_QUERY_FIELDS,
+  type DependenciesQueryResult,
+  type RepositoryModule,
+  type RepositoryQueryField
+} from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
 
 type QueryOptions = {
@@ -9,12 +16,12 @@ type QueryOptions = {
 type QueryResult = {
   command: 'query';
   field: RepositoryQueryField;
-  result: string | string[];
+  result: string | string[] | RepositoryModule[];
 };
 
 const firstPositionalArg = (args: string[]): string | undefined => args.find((arg) => !arg.startsWith('-'));
 
-const printText = (field: RepositoryQueryField, result: string | string[]): void => {
+const printText = (field: RepositoryQueryField, result: string | string[] | RepositoryModule[]): void => {
   const heading = field.charAt(0).toUpperCase() + field.slice(1);
   console.log(heading);
   console.log('───────');
@@ -25,7 +32,15 @@ const printText = (field: RepositoryQueryField, result: string | string[]): void
       return;
     }
 
-    for (const value of result) {
+    const firstValue = result[0];
+    if (typeof firstValue === 'object' && firstValue !== null && 'name' in firstValue && 'dependencies' in firstValue) {
+      for (const moduleEntry of result as RepositoryModule[]) {
+        console.log(`${moduleEntry.name}: ${moduleEntry.dependencies.length > 0 ? moduleEntry.dependencies.join(', ') : 'none'}`);
+      }
+      return;
+    }
+
+    for (const value of result as string[]) {
       console.log(value);
     }
     return;
@@ -34,11 +49,72 @@ const printText = (field: RepositoryQueryField, result: string | string[]): void
   console.log(result);
 };
 
+const printDependenciesText = (payload: DependenciesQueryResult): void => {
+  console.log('Dependencies');
+  console.log('────────────');
+
+  if (payload.module) {
+    const values = payload.dependencies as string[];
+    console.log(`${payload.module}: ${values.length > 0 ? values.join(', ') : 'none'}`);
+    return;
+  }
+
+  const graph = payload.dependencies as RepositoryModule[];
+  if (graph.length === 0) {
+    console.log('none');
+    return;
+  }
+
+  for (const moduleEntry of graph) {
+    console.log(`${moduleEntry.name}: ${moduleEntry.dependencies.length > 0 ? moduleEntry.dependencies.join(', ') : 'none'}`);
+  }
+};
+
 export const runQuery = async (cwd: string, commandArgs: string[], options: QueryOptions): Promise<number> => {
   const fieldArg = firstPositionalArg(commandArgs);
   if (!fieldArg) {
     console.error('playbook query: missing required <field> argument');
     return ExitCode.Failure;
+  }
+
+  if (fieldArg === 'dependencies') {
+    const moduleArg = commandArgs.find((arg, index) => index > commandArgs.indexOf(fieldArg) && !arg.startsWith('-'));
+
+    try {
+      const payload = queryDependencies(cwd, moduleArg);
+      if (options.format === 'json') {
+        console.log(JSON.stringify(payload, null, 2));
+        return ExitCode.Success;
+      }
+
+      if (!options.quiet) {
+        printDependenciesText(payload);
+      }
+
+      return ExitCode.Success;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      if (options.format === 'json') {
+        console.log(
+          JSON.stringify(
+            {
+              schemaVersion: '1.0',
+              command: 'query',
+              type: 'dependencies',
+              module: moduleArg ?? null,
+              error: message
+            },
+            null,
+            2
+          )
+        );
+      } else {
+        console.error(message);
+      }
+
+      return ExitCode.Failure;
+    }
   }
 
   try {
@@ -69,7 +145,7 @@ export const runQuery = async (cwd: string, commandArgs: string[], options: Quer
             command: 'query',
             field: fieldArg,
             error: message,
-            supportedFields: [...SUPPORTED_QUERY_FIELDS]
+            supportedFields: [...SUPPORTED_QUERY_FIELDS, 'dependencies']
           },
           null,
           2

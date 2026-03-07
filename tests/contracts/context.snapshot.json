@@ -35,6 +35,7 @@
       "rules",
       "index",
       "ask",
+      "deps",
       "query",
       "session"
     ]

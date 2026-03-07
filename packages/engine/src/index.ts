@@ -17,7 +17,7 @@ export { generateRepositoryHealth } from './doctor/index.js';
 export type { RepositoryHealth, GovernanceStatusItem } from './doctor/index.js';
 
 export { generateRepositoryIndex } from './indexer/repoIndexer.js';
-export type { RepositoryIndex } from './indexer/repoIndexer.js';
+export type { RepositoryIndex, RepositoryModule } from './indexer/repoIndexer.js';
 
 export { queryRepositoryIndex, SUPPORTED_QUERY_FIELDS } from './query/repoQuery.js';
 export type { RepositoryQueryField, RepositoryQueryResult } from './query/repoQuery.js';
@@ -29,3 +29,6 @@ export type { ExplainTargetResult, RuleExplanation, ModuleExplanation, Architect
 
 export { getCliSchemas, getCliSchema, isCliSchemaCommand, CLI_SCHEMA_COMMANDS } from './schema/cliSchemas.js';
 export type { CliSchemaCommand, JsonSchema } from './schema/cliSchemas.js';
+
+export { queryDependencies } from './query/dependencies.js';
+export type { DependenciesQueryResult } from './query/dependencies.js';

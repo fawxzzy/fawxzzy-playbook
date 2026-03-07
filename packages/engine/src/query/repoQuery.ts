@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { RepositoryIndex } from '../indexer/repoIndexer.js';
+import type { RepositoryIndex, RepositoryModule } from '../indexer/repoIndexer.js';
 
 export const SUPPORTED_QUERY_FIELDS = ['architecture', 'framework', 'language', 'modules', 'database', 'rules'] as const;
 
@@ -8,7 +8,7 @@ export type RepositoryQueryField = (typeof SUPPORTED_QUERY_FIELDS)[number];
 
 export type RepositoryQueryResult = {
   field: RepositoryQueryField;
-  result: RepositoryIndex[RepositoryQueryField];
+  result: string | string[] | RepositoryModule[];
 };
 
 const INDEX_RELATIVE_PATH = '.playbook/repo-index.json' as const;

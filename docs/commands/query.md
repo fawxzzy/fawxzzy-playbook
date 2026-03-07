@@ -6,10 +6,12 @@ Query structured repository intelligence from `.playbook/repo-index.json`.
 
 - `playbook query architecture`
 - `playbook query modules`
+- `playbook query dependencies`
+- `playbook query dependencies workouts`
 - `playbook query framework`
 - `playbook query database`
 - `playbook query rules`
-- `playbook query modules --json`
+- `playbook query dependencies workouts --json`
 
 ## Behavior
 
@@ -19,7 +21,7 @@ The command:
 
 1. Reads `.playbook/repo-index.json`
 2. Validates `schemaVersion`
-3. Returns only the requested field
+3. Returns only the requested field payload
 
 Supported fields:
 
@@ -29,6 +31,9 @@ Supported fields:
 - `modules`
 - `database`
 - `rules`
+- `dependencies`
+
+For `dependencies`, the command can return either the full module dependency graph (`playbook query dependencies`) or one module's direct dependencies (`playbook query dependencies <module>`).
 
 `playbook query` never modifies repository files and never reruns repository analysis.
 
@@ -37,16 +42,33 @@ Supported fields:
 ```bash
 playbook index
 playbook query modules
-playbook query architecture
-playbook query modules --json
+playbook query dependencies
+playbook query dependencies workouts --json
 ```
 
-## JSON contract
+## JSON contracts
+
+Standard field query:
 
 ```json
 {
   "command": "query",
   "field": "modules",
-  "result": ["users", "workouts"]
+  "result": [
+    { "name": "users", "dependencies": [] },
+    { "name": "workouts", "dependencies": ["users"] }
+  ]
+}
+```
+
+Dependency query:
+
+```json
+{
+  "schemaVersion": "1.0",
+  "command": "query",
+  "type": "dependencies",
+  "module": "workouts",
+  "dependencies": ["users"]
 }
 ```

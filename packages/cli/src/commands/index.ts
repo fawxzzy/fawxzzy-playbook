@@ -228,6 +228,16 @@ export const commandRegistry: RegisteredCommand[] = [
   },
 
 
+
+  {
+    name: 'deps',
+    description: 'Print module dependency graph from .playbook/repo-index.json',
+    run: async ({ cwd, commandArgs, format, quiet }) => {
+      const { runDeps } = await import('./deps.js');
+      return runDeps(cwd, commandArgs, { format, quiet });
+    }
+  },
+
   {
     name: 'query',
     description: 'Query machine-readable repository intelligence from .playbook/repo-index.json',

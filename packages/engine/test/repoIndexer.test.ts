@@ -14,6 +14,7 @@ describe('generateRepositoryIndex', () => {
     fs.writeFileSync(path.join(repo, 'tsconfig.json'), '{}');
     fs.mkdirSync(path.join(repo, 'src', 'api'), { recursive: true });
     fs.mkdirSync(path.join(repo, 'src', 'ui'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'src', 'api', 'index.ts'), "import { card } from '../ui/card';\nexport const api = card;\n");
 
     const index = generateRepositoryIndex(repo);
 
@@ -22,7 +23,10 @@ describe('generateRepositoryIndex', () => {
       framework: 'nextjs',
       language: 'typescript',
       architecture: 'modular-monolith',
-      modules: ['api', 'ui'],
+      modules: [
+        { name: 'api', dependencies: ['ui'] },
+        { name: 'ui', dependencies: [] }
+      ],
       database: 'supabase',
       rules: ['requireNotesFileWhenGovernanceExists', 'requireNotesOnChanges', 'verify.rule.tests.required']
     });

@@ -1,5 +1,20 @@
 import { queryRepositoryIndex } from '../query/repoQuery.js';
+import type { RepositoryModule } from '../indexer/repoIndexer.js';
 import { getRuleMetadata } from './ruleRegistry.js';
+
+
+const toModuleNames = (modules: string[] | RepositoryModule[]): string[] => {
+  if (modules.length === 0) {
+    return [];
+  }
+
+  const first = modules[0];
+  if (typeof first === 'string') {
+    return modules as string[];
+  }
+
+  return (modules as RepositoryModule[]).map((moduleEntry) => moduleEntry.name);
+};
 
 type ExplainContext = {
   architecture: string;
@@ -45,7 +60,7 @@ const normalizeTarget = (target: string): string => target.trim().toLowerCase();
 
 const gatherContext = (projectRoot: string): ExplainContext => {
   const architecture = queryRepositoryIndex(projectRoot, 'architecture').result as string;
-  const modules = queryRepositoryIndex(projectRoot, 'modules').result as string[];
+  const modules = toModuleNames(queryRepositoryIndex(projectRoot, 'modules').result as string[] | RepositoryModule[]);
   const framework = queryRepositoryIndex(projectRoot, 'framework').result as string;
   const rules = queryRepositoryIndex(projectRoot, 'rules').result as string[];
 
