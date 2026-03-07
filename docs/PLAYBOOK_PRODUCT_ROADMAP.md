@@ -332,7 +332,102 @@ Intelligence artifacts should include:
 - dependents
 - architecture metadata
 
-PHASE 3 — QUERY SYSTEM
+AI Efficiency & Context Compression
+
+Goal:
+
+Reduce AI token usage and latency when performing repository changes.
+
+Key mechanisms:
+
+Repository Intelligence Graph
+
+Persistent structured knowledge of repository architecture.
+
+.playbook/intelligence.json
+
+Contains:
+
+modules
+dependencies
+tests
+rules
+risk
+docs
+owners
+Context Bundles
+
+Commands produce minimal change scope bundles.
+
+Example:
+
+playbook context auth
+
+Output:
+
+files
+tests
+dependencies
+docs
+rules
+risk
+Cached Context Snapshots
+
+Reusable bundles stored in:
+
+.playbook/context/
+
+Examples:
+
+auth.json
+workouts.json
+payments.json
+
+These reduce repeated token usage across multiple AI requests.
+
+Deterministic Patch Scope
+
+Playbook determines:
+
+files relevant to change
+
+AI is instructed to only modify those files.
+
+This prevents agent wandering.
+
+Estimated Token Reduction
+
+Without Playbook context:
+
+repo scan ≈ 40k tokens
+reasoning ≈ 5k
+generation ≈ 1k
+
+≈ 46k tokens
+
+With Playbook context:
+
+context bundle ≈ 4k
+reasoning ≈ 3k
+generation ≈ 1k
+
+≈ 8k tokens
+
+~80% improvement.
+
+This matters a lot for:
+
+Codex
+
+GPT agents
+
+Cursor
+
+Copilot
+
+enterprise AI tooling
+
+PHASE 4 — QUERY SYSTEM
 
 Goal:
 Enable deterministic repository reasoning through command-surface intelligence queries.
@@ -368,7 +463,7 @@ Output:
 - affected rules
 - architecture boundaries touched
 
-PHASE 4 — DEPENDENCY GRAPH + IMPACT ANALYSIS
+PHASE 5 — DEPENDENCY GRAPH + IMPACT ANALYSIS
 
 Goal:
 Use repository dependency edges to make change impact deterministic.
@@ -382,7 +477,7 @@ Expected outcomes:
 - expose architectural blast radius for proposed changes
 - prioritize low-impact remediation paths first
 
-PHASE 5 — RISK ANALYSIS
+PHASE 6 — RISK ANALYSIS
 
 Goal:
 Add deterministic module-level risk scoring for safer AI and human remediation planning.
@@ -399,7 +494,7 @@ Risk model signals should include:
 Expected outcome:
 - safer prioritization of change sequencing and rollout planning.
 
-PHASE 6 — AI REPOSITORY CONTRACT
+PHASE 7 — AI REPOSITORY CONTRACT
 
 Status: **Baseline implemented** via `playbook ai-contract` and `.playbook/ai-contract.json`.
 
@@ -451,7 +546,7 @@ This phase formalizes Playbook's repository-to-AI protocol, ensuring AI behavior
 Future standardization direction:
 - Publish `docs/AI_CONTRACT_SPEC.md` as a public AI Contract specification for AI-operable repositories.
 
-PHASE 7 — AI EXECUTION RUNTIME (PLAYBOOK AGENT)
+PHASE 8 — AI EXECUTION RUNTIME (PLAYBOOK AGENT)
 
 Goal:
 Introduce **Playbook Agent** as an AI execution runtime for repositories.
@@ -506,7 +601,7 @@ Playbook should analyze PRs but not author them.
 
 Rule: **Playbook analyzes changes rather than rewriting developer intent.**
 
-PHASE 8 — AUTONOMOUS REPOSITORY MAINTENANCE
+PHASE 9 — AUTONOMOUS REPOSITORY MAINTENANCE
 
 Goal:
 Extend Playbook Agent into recurring and CI-driven repository maintenance modes.
