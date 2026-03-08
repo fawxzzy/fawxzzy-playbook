@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { RepositoryIndex } from '../indexer/repoIndexer.js';
+import { resolveRepositoryTarget } from '../intelligence/targetResolver.js';
 
 export type DocsCoverageModuleResult = {
   module: string;
@@ -215,11 +216,12 @@ export const queryDocsCoverage = (projectRoot: string, moduleName?: string): Doc
   const index = readRepositoryIndex(projectRoot);
   const markdownFiles = collectMarkdownFiles(projectRoot);
 
-  if (moduleName && !index.modules.some((moduleEntry) => moduleEntry.name === moduleName)) {
+  const resolvedTarget = moduleName ? resolveRepositoryTarget(projectRoot, moduleName) : undefined;
+  if (resolvedTarget && resolvedTarget.kind !== 'module') {
     throw new Error(`playbook query docs-coverage: unknown module "${moduleName}".`);
   }
 
-  const targetModules = moduleName ? [moduleName] : index.modules.map((moduleEntry) => moduleEntry.name);
+  const targetModules = resolvedTarget ? [resolvedTarget.selector] : index.modules.map((moduleEntry) => moduleEntry.name);
 
   const modules = targetModules
     .sort((a, b) => a.localeCompare(b))

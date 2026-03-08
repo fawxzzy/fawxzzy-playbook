@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { RepositoryIndex, RepositoryModule } from '../indexer/repoIndexer.js';
+import { resolveRepositoryTarget, type ResolvedTarget } from '../intelligence/targetResolver.js';
 
 export type RiskLevel = 'low' | 'medium' | 'high';
 
@@ -24,6 +25,7 @@ export type RiskQueryResult = {
   command: 'query';
   type: 'risk';
   module: string;
+  resolvedTarget: ResolvedTarget;
   riskScore: number;
   riskLevel: RiskLevel;
   signals: RiskSignals;
@@ -118,23 +120,21 @@ const computeTransitiveImpact = (moduleName: string, reverseGraph: Map<string, s
 
 const readVerifyFailures = (projectRoot: string): { failures: VerifyFailure[]; warning?: string } => {
   for (const relativePath of VERIFY_ARTIFACT_RELATIVE_PATHS) {
-    const fullPath = path.join(projectRoot, relativePath);
-    if (!fs.existsSync(fullPath)) {
+    const absolutePath = path.join(projectRoot, relativePath);
+    if (!fs.existsSync(absolutePath)) {
       continue;
     }
 
-    const raw = fs.readFileSync(fullPath, 'utf8');
-    const parsed = JSON.parse(raw) as {
-      command?: string;
-      verify?: { failures?: VerifyFailure[] };
-      failures?: VerifyFailure[];
-    };
+    const raw = fs.readFileSync(absolutePath, 'utf8');
+    const payload = JSON.parse(raw) as Record<string, unknown>;
 
-    if (relativePath === '.playbook/plan.json') {
-      return { failures: parsed.verify?.failures ?? [] };
-    }
+    const findings = Array.isArray(payload.failures)
+      ? (payload.failures as VerifyFailure[])
+      : Array.isArray(payload.findings)
+        ? (payload.findings as VerifyFailure[])
+        : [];
 
-    return { failures: parsed.failures ?? [] };
+    return { failures: findings };
   }
 
   return {
@@ -159,18 +159,23 @@ const countModuleVerifyFailures = (moduleName: string, failures: VerifyFailure[]
 
 export const queryRisk = (projectRoot: string, moduleName: string): RiskQueryResult => {
   const index = readRepositoryIndex(projectRoot);
-  const targetModule = index.modules.find((moduleEntry) => moduleEntry.name === moduleName);
+  const resolvedTarget = resolveRepositoryTarget(projectRoot, moduleName);
+  if (resolvedTarget.kind !== 'module') {
+    throw new Error(`playbook query risk: unknown module "${moduleName}".`);
+  }
+
+  const targetModule = index.modules.find((moduleEntry) => moduleEntry.name === resolvedTarget.selector);
 
   if (!targetModule) {
     throw new Error(`playbook query risk: unknown module "${moduleName}".`);
   }
 
   const reverseGraph = buildReverseGraph(index.modules);
-  const dependents = (reverseGraph.get(moduleName) ?? []).length;
-  const transitiveImpact = computeTransitiveImpact(moduleName, reverseGraph);
+  const dependents = (reverseGraph.get(resolvedTarget.selector) ?? []).length;
+  const transitiveImpact = computeTransitiveImpact(resolvedTarget.selector, reverseGraph);
   const isArchitecturalHub = dependents >= HUB_DEPENDENTS_THRESHOLD;
   const verifySignal = readVerifyFailures(projectRoot);
-  const verifyFailures = countModuleVerifyFailures(moduleName, verifySignal.failures);
+  const verifyFailures = countModuleVerifyFailures(resolvedTarget.selector, verifySignal.failures);
 
   const fanInScore = clamp(dependents / Math.max(index.modules.length - 1, 1), 0, 1);
   const impactScore = clamp(transitiveImpact / Math.max(index.modules.length - 1, 1), 0, 1);
@@ -212,7 +217,8 @@ export const queryRisk = (projectRoot: string, moduleName: string): RiskQueryRes
     schemaVersion: '1.0',
     command: 'query',
     type: 'risk',
-    module: moduleName,
+    module: resolvedTarget.selector,
+    resolvedTarget,
     riskScore,
     riskLevel,
     signals: {

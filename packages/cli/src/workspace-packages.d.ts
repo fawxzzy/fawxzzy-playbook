@@ -52,10 +52,35 @@ declare module "@zachariahredfield/playbook-engine" {
   export type RuleOwnersQueryResult =
     | { schemaVersion: '1.0'; command: 'query'; type: 'rule-owners'; rules: RuleOwnershipEntry[] }
     | { schemaVersion: '1.0'; command: 'query'; type: 'rule-owners'; rule: RuleOwnershipEntry };
-  export type ModuleOwnershipEntry = { name: string; owners: string[]; area: string };
+  export type ModuleOwnershipStatus =
+    | 'configured'
+    | 'no-metadata-configured'
+    | 'intentionally-unowned'
+    | 'inherited-default'
+    | 'unresolved-mapping';
+  export type ModuleOwnershipEntry = {
+    name: string;
+    owners: string[];
+    area: string;
+    ownership: { status: ModuleOwnershipStatus; source: string; sourceLocation?: string };
+  };
   export type ModuleOwnersQueryResult =
-    | { schemaVersion: '1.0'; command: 'query'; type: 'module-owners'; modules: ModuleOwnershipEntry[] }
-    | { schemaVersion: '1.0'; command: 'query'; type: 'module-owners'; module: ModuleOwnershipEntry };
+    | {
+        schemaVersion: '1.0';
+        command: 'query';
+        type: 'module-owners';
+        contract: { minimumFields: ['owners', 'area', 'sourceLocation']; metadataPath: '.playbook/module-owners.json' };
+        diagnostics: string[];
+        modules: ModuleOwnershipEntry[];
+      }
+    | {
+        schemaVersion: '1.0';
+        command: 'query';
+        type: 'module-owners';
+        contract: { minimumFields: ['owners', 'area', 'sourceLocation']; metadataPath: '.playbook/module-owners.json' };
+        diagnostics: string[];
+        module: ModuleOwnershipEntry;
+      };
 
   export type TestHotspotType = 'broad-retrieval' | 'repeated-fixture-setup' | 'repeated-cli-runner' | 'manual-json-contract-plumbing';
   export type TestHotspot = {

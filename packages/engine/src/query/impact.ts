@@ -1,10 +1,12 @@
 import { resolveIndexedModuleContext } from './moduleIntelligence.js';
+import { resolveRepositoryTarget, type ResolvedTarget } from '../intelligence/targetResolver.js';
 
 export type ImpactQueryResult = {
   schemaVersion: '1.0';
   command: 'query';
   query: 'impact';
   target: string;
+  resolvedTarget: ResolvedTarget;
   module: {
     name: string;
     path: string;
@@ -25,7 +27,12 @@ export type ImpactQueryResult = {
 };
 
 export const queryImpact = (projectRoot: string, moduleName: string): ImpactQueryResult => {
-  const moduleContext = resolveIndexedModuleContext(projectRoot, moduleName, {
+  const resolvedTarget = resolveRepositoryTarget(projectRoot, moduleName);
+  if (resolvedTarget.kind !== 'module') {
+    throw new Error(`playbook query impact: unknown module "${moduleName}".`);
+  }
+
+  const moduleContext = resolveIndexedModuleContext(projectRoot, resolvedTarget.selector, {
     unknownModulePrefix: 'playbook query impact'
   });
 
@@ -33,7 +40,8 @@ export const queryImpact = (projectRoot: string, moduleName: string): ImpactQuer
     schemaVersion: '1.0',
     command: 'query',
     query: 'impact',
-    target: moduleName,
+    target: resolvedTarget.selector,
+    resolvedTarget,
     module: moduleContext.module,
     impact: moduleContext.impact
   };

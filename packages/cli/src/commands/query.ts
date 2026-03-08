@@ -175,6 +175,11 @@ const printModuleOwnersText = (payload: ModuleOwnersQueryResult): void => {
     console.log(`Module: ${entry.name}`);
     console.log(`Owners: ${entry.owners.length > 0 ? entry.owners.join(', ') : 'none'}`);
     console.log(`Area: ${entry.area}`);
+    console.log(`Ownership status: ${entry.ownership.status}`);
+    console.log(`Ownership source: ${entry.ownership.source}`);
+    if (entry.ownership.sourceLocation) {
+      console.log(`Ownership source location: ${entry.ownership.sourceLocation}`);
+    }
     return;
   }
 
@@ -191,6 +196,19 @@ const printModuleOwnersText = (payload: ModuleOwnersQueryResult): void => {
     console.log(entry.name);
     console.log(`  Owners: ${entry.owners.length > 0 ? entry.owners.join(', ') : 'none'}`);
     console.log(`  Area: ${entry.area}`);
+    console.log(`  Ownership status: ${entry.ownership.status}`);
+    console.log(`  Ownership source: ${entry.ownership.source}`);
+    if (entry.ownership.sourceLocation) {
+      console.log(`  Ownership source location: ${entry.ownership.sourceLocation}`);
+    }
+  }
+
+  if (payload.diagnostics.length > 0) {
+    console.log('');
+    console.log('Diagnostics');
+    for (const diagnostic of payload.diagnostics) {
+      console.log(`  - ${diagnostic}`);
+    }
   }
 };
 

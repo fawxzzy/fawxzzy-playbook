@@ -1,12 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { RepositoryIndex } from '../indexer/repoIndexer.js';
+import { resolveRepositoryTarget, type ResolvedTarget } from '../intelligence/targetResolver.js';
 
 export type DependenciesQueryResult = {
   schemaVersion: '1.0';
   command: 'query';
   type: 'dependencies';
   module: string | null;
+  resolvedTarget?: ResolvedTarget;
   dependencies: Array<{ name: string; dependencies: string[] }> | string[];
 };
 
@@ -43,7 +45,12 @@ export const queryDependencies = (projectRoot: string, moduleName?: string): Dep
     };
   }
 
-  const moduleInfo = index.modules.find((moduleEntry) => moduleEntry.name === moduleName);
+  const resolvedTarget = resolveRepositoryTarget(projectRoot, moduleName);
+  if (resolvedTarget.kind !== 'module') {
+    throw new Error(`playbook query dependencies: unknown module "${moduleName}".`);
+  }
+
+  const moduleInfo = index.modules.find((moduleEntry) => moduleEntry.name === resolvedTarget.selector);
   if (!moduleInfo) {
     throw new Error(`playbook query dependencies: unknown module "${moduleName}".`);
   }
@@ -52,7 +59,8 @@ export const queryDependencies = (projectRoot: string, moduleName?: string): Dep
     schemaVersion: '1.0',
     command: 'query',
     type: 'dependencies',
-    module: moduleName,
+    module: resolvedTarget.selector,
+    resolvedTarget,
     dependencies: moduleInfo.dependencies
   };
 };

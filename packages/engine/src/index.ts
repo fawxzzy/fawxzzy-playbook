@@ -32,6 +32,9 @@ export type { AnalyzePullRequestResult } from './pr/analyzePr.js';
 export { formatAnalyzePrOutput, formatAnalyzePrText, formatAnalyzePrJson, formatAnalyzePrGithubComment, formatAnalyzePrGithubReview } from './formatters/analyzePrFormatter.js';
 export type { AnalyzePrOutputFormat } from './formatters/analyzePrFormatter.js';
 
+export { resolveRepositoryTarget } from './intelligence/targetResolver.js';
+export type { ResolvedTarget, TargetKind } from './intelligence/targetResolver.js';
+
 export { explainTarget } from './explain/explainEngine.js';
 export type { ExplainTargetResult, RuleExplanation, ModuleExplanation, ArchitectureExplanation, UnknownExplanation } from './explain/explainEngine.js';
 

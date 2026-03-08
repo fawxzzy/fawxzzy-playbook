@@ -120,6 +120,7 @@ describe('runQuery', () => {
       command: 'query',
       type: 'dependencies',
       module: 'workouts',
+      resolvedTarget: { input: 'workouts', kind: 'module', selector: 'workouts', canonical: 'module:workouts', matched: true },
       dependencies: ['auth']
     });
 
@@ -318,10 +319,15 @@ describe('runQuery', () => {
       schemaVersion: '1.0',
       command: 'query',
       type: 'module-owners',
+      contract: { minimumFields: ['owners', 'area', 'sourceLocation'], metadataPath: '.playbook/module-owners.json' },
+      diagnostics: [
+        'Some indexed modules are missing ownership mappings and are marked unresolved-mapping.',
+        'Ownership metadata is configured without sourceLocation for one or more modules.'
+      ],
       modules: [
-        { name: 'analytics', owners: ['data'], area: 'platform' },
-        { name: 'auth', owners: [], area: 'unassigned' },
-        { name: 'workouts', owners: ['fitness'], area: 'product' }
+        { name: 'analytics', owners: ['data'], area: 'platform', ownership: { status: 'configured', source: '.playbook/module-owners.json' } },
+        { name: 'auth', owners: [], area: 'unassigned', ownership: { status: 'unresolved-mapping', source: '.playbook/module-owners.json' } },
+        { name: 'workouts', owners: ['fitness'], area: 'product', ownership: { status: 'configured', source: '.playbook/module-owners.json' } }
       ]
     });
 
@@ -342,10 +348,16 @@ describe('runQuery', () => {
       schemaVersion: '1.0',
       command: 'query',
       type: 'module-owners',
+      contract: { minimumFields: ['owners', 'area', 'sourceLocation'], metadataPath: '.playbook/module-owners.json' },
+      diagnostics: [
+        'Some indexed modules are missing ownership mappings and are marked unresolved-mapping.',
+        'Ownership metadata is configured without sourceLocation for one or more modules.'
+      ],
       module: {
         name: 'workouts',
         owners: ['fitness'],
-        area: 'product'
+        area: 'product',
+        ownership: { status: 'configured', source: '.playbook/module-owners.json' }
       }
     });
 
@@ -367,7 +379,9 @@ describe('runQuery', () => {
       '',
       'Module: workouts',
       'Owners: fitness',
-      'Area: product'
+      'Area: product',
+      'Ownership status: configured',
+      'Ownership source: .playbook/module-owners.json'
     ]);
 
     logSpy.mockRestore();
@@ -386,10 +400,13 @@ describe('runQuery', () => {
       schemaVersion: '1.0',
       command: 'query',
       type: 'module-owners',
+      contract: { minimumFields: ['owners', 'area', 'sourceLocation'], metadataPath: '.playbook/module-owners.json' },
+      diagnostics: ['No ownership metadata configured at .playbook/module-owners.json.'],
       module: {
         name: 'auth',
         owners: [],
-        area: 'unassigned'
+        area: 'unassigned',
+        ownership: { status: 'no-metadata-configured', source: 'generated-default' }
       }
     });
 

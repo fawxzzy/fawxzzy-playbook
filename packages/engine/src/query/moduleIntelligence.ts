@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { RepositoryIndex, RepositoryModule } from '../indexer/repoIndexer.js';
 import { queryRisk } from './risk.js';
+import { resolveRepositoryTarget } from '../intelligence/targetResolver.js';
 
 const INDEX_RELATIVE_PATH = '.playbook/repo-index.json' as const;
 
@@ -117,7 +118,8 @@ export const resolveIndexedModuleContext = (
 ): IndexedModuleContext => {
   const index = readIndexedRepository(projectRoot);
   const modules = normalizeModules(index.modules);
-  const targetModule = modules.find((moduleEntry) => moduleEntry.name === moduleName);
+  const resolvedTarget = resolveRepositoryTarget(projectRoot, moduleName);
+  const targetModule = resolvedTarget.kind === 'module' ? modules.find((moduleEntry) => moduleEntry.name === resolvedTarget.selector) : undefined;
 
   if (!targetModule) {
     const prefix = options?.unknownModulePrefix ?? 'playbook query impact';
@@ -125,9 +127,9 @@ export const resolveIndexedModuleContext = (
   }
 
   const reverseGraph = buildReverseGraph(modules);
-  const directDependents = [...(reverseGraph.get(moduleName) ?? [])].sort((a, b) => a.localeCompare(b));
-  const dependents = computeTransitiveDependents(moduleName, reverseGraph);
-  const risk = queryRisk(projectRoot, moduleName);
+  const directDependents = [...(reverseGraph.get(targetModule.name) ?? [])].sort((a, b) => a.localeCompare(b));
+  const dependents = computeTransitiveDependents(targetModule.name, reverseGraph);
+  const risk = queryRisk(projectRoot, targetModule.name);
 
   return {
     module: {

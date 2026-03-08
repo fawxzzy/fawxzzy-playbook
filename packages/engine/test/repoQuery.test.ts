@@ -98,6 +98,7 @@ describe('queryRepositoryIndex', () => {
       command: 'query',
       type: 'dependencies',
       module: 'workouts',
+      resolvedTarget: { input: 'workouts', kind: 'module', selector: 'workouts', canonical: 'module:workouts', matched: true },
       dependencies: ['auth']
     });
   });
@@ -455,9 +456,27 @@ describe('queryRepositoryIndex', () => {
       schemaVersion: '1.0',
       command: 'query',
       type: 'module-owners',
+      contract: {
+        minimumFields: ['owners', 'area', 'sourceLocation'],
+        metadataPath: '.playbook/module-owners.json'
+      },
+      diagnostics: [
+        'Some indexed modules are missing ownership mappings and are marked unresolved-mapping.',
+        'Ownership metadata is configured without sourceLocation for one or more modules.'
+      ],
       modules: [
-        { name: 'auth', owners: [], area: 'unassigned' },
-        { name: 'workouts', owners: ['fitness'], area: 'product' }
+        {
+          name: 'auth',
+          owners: [],
+          area: 'unassigned',
+          ownership: { status: 'unresolved-mapping', source: '.playbook/module-owners.json', sourceLocation: undefined }
+        },
+        {
+          name: 'workouts',
+          owners: ['fitness'],
+          area: 'product',
+          ownership: { status: 'configured', source: '.playbook/module-owners.json', sourceLocation: undefined }
+        }
       ]
     });
   });
@@ -483,10 +502,16 @@ describe('queryRepositoryIndex', () => {
       schemaVersion: '1.0',
       command: 'query',
       type: 'module-owners',
+      contract: {
+        minimumFields: ['owners', 'area', 'sourceLocation'],
+        metadataPath: '.playbook/module-owners.json'
+      },
+      diagnostics: ['Ownership metadata is configured without sourceLocation for one or more modules.'],
       module: {
         name: 'workouts',
         owners: ['fitness'],
-        area: 'product'
+        area: 'product',
+        ownership: { status: 'configured', source: '.playbook/module-owners.json', sourceLocation: undefined }
       }
     });
   });

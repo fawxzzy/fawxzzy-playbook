@@ -2,6 +2,7 @@ import { readRepositoryGraph, summarizeGraphNeighborhood, type GraphNeighborhood
 import { queryRepositoryIndex } from '../query/repoQuery.js';
 import type { RepositoryModule } from '../indexer/repoIndexer.js';
 import { getRuleMetadata } from './ruleRegistry.js';
+import { resolveRepositoryTarget, type ResolvedTarget } from '../intelligence/targetResolver.js';
 
 const toModuleNames = (modules: string[] | RepositoryModule[]): string[] => {
   if (modules.length === 0) {
@@ -23,10 +24,9 @@ type ExplainContext = {
   rules: string[];
 };
 
-type ExplainTargetType = 'rule' | 'module' | 'architecture' | 'unknown';
-
 export type RuleExplanation = {
   type: 'rule';
+  resolvedTarget: ResolvedTarget;
   id: string;
   purpose: string;
   fix: string[];
@@ -36,6 +36,7 @@ export type RuleExplanation = {
 
 export type ModuleExplanation = {
   type: 'module';
+  resolvedTarget: ResolvedTarget;
   name: string;
   responsibilities: string[];
   dependencies: string[];
@@ -45,6 +46,7 @@ export type ModuleExplanation = {
 
 export type ArchitectureExplanation = {
   type: 'architecture';
+  resolvedTarget: ResolvedTarget;
   architecture: string;
   structure: string;
   reasoning: string;
@@ -53,6 +55,7 @@ export type ArchitectureExplanation = {
 
 export type UnknownExplanation = {
   type: 'unknown';
+  resolvedTarget: ResolvedTarget;
   target: string;
   message: string;
 };
@@ -96,22 +99,6 @@ const architectureReasoning = (architecture: string, framework: string, modules:
   return `Architecture is inferred as ${architecture} from repository intelligence signals. Indexed framework: ${framework}. Indexed modules: ${modules.join(', ') || 'none'}.`;
 };
 
-const determineTargetType = (target: string, context: ExplainContext): ExplainTargetType => {
-  if (target.startsWith('pb') || Boolean(getRuleMetadata(target))) {
-    return 'rule';
-  }
-
-  if (target === 'architecture') {
-    return 'architecture';
-  }
-
-  if (context.modules.some((moduleName) => moduleName.toLowerCase() === target)) {
-    return 'module';
-  }
-
-  return 'unknown';
-};
-
 const readGraphNeighborhood = (projectRoot: string, nodeId: string): GraphNeighborhoodSummary | undefined => {
   try {
     const graph = readRepositoryGraph(projectRoot);
@@ -121,19 +108,21 @@ const readGraphNeighborhood = (projectRoot: string, nodeId: string): GraphNeighb
   }
 };
 
-const explainRule = (projectRoot: string, context: ExplainContext, normalizedTarget: string): RuleExplanation | UnknownExplanation => {
-  const metadata = getRuleMetadata(normalizedTarget);
+const explainRule = (projectRoot: string, context: ExplainContext, resolvedTarget: ResolvedTarget): RuleExplanation | UnknownExplanation => {
+  const metadata = getRuleMetadata(resolvedTarget.selector);
 
   if (!metadata) {
     return {
       type: 'unknown',
-      target: normalizedTarget,
-      message: `No rule metadata found for ${normalizedTarget} in rule registry.`
+      resolvedTarget,
+      target: resolvedTarget.input,
+      message: `No rule metadata found for ${resolvedTarget.selector} in rule registry.`
     };
   }
 
   return {
     type: 'rule',
+    resolvedTarget,
     id: metadata.id,
     purpose: metadata.purpose,
     fix: metadata.fix,
@@ -143,18 +132,18 @@ const explainRule = (projectRoot: string, context: ExplainContext, normalizedTar
 };
 
 export const explainTarget = (projectRoot: string, target: string): ExplainTargetResult => {
-  const normalizedTarget = normalizeTarget(target);
   const context = gatherContext(projectRoot);
-  const targetType = determineTargetType(normalizedTarget, context);
+  const resolvedTarget = resolveRepositoryTarget(projectRoot, normalizeTarget(target));
 
-  if (targetType === 'rule') {
-    return explainRule(projectRoot, context, normalizedTarget);
+  if (resolvedTarget.kind === 'rule') {
+    return explainRule(projectRoot, context, resolvedTarget);
   }
 
-  if (targetType === 'module') {
-    const moduleName = context.modules.find((name) => name.toLowerCase() === normalizedTarget) ?? normalizedTarget;
+  if (resolvedTarget.kind === 'module') {
+    const moduleName = resolvedTarget.selector;
     return {
       type: 'module',
+      resolvedTarget,
       name: moduleName,
       responsibilities: inferModuleResponsibilities(moduleName),
       dependencies: [],
@@ -163,9 +152,10 @@ export const explainTarget = (projectRoot: string, target: string): ExplainTarge
     };
   }
 
-  if (targetType === 'architecture') {
+  if (resolvedTarget.kind === 'architecture') {
     return {
       type: 'architecture',
+      resolvedTarget,
       architecture: context.architecture,
       structure: architectureStructure(context.architecture),
       reasoning: architectureReasoning(context.architecture, context.framework, context.modules),
@@ -175,6 +165,7 @@ export const explainTarget = (projectRoot: string, target: string): ExplainTarge
 
   return {
     type: 'unknown',
+    resolvedTarget,
     target,
     message: `Unable to explain "${target}" from repository intelligence. Try: playbook query modules | playbook rules.`
   };

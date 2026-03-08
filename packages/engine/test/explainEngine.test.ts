@@ -50,6 +50,7 @@ describe('explainTarget', () => {
 
     expect(result).toEqual({
       type: 'module',
+      resolvedTarget: { input: 'workouts', kind: 'module', selector: 'workouts', canonical: 'module:workouts', matched: true },
       name: 'workouts',
       responsibilities: [
         'Owns workouts feature behavior and boundaries.',
@@ -96,6 +97,7 @@ describe('explainTarget', () => {
 
     expect(result).toEqual({
       type: 'unknown',
+      resolvedTarget: { input: 'payments', kind: 'unknown', selector: 'payments', canonical: 'payments', matched: false },
       target: 'payments',
       message: 'Unable to explain "payments" from repository intelligence. Try: playbook query modules | playbook rules.'
     });

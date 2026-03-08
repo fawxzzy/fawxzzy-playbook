@@ -63,6 +63,7 @@ describe('runAsk', () => {
     expect(exitCode).toBe(ExitCode.Success);
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload).toEqual({
+      answerability: { state: 'answered-from-trusted-artifact', artifact: '.playbook/repo-index.json' },
       command: 'ask',
       question: 'what architecture does this repo use?',
       mode: 'normal',

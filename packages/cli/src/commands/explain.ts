@@ -22,6 +22,7 @@ const toOutput = (target: string, explanation: ExplainTargetResult): ExplainOutp
       target,
       type: 'unknown',
       explanation: {
+        resolvedTarget: explanation.resolvedTarget,
         message: explanation.message
       }
     };
