@@ -1,12 +1,12 @@
 PLAYBOOK – 12 MONTH PRODUCT ROADMAP
 
-AI Governance for Software Engineering
+Deterministic Repo Runtime and Trust Layer for Software Engineering
 
 MISSION
 
-Build the governance layer for AI-assisted software development.
+Build the deterministic runtime and trust layer between humans/AI agents and real repositories.
 
-Playbook ensures that AI-generated code:
+Playbook ensures repository change workflows:
 
 follows architecture
 
@@ -16,13 +16,13 @@ maintains documentation discipline
 
 prevents architectural drift
 
-Playbook sits between AI coding agents and repositories.
+Playbook sits between humans/AI coding agents and repositories as a contract-first operating layer.
 
-AI Agents
-     ↓
-Playbook
-     ↓
-Repository
+Humans + AI Agents
+        ↓
+     Playbook
+        ↓
+   Repository
 CORE PRINCIPLES
 
 These rules guide all development decisions.
@@ -107,12 +107,12 @@ YEAR 1 OBJECTIVE
 
 ## Product positioning (current)
 
-Playbook is positioned as an **AI-operable development tool**:
+Playbook is positioned as **deterministic repo intelligence + governance + safe remediation runtime**:
 
-- human-usable for local engineering workflows
-- machine-readable for CI and automation
-- CI-enforceable through deterministic exit codes and contracts
-- agent-compatible through stable JSON responses and explicit command surfaces
+- deterministic repo intelligence for humans and AI agents
+- governance validation through explicit, CI-enforceable contracts
+- safe remediation through reviewed `plan -> apply -> verify` loops
+- machine-readable command surfaces for automation and integrations
 
 Current implemented product-facing command/artifact set:
 

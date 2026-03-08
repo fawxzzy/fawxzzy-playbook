@@ -4,7 +4,7 @@
 
 `playbook-demo` is the official fast onboarding repository artifact for first-run adoption.
 
-Goal: let developers run Playbook (`analyze` and `verify`) immediately and see useful governance output without repository setup work.
+Goal: let developers quickly experience deterministic repository intelligence and reviewed remediation in a stable, low-setup environment.
 
 ## Adoption role
 
@@ -16,21 +16,26 @@ The demo repo is part of product adoption strategy:
 
 ## Current status
 
-`playbook-demo` is now an active product artifact and is exposed directly through `playbook demo` (deterministic text/JSON onboarding contract).
+`playbook-demo` is an active product artifact and is exposed directly through `playbook demo` (deterministic text/JSON onboarding contract).
 
-## Optional AI-aware path (advanced)
+## Canonical serious-user ladder
 
-For AI-assisted onboarding or agent bootstrap scenarios, the repository-intelligence surface is available:
+Use the demo to practice the same operating ladder used in real repositories:
 
 ```bash
 playbook ai-context --json
+playbook ai-contract --json
+playbook context --json
 playbook index --json
 playbook query modules --json
-playbook ask "where should a new feature live?" --json
 playbook explain architecture --json
+playbook verify --json
+playbook plan --json > .playbook/plan.json
+playbook apply --from-plan .playbook/plan.json
+playbook verify --json
 ```
 
-This is an advanced path that complements (not replaces) the primary onboarding narrative centered on `analyze`, `verify`, and `plan`.
+`analyze` can still be used as a compatibility-friendly shortcut for lightweight stack inspection, but it is not the primary serious-user narrative.
 
 ## Rule: Demo Terminology Sync
 
@@ -61,15 +66,18 @@ The demo repo is the product perception layer.
 
 Design decisions in `playbook-demo` should prioritize explaining Playbook's value clearly, even if that means covering fewer commands in a single walkthrough.
 
-## Pattern: analyze → verify → plan must align on the same issues
+## Pattern: deterministic intelligence + remediation loop
 
 The core demo narrative should be intentionally sequenced:
 
-1. `analyze` highlights the expected architectural drift signals.
-2. `verify` confirms governance failures on the same drift themes.
-3. `plan` proposes deterministic remediation for those exact items.
+1. `ai-context`, `ai-contract`, and `context` establish runtime/trust-layer context.
+2. `index`, `query`, and `explain` establish deterministic repository intelligence.
+3. `verify` confirms governance findings.
+4. `plan` generates reviewed remediation tasks for those findings.
+5. `apply` executes bounded tasks from the reviewed plan.
+6. `verify` confirms the post-remediation end state.
 
-All three steps should describe the same small set of intentional issues so users can trust the flow from diagnosis to action.
+All steps should describe the same small set of intentional issues so users can trust the flow from diagnosis to action.
 
 ## Pattern: model realistic architectural drift
 
@@ -77,8 +85,8 @@ Intentional demo issues should resemble real repository drift (for example, docs
 
 This keeps outputs educational, credible, and easy to transfer to real repos.
 
-## Failure mode: too many intentional issues create noise
+## Failure mode: too many unrelated findings
 
-If the demo contains too many seeded problems, outputs from `analyze`, `verify`, and `plan` feel noisy and less trustworthy.
+If demo scenarios include too many unrelated issues, users cannot map diagnosis to remediation.
 
-Keep issue count low and legible so command output remains screenshot-friendly for README/docs and easy to follow in live demos.
+Keep scenarios narrow, explainable, and deterministic.

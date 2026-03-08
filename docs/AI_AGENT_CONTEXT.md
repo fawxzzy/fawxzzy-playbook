@@ -18,13 +18,26 @@ This keeps architecture reasoning explicit and reproducible for agents working i
 - WHAT: Treat unscoped `playbook` as unavailable for onboarding commands.
 - WHY: The unscoped npm package name is already taken, so `npx playbook ...` cannot be the reliable install-free path.
 
-### Preferred onboarding commands
+### Preferred install-free bootstrap
 
-- WHAT: Primary command: `npx --yes @fawxzzy/playbook analyze`.
-- WHY: Uses the scoped package we control and works as a copy/paste quick start.
+Use the scoped package entrypoint for the canonical serious-user ladder:
 
-- WHAT: Optional compatibility command: `npx --yes -p @fawxzzy/playbook playbook analyze`.
-- WHY: Gives teams an alternate invocation form when they prefer explicit package preinstall semantics.
+```bash
+npx --yes @fawxzzy/playbook ai-context --json
+npx --yes @fawxzzy/playbook ai-contract --json
+npx --yes @fawxzzy/playbook context --json
+npx --yes @fawxzzy/playbook index --json
+npx --yes @fawxzzy/playbook query modules --json
+npx --yes @fawxzzy/playbook explain architecture --json
+```
+
+`analyze` remains available for compatibility and lightweight stack inspection, but it is no longer the primary serious-user bootstrap path.
+
+Optional compatibility invocation (same scoped package):
+
+```bash
+npx --yes -p @fawxzzy/playbook playbook ai-context --json
+```
 
 ### Publishing notes
 
