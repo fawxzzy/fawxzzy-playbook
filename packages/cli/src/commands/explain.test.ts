@@ -43,6 +43,13 @@ describe('runExplain', () => {
       target: 'workouts',
       type: 'module',
       explanation: {
+        resolvedTarget: {
+          input: 'workouts',
+          kind: 'module',
+          selector: 'workouts',
+          canonical: 'module:workouts',
+          matched: true
+        },
         name: 'workouts',
         responsibilities: [
           'Owns workouts feature behavior and boundaries.',
@@ -86,6 +93,13 @@ describe('runExplain', () => {
       target: 'payments',
       type: 'unknown',
       explanation: {
+        resolvedTarget: {
+          input: 'payments',
+          kind: 'unknown',
+          selector: 'payments',
+          canonical: 'payments',
+          matched: false
+        },
         message: 'Unable to explain "payments" from repository intelligence. Try: playbook query modules | playbook rules.'
       }
     });

@@ -14,6 +14,10 @@ type AskOptions = {
 };
 
 type AskResult = {
+  answerability: {
+    state: 'answered-from-trusted-artifact' | 'artifact-missing' | 'artifact-stale' | 'unsupported-question';
+    artifact?: string;
+  };
   command: 'ask';
   question: string;
   mode: ResponseMode;
@@ -213,6 +217,7 @@ export const runAsk = async (cwd: string, commandArgs: string[], options: AskOpt
     };
 
     const result: AskResult = {
+      answerability: answer.answerability,
       command: 'ask',
       question: answer.question,
       mode,

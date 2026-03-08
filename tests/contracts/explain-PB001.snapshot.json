@@ -3,6 +3,13 @@
   "target": "PB001",
   "type": "rule",
   "explanation": {
+    "resolvedTarget": {
+      "input": "pb001",
+      "kind": "rule",
+      "selector": "PB001",
+      "canonical": "rule:PB001",
+      "matched": true
+    },
     "id": "PB001",
     "purpose": "Ensure architecture documentation exists and stays aligned with implementation intent.",
     "fix": [

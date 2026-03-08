@@ -28,11 +28,32 @@ describe('answerRepositoryQuestion', () => {
     const result = answerRepositoryQuestion(repo, 'where should a new feature live?');
 
     expect(result.answer).toBe('Recommended location: src/features/<feature>');
+    expect(result.answerability.state).toBe('answered-from-trusted-artifact');
     expect(result.reason).toContain('modular-monolith architecture');
     expect(result.context).toEqual({
       architecture: 'modular-monolith',
       framework: 'nextjs',
       modules: ['users', 'workouts']
+    });
+  });
+
+  it('answers preferred operating ladder from managed governance artifact', () => {
+    const repo = createRepo('playbook-ask-engine-ladder');
+    writeRepoIndex(repo, {
+      schemaVersion: '1.0',
+      framework: 'node',
+      language: 'typescript',
+      architecture: 'layered',
+      modules: ['api'],
+      database: 'postgres',
+      rules: []
+    });
+
+    const result = answerRepositoryQuestion(repo, 'what is the preferred ai operating ladder?');
+
+    expect(result.answerability).toEqual({
+      state: 'artifact-missing',
+      artifact: '.playbook/ai-contract.json'
     });
   });
 
@@ -71,7 +92,6 @@ describe('answerRepositoryQuestion', () => {
     expect(result.answer).toBe('Modules: users, workouts');
   });
 
-
   it('returns module-scoped context when ask is scoped to a module', () => {
     const repo = createRepo('playbook-ask-engine-module-scope');
     writeRepoIndex(repo, {
@@ -87,7 +107,7 @@ describe('answerRepositoryQuestion', () => {
       rules: []
     });
 
-    const result = answerRepositoryQuestion(repo, 'how does this module work?', { module: 'workouts' });
+    const result = answerRepositoryQuestion(repo, 'how does this module work?', { module: 'module:workouts' });
 
     expect(result.answer).toContain('Module scope: workouts');
     expect(result.context.module?.module.name).toBe('workouts');
