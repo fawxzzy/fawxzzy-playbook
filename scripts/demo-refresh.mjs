@@ -198,9 +198,6 @@ const resolveRefreshCommand = (demoDir) => {
   );
 };
 
-const VERIFY_BEFORE_EXIT_MISMATCH_PATTERN =
-  /verify-before[\s\S]{0,200}(?:expected|expecting)[\s\S]{0,120}exit(?:\s+code|\s+status)?\s*[=:]?\s*1[\s\S]{0,120}(?:got|received)[\s\S]{0,80}0/i;
-
 const runRefreshCommand = ({ demoDir, refreshCommand }) => {
   const result = run({
     cwd: demoDir,
@@ -209,22 +206,11 @@ const runRefreshCommand = ({ demoDir, refreshCommand }) => {
     allowFailure: true,
     env: {
       ...process.env,
-      PLAYBOOK_CLI_PATH: localCliEntrypoint,
-      // TEMP(PB-V1-PRODUCT-TRUTH-PACKAGING-001): tolerate verify-before warning-only baseline until playbook-demo restores deterministic failing baseline.
-      PLAYBOOK_DEMO_VERIFY_BEFORE_ALLOWED_EXIT_CODES:
-        process.env.PLAYBOOK_DEMO_VERIFY_BEFORE_ALLOWED_EXIT_CODES ?? '0,1'
+      PLAYBOOK_CLI_PATH: localCliEntrypoint
     }
   });
 
   if (result.status === 0) {
-    return;
-  }
-
-  const combinedOutput = `${result.stderr ?? ''}\n${result.stdout ?? ''}`;
-  if (VERIFY_BEFORE_EXIT_MISMATCH_PATTERN.test(combinedOutput)) {
-    console.warn(
-      'Temporary unblock: demo refresh reported verify-before exit mismatch (expected 1, got 0). Continuing while playbook-demo baseline contract is restored.'
-    );
     return;
   }
 
