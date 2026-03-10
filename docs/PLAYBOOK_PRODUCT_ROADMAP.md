@@ -6,6 +6,18 @@ MISSION
 
 Build the deterministic runtime and trust layer between humans/AI agents and real repositories.
 
+## Strategic repositioning: CLI to reasoning engine
+
+Playbook continues to ship as a deterministic repository intelligence and governance CLI, but the product is being intentionally repositioned as a deterministic reasoning engine for:
+
+- knowledge formation
+- knowledge compression
+- governance enforcement
+- self-improvement via introspection
+
+Positioning rule: preserve current command-surface reliability while growing reasoning depth behind the same deterministic contracts.
+
+
 Playbook ensures repository change workflows:
 
 follows architecture
@@ -84,6 +96,11 @@ Promotion
       ↓
 Retirement
 
+Reasoning-engine lifecycle bridge (implementation-facing):
+
+`evidence -> zettels -> graph -> groups -> candidate patterns -> draft pattern cards -> promotion decisions -> contracts`
+
+
 Lifecycle stage intent:
 
 - **Observation / Extraction**
@@ -145,6 +162,33 @@ Implementation foundation (internal):
 - Established evidence-linked knowledge artifacts to preserve traceability to source observations/rules/remediations/repo structure evidence.
 - Implemented lifecycle helpers that enforce valid transitions and support supersede relationships.
 - Positioned lifecycle infrastructure as internal-only groundwork without expanding the public CLI knowledge-management surface.
+
+## Next defining capabilities for reasoning-engine maturity
+
+### Meta-Playbook introspection
+
+Playbook should introspect its own reasoning pipeline to detect weak compaction quality, repeated failure motifs, and governance blind spots, then emit bounded improvement proposals as reviewable artifacts.
+
+### Functorial knowledge transforms
+
+Playbook should map validated pattern knowledge into executable surfaces (contracts, docs, CI policy) with structure-preserving, replayable transforms and lineage guarantees.
+
+### Topology/equivalence compression
+
+Playbook should collapse structurally equivalent promoted patterns into canonical representatives so doctrine scales by structure rather than duplicated prose.
+
+Novelty boundary:
+
+Playbook does not claim invention of new raw mathematics. Product novelty is architectural synthesis plus deterministic operationalization of established ideas into everyday engineering governance.
+
+Rule:
+Every major subsystem in Playbook must contribute to knowledge formation, compression, governance, or self-reflection.
+
+Pattern:
+Playbook’s novelty is architectural synthesis, not isolated invention of underlying theory.
+
+Failure Mode:
+Treating Playbook as only a tooling layer hides its real product direction and leads to roadmap underreach.
 
 4️⃣ Developer Experience Over Features
 

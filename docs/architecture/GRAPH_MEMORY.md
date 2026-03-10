@@ -101,6 +101,20 @@ raw artifacts
 -> contracts
 ```
 
+## Reasoning-engine lifecycle mapping
+
+Graph memory is the structural core of Playbook's reasoning-engine lifecycle:
+
+`evidence -> zettels -> graph -> groups -> candidate patterns -> draft pattern cards -> promotion decisions -> contracts`
+
+- `evidence -> zettels`: converts deterministic findings into atomic, linked working-memory units
+- `zettels -> graph`: anchors notes in typed relationship structure for replayable retrieval
+- `graph -> groups`: derives deterministic cohesion groups that preserve lineage
+- `groups -> candidate patterns -> draft pattern cards`: synthesizes reviewable abstractions without skipping evidence traceability
+- `draft pattern cards -> promotion decisions -> contracts`: applies explicit governance morphisms before doctrine gains policy force
+
+This keeps graph memory implementation-oriented: it is not passive storage, it is the compression and governance substrate for durable knowledge.
+
 ## Temperature model
 
 ```text

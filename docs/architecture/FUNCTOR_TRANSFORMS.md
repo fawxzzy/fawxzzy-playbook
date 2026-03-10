@@ -2,6 +2,10 @@
 
 Playbook functors map pattern knowledge into executable domains while preserving structural invariants.
 
+## Reasoning-engine role
+
+Functor transforms are a defining reasoning-engine capability: they move validated knowledge across operational domains without breaking structural meaning.
+
 ## Rule / Pattern / Failure Mode
 
 Rule:
@@ -57,3 +61,8 @@ Each generated artifact must include:
 - generation timestamp
 
 This guarantees that transformed doctrine remains auditable and reversible.
+
+
+## Novelty boundary
+
+Playbook is not claiming invention of new raw mathematics through functors. The product novelty is deterministic operationalization: stable contracts, replayable mappings, and lineage-complete transform outputs integrated into governance workflows.
