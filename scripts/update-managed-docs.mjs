@@ -88,7 +88,7 @@ const toCommandTruth = (commands) => {
         canonicalSequence: command.canonicalSequence,
         productFacing: command.productFacing,
         machineReadable: command.machineReadable,
-        example: command.example
+        example: `pnpm playbook ${command.exampleArgs}`
       }))
       .sort((left, right) => left.name.localeCompare(right.name)),
     canonicalCommands,
@@ -117,7 +117,7 @@ const renderManagedCommands = (commands) => {
     if (productFacing.length > 0) {
       for (const command of productFacing) {
         lines.push(`- ${code(command.name)}: ${command.description}`);
-        lines.push(`  - Example: ${code(command.example)}`);
+        lines.push(`  - Example: ${code(`pnpm playbook ${command.exampleArgs}`)}`);
       }
       lines.push('');
     }
@@ -144,7 +144,7 @@ const renderManagedExamples = (commands) => {
   lines.push('| Command | Example |');
   lines.push('| --- | --- |');
   for (const command of productFacing) {
-    lines.push(`| ${code(command.name)} | ${code(command.example)} |`);
+    lines.push(`| ${code(command.name)} | ${code(`pnpm playbook ${command.exampleArgs}`)} |`);
   }
 
   return lines.join('\n');
@@ -159,7 +159,7 @@ const renderDocsProductCommands = (commands) => {
   for (const command of productCommands) {
     const onboarding = command.onboardingPriority ?? '—';
     lines.push(
-      `| ${code(command.name)} | ${command.description} | ${command.lifecycle} | ${command.role} | ${command.discoverability} | ${onboarding} | Current (implemented) | ${code(command.example)} |`
+      `| ${code(command.name)} | ${command.description} | ${command.lifecycle} | ${command.role} | ${command.discoverability} | ${onboarding} | Current (implemented) | ${code(`pnpm playbook ${command.exampleArgs}`)} |`
     );
   }
 

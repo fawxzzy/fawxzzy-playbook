@@ -1,14 +1,44 @@
 #!/usr/bin/env node
+import path from 'node:path';
 import { ExitCode } from './lib/cliContract.js';
 import { hasRegisteredCommand, listRegisteredCommands, runRegisteredCommand } from './commands/index.js';
 
-const args = process.argv.slice(2);
+const rawArgs = process.argv.slice(2);
 
 const parseFlag = (allArgs: string[], flag: string): boolean => allArgs.includes(flag);
 const parseOptionValue = (allArgs: string[], name: string): string | undefined => {
   const index = allArgs.indexOf(name);
   return index >= 0 && allArgs[index + 1] ? String(allArgs[index + 1]) : undefined;
 };
+
+const stripLeadingGlobalRepoOption = (allArgs: string[]): { args: string[]; repo: string | undefined } => {
+  const stripped: string[] = [];
+  let repo: string | undefined;
+
+  for (let index = 0; index < allArgs.length; index += 1) {
+    const arg = allArgs[index];
+
+    if (!arg.startsWith('-')) {
+      stripped.push(...allArgs.slice(index));
+      break;
+    }
+
+    if (arg === '--repo') {
+      const value = allArgs[index + 1];
+      if (value) {
+        repo = String(value);
+        index += 1;
+      }
+      continue;
+    }
+
+    stripped.push(arg);
+  }
+
+  return { args: stripped, repo };
+};
+
+const { args, repo } = stripLeadingGlobalRepoOption(rawArgs);
 
 const formatFromArgs = (allArgs: string[]): 'text' | 'json' => {
   if (parseFlag(allArgs, '--json')) {
@@ -31,7 +61,7 @@ const explain = parseFlag(args, '--explain');
 const showHelp = () => {
   const commandRows = listRegisteredCommands().map((entry) => `  ${entry.name.padEnd(27)} ${entry.description}`);
 
-  console.log(`Usage: playbook <command> [options]
+  console.log(`Usage: playbook [global-options] <command> [options]
 
 Lightweight project governance CLI
 
@@ -39,6 +69,7 @@ Commands:
 ${commandRows.join('\n')}
 
 Global options:
+  --repo <path>               Target repository root for command execution
   --ci                        CI mode (deterministic, quiet unless errors)
   --format <text|json>        Output format (default text)
   --json                      Alias for --format=json
@@ -67,8 +98,10 @@ const run = async () => {
     process.exit(ExitCode.Failure);
   }
 
+  const targetCwd = repo ? path.resolve(process.cwd(), repo) : process.cwd();
+
   const exitCode = await runRegisteredCommand(command, {
-    cwd: process.cwd(),
+    cwd: targetCwd,
     args,
     commandArgs,
     ci,
