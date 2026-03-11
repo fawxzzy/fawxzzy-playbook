@@ -9,7 +9,7 @@
       "failures": 0,
       "warnings": 1,
       "baseRef": "origin/main",
-      "baseSha": "bd7f10721189c0db3c4b184729968cdb0ee05f08"
+      "baseSha": "c518222a5d22a875cfe3d6523d6194a9eab194c3"
     },
     "failures": [],
     "warnings": [
@@ -21,18 +21,11 @@
   },
   "remediation": {
     "status": "not_needed",
-    "totalSteps": 2,
+    "totalSteps": 1,
     "unresolvedFailures": 0,
     "reason": "No verify failures were detected."
   },
   "tasks": [
-    {
-      "id": "task-artifact-pb012",
-      "ruleId": "PB012",
-      "file": ".playbookignore",
-      "action": "Add .playbookignore",
-      "autoFix": true
-    },
     {
       "id": "task-artifact-pb013",
       "ruleId": "PB013",

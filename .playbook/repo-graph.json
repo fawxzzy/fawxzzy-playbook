@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
   "kind": "playbook-repo-graph",
-  "generatedAt": "2026-03-11T05:26:44.171Z",
+  "generatedAt": "2026-03-11T20:02:30.304Z",
   "nodes": [
     {
       "id": "module:@fawxzzy/playbook",
