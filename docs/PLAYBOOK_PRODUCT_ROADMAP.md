@@ -195,16 +195,20 @@ Using a second repo too early without bounded rollout turns a proving ground int
 
 ## External Pilot Integration — Fawxzzy Fitness
 
-Status: **Foundation implemented (command-truth + external targeting slice).**
+Status: **Coexistence-first migration slice defined (policy + inventory + phased execution contract).**
 
-This roadmap slice establishes the operator-safe baseline for running Playbook from this repository against external pilot repositories.
+This roadmap slice establishes the next operator-safe migration layer for running Playbook from this repository against the primary external pilot repository while preserving legacy pilot tooling until parity is proven.
 
-Delivered in this slice:
+Current slice establishes:
 
-- canonical command-truth normalization around `pnpm playbook <command>` across operator-facing docs/templates
-- managed-doc normalization at metadata/generator layer so regenerated command examples stay canonical
-- first-class external repo targeting via global `--repo <path>` for command execution from outside target repo
-- deterministic external pilot bootstrap test coverage for `index`, `query modules`, and `verify` against a fixture repo
+- coexistence-first migration policy for external pilot rollout
+- legacy Playbook inventory framework (`KEEP_TEMPORARILY`, `REPLACE_WITH_NEW_PLAYBOOK`, `INVESTIGATE_USAGE`, `REMOVE_AFTER_PARITY`)
+- phased removal strategy (`Coexistence -> Capability Mapping -> Parity Validation -> Controlled Removal`)
+- pilot execution contract for canonical external-runbook commands using `pnpm playbook --repo <path> ...`
+
+Reference plan:
+
+- `docs/roadmap/EXTERNAL_PILOT_FAWXZZY_FITNESS.md`
 
 Rule — Canonical Operator Surface
 A CLI repo must expose one canonical operator-facing invocation form across docs, templates, generated docs, and roadmap guidance.
