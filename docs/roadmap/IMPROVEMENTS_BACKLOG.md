@@ -54,6 +54,22 @@ These labels are long-term architecture/backlog framing only and do not modify t
 
 ---
 
+
+## Platform direction: Session + Evidence prerequisites
+
+Backlog scope (explicitly directional; not an active delivery commitment):
+
+- Define a deterministic **session artifact contract** that captures actor, refs, command chain, consumed/produced artifacts, findings, approvals, and links to PR/CI/issue context.
+- Define an **evidence graph** contract that links deterministic source artifacts and command outputs to findings, plans, apply traces, verify outcomes, and approval decisions.
+- Define **repo longitudinal state** stitching across sessions so repeated outcomes can be compared without weakening repository-local privacy boundaries.
+- Define a deterministic **knowledge promotion pipeline** where candidate memory/pattern promotion is evidence-bound, provenance-preserving, and policy-gated.
+
+Pattern: Evidence Before Memory.
+Rule: Policy and approvals precede autonomous execution.
+Failure Mode: Agent runtime expansion before trust primitives.
+Failure Mode: Memory without evidence.
+
+---
 ## Platform direction: Repository Longitudinal State Model
 
 Backlog scope (directional, not current-sprint commitment):

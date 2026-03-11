@@ -110,7 +110,9 @@ Boundary rules:
 
 - Repo-local facts stay local unless an explicit promotion workflow is approved.
 - Promotion candidates must be sanitized before any upstream or cross-repository use.
-- Promoted patterns must retain evidence lineage while preserving privacy and scoped ownership boundaries.
+- Only sanitized reusable patterns are promotable upstream; raw repo-local knowledge is not.
+- Promoted patterns must retain evidence lineage/provenance while preserving privacy and scoped ownership boundaries.
+- Promotion workflows must preserve source artifact and command-output provenance so downstream consumers can audit trust decisions.
 
 ## 5) Extension Model
 
