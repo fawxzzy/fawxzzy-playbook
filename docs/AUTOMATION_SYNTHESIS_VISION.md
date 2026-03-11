@@ -6,7 +6,7 @@ This document defines a future-facing **Automation Synthesis** capability track 
 
 Automation Synthesis is intentionally positioned as a phased expansion built on Playbook's current strengths (repository intelligence, deterministic verification, and contract-driven remediation), not a replacement for near-term roadmap priorities.
 
-This track should align with the long-term platform layering in `docs/architecture/PLAYBOOK_PLATFORM_ARCHITECTURE.md`, especially repository memory, evidence-linked trust, policy/control-plane approvals, and bounded orchestration.
+This track should align with the long-term platform layering in `docs/architecture/PLAYBOOK_PLATFORM_ARCHITECTURE.md`, especially session/evidence architecture, repository memory, evidence-linked trust, policy/control-plane approvals, and bounded orchestration.
 
 ## Problem statement
 
@@ -37,7 +37,7 @@ Automation Synthesis should follow a staged architecture aligned with Playbook's
 8. **Runtime monitoring + rollback**
    - Track production behavior and support fast rollback/deactivation.
 
-Generated automations are untrusted until verification and approvals pass.
+Generated automations are untrusted until verification and approvals pass, and every synthesis decision should remain traceable to session-scoped evidence and approval history.
 
 ## Candidate trigger sources
 
@@ -135,11 +135,14 @@ This rollout is intentionally additive to core Playbook priorities, not a pivot 
 Automation Synthesis should remain downstream of Playbook's deterministic trust stack:
 
 - **Repository memory / longitudinal state:** synthesis quality should improve from recurring repository history, not one-off prompts.
-- **Evidence graph / trust model:** generated automations should carry evidence links from trigger -> synthesis -> verification -> approval.
+- **Session + evidence layer:** synthesis should consume session-scoped evidence envelopes (trigger context, command lineage, artifacts, findings, approvals) before any memory/promotion path is considered.
+- **Evidence graph / trust model:** generated automations should carry evidence links from trigger -> synthesis -> verification -> approval, with provenance preserved for later audits.
 - **Policy/control plane:** approval, permission, and execution boundaries should be centrally governed across CLI/CI/API surfaces.
 - **Human approval surfaces:** PR checks, CI gates, and future dashboard/API review flows should expose explicit approve/deny transitions.
 - **Longitudinal runtime learning:** post-deployment outcomes should feed deterministic learning loops for template refinement and rollback policy tightening.
 
 Rule: synthesized automation remains untrusted until verification evidence is complete and required approvals pass.
+
+Rule: verification remains the trust boundary even when synthesis quality, session evidence, or approval history appears strong.
 
 Failure mode to avoid: evidence-poor automation that appears successful in isolated runs but lacks policy- and trust-linked runtime lineage.

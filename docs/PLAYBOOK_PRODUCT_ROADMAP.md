@@ -401,12 +401,13 @@ Failure Mode: Roadmap inflation from treating platform direction as near-term co
 1. knowledge persistence
 2. knowledge compaction / promotion
 3. repo longitudinal state
-4. trust / evidence model
-5. control plane
-6. execution orchestration hardening
-7. multi-repo transfer
-8. interface surfaces
-9. capability / model routing
+4. session envelope + evidence model
+5. trust / evidence model hardening
+6. control plane
+7. execution orchestration hardening
+8. multi-repo transfer
+9. interface surfaces
+10. capability / model routing
 
 This ordering is a dependency recommendation, not an active delivery commitment.
 
@@ -435,7 +436,19 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - inside the near-term window only for current deterministic compaction foundations; broader persistence/promotion runtime is outside the current 4-week plan.
 
-#### 3. Trust / Evidence
+#### 3. Session + Evidence Envelope
+
+- **Already exists today**
+  - deterministic command artifacts (`.playbook/repo-index.json`, findings/plan outputs, and verify/apply execution outputs) provide the substrate that a session envelope must compose.
+- **Partially defined**
+  - evidence-linked findings/plans and trust-boundary language exist, but there is not yet a first-class canonical session contract across actor, refs, command chain, approvals, and promotion-candidate lineage.
+- **Future work**
+  - standardize the Session envelope and Evidence provenance model described in `docs/architecture/PLAYBOOK_SESSION_EVIDENCE_ARCHITECTURE.md`.
+  - require deterministic evidence references for policy decisions, promotion candidates, and future automation synthesis inputs.
+- **Execution window**
+  - outside the current near-term execution window except for existing remediation/evidence hardening already in progress.
+
+#### 4. Trust / Evidence Hardening
 
 - **Already exists today**
   - deterministic findings, evidence-linked plans, remediation trust boundaries, and private-first local execution are current product constraints.
@@ -446,7 +459,7 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - outside the current near-term execution window beyond existing remediation/evidence hardening already underway.
 
-#### 4. Policy / Control Plane
+#### 5. Policy / Control Plane
 
 - **Already exists today**
   - `verify`, remediation safety rules, CI validation, and docs/roadmap contract enforcement already function as local deterministic policy gates.
@@ -457,7 +470,7 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - outside the current near-term execution window except for active delivery-system and remediation-hardening work already committed elsewhere.
 
-#### 5. Execution Orchestration
+#### 6. Execution Orchestration
 
 - **Already exists today**
   - reviewed `verify -> plan -> apply -> verify` execution loops, CLI-first execution, and CI-safe remediation workflows are implemented.
@@ -468,7 +481,7 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - near-term work is limited to current remediation contract hardening; broader orchestration expansion is outside the 4-week plan.
 
-#### 6. Longitudinal State / Learning
+#### 7. Longitudinal State / Learning
 
 - **Already exists today**
   - current artifacts preserve point-in-time repository intelligence, findings, plans, and some internal knowledge lifecycle state.
@@ -479,7 +492,7 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - outside the current near-term execution window.
 
-#### 7. Multi-Repo Knowledge Transfer
+#### 8. Multi-Repo Knowledge Transfer
 
 - **Already exists today**
   - external repository targeting and bounded pilot execution exist today through `--repo` and `playbook pilot --repo <path>`.
@@ -490,7 +503,7 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - outside the current near-term execution window beyond current external pilot/runtime hardening.
 
-#### 8. Interface Surfaces
+#### 9. Interface Surfaces
 
 - **Already exists today**
   - CLI, JSON command contracts, GitHub/CI formatting surfaces, AI contract/bootstrap artifacts, and demo/docs surfaces are implemented.
@@ -501,7 +514,7 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - outside the current near-term execution window except for current product-truth/documentation packaging work.
 
-#### 9. Capability / Model Routing
+#### 10. Capability / Model Routing
 
 - **Already exists today**
   - deterministic routing is presently command- and contract-driven rather than model-driven; Playbook prefers explicit command surfaces and repository intelligence artifacts over open-ended inference.
@@ -950,17 +963,19 @@ Use a layered phase model so each phase compounds directly on the previous one:
    Risk signals, impact-aware sequencing, and risk-shaped remediation prioritization.
 8. **Phase 8 â€” AI Repository Contract**  
    Machine-readable AI-operability contract and enforcement rules.
-9. **Phase 9 â€” AI Execution Runtime**  
-   Agent orchestration that consumes repository intelligence + AI contract and obeys deterministic mutation workflow.
-10. **Phase 10 â€” Autonomous Maintenance (Policy-Gated)**  
+9. **Phase 9 â€” Session + Evidence Layer**  
+   Session envelope and evidence provenance contracts that bind actor context, command lineage, approvals, and deterministic artifact references.
+10. **Phase 10 â€” AI Execution Runtime**  
+   Agent orchestration that consumes repository intelligence + AI contract + session/evidence controls and obeys deterministic mutation workflow.
+11. **Phase 11 â€” Autonomous Maintenance (Policy-Gated)**  
    Recurring maintenance execution modes with approval and policy controls.
-11. **Phase 11 â€” Repository Learning Loop (Human-Reviewed)**  
+12. **Phase 12 â€” Repository Learning Loop (Human-Reviewed)**  
    Pattern detection and candidate improvements from repeated findings/remediations/query usage, including pattern mining from repeated findings, remediation clustering, candidate rule synthesis, invariant discovery, doctrine promotion candidates, memory compaction, and graph-informed learning artifacts. Outputs remain candidate knowledge artifacts until human review promotes them to enforced governance.
 
 Reasoning for reordering:
 - Separates repository understanding (read runtime) from repository mutation (change runtime).
 - Makes intelligence and context efficiency foundational before AI runtime expansion.
-- Ensures advanced automation is gated by deterministic contracts and mutation safety.
+- Ensures advanced automation is gated by deterministic contracts, session evidence, policy approvals, and mutation safety.
 
 ### Missing Capabilities to Formalize
 
