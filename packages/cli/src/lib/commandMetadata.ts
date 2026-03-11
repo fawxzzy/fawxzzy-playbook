@@ -13,7 +13,7 @@ export type CommandMetadata = {
   onboardingPriority: number | null;
   canonicalSequence: number | null;
   productFacing: boolean;
-  example: string;
+  exampleArgs: string;
   machineReadable: boolean;
 };
 
@@ -28,7 +28,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: true,
-    example: 'pnpm playbook analyze --json',
+    exampleArgs: 'analyze --json',
     machineReadable: true
   },
   {
@@ -41,7 +41,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: 8,
     canonicalSequence: 8,
     productFacing: true,
-    example: 'pnpm playbook verify --ci --json',
+    exampleArgs: 'verify --ci --json',
     machineReadable: true
   },
   {
@@ -54,7 +54,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: 9,
     canonicalSequence: 9,
     productFacing: true,
-    example: 'pnpm playbook plan --json',
+    exampleArgs: 'plan --json',
     machineReadable: true
   },
   {
@@ -67,7 +67,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: 10,
     canonicalSequence: 10,
     productFacing: true,
-    example: 'pnpm playbook apply --from-plan .playbook/plan.json',
+    exampleArgs: 'apply --from-plan .playbook/plan.json',
     machineReadable: true
   },
   {
@@ -80,7 +80,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: true,
-    example: 'pnpm playbook analyze-pr --json',
+    exampleArgs: 'analyze-pr --json',
     machineReadable: true
   },
   {
@@ -93,7 +93,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: true,
-    example: 'pnpm playbook doctor --fix --dry-run',
+    exampleArgs: 'doctor --fix --dry-run',
     machineReadable: true
   },
   {
@@ -106,7 +106,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: true,
-    example: 'pnpm playbook diagram --repo . --out docs/ARCHITECTURE_DIAGRAMS.md',
+    exampleArgs: 'diagram --repo . --out docs/ARCHITECTURE_DIAGRAMS.md',
     machineReadable: false
   },
   {
@@ -119,7 +119,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: true,
-    example: 'pnpm playbook docs audit --json',
+    exampleArgs: 'docs audit --json',
     machineReadable: true
   },
   {
@@ -132,7 +132,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: true,
-    example: 'pnpm playbook audit architecture --json',
+    exampleArgs: 'audit architecture --json',
     machineReadable: true
   },
   {
@@ -145,7 +145,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: true,
-    example: 'pnpm playbook rules --json',
+    exampleArgs: 'rules --json',
     machineReadable: true
   },
   {
@@ -158,7 +158,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: true,
-    example: 'pnpm playbook schema verify --json',
+    exampleArgs: 'schema verify --json',
     machineReadable: true
   },
   {
@@ -171,7 +171,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: 3,
     canonicalSequence: 3,
     productFacing: true,
-    example: 'pnpm playbook context --json',
+    exampleArgs: 'context --json',
     machineReadable: true
   },
   {
@@ -184,7 +184,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: 1,
     canonicalSequence: 1,
     productFacing: true,
-    example: 'pnpm playbook ai-context --json',
+    exampleArgs: 'ai-context --json',
     machineReadable: true
   },
   {
@@ -197,7 +197,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: 2,
     canonicalSequence: 2,
     productFacing: true,
-    example: 'pnpm playbook ai-contract --json',
+    exampleArgs: 'ai-contract --json',
     machineReadable: true
   },
   {
@@ -210,7 +210,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: true,
-    example: 'pnpm playbook contracts --json',
+    exampleArgs: 'contracts --json',
     machineReadable: true
   },
   {
@@ -223,7 +223,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: 4,
     canonicalSequence: 4,
     productFacing: true,
-    example: 'pnpm playbook index --json',
+    exampleArgs: 'index --json',
     machineReadable: true
   },
   {
@@ -236,7 +236,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: true,
-    example: 'pnpm playbook graph --json',
+    exampleArgs: 'graph --json',
     machineReadable: true
   },
   {
@@ -249,7 +249,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: 5,
     canonicalSequence: 5,
     productFacing: true,
-    example: 'pnpm playbook query modules --json',
+    exampleArgs: 'query modules --json',
     machineReadable: true
   },
   {
@@ -262,7 +262,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: true,
-    example: 'pnpm playbook deps workouts --json',
+    exampleArgs: 'deps workouts --json',
     machineReadable: true
   },
   {
@@ -275,7 +275,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: 7,
     canonicalSequence: 7,
     productFacing: true,
-    example: 'pnpm playbook ask "where should a new feature live?" --repo-context --json',
+    exampleArgs: 'ask "where should a new feature live?" --repo-context --json',
     machineReadable: true
   },
   {
@@ -288,7 +288,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: 6,
     canonicalSequence: 6,
     productFacing: true,
-    example: 'pnpm playbook explain architecture --json',
+    exampleArgs: 'explain architecture --json',
     machineReadable: true
   },
   {
@@ -301,7 +301,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: false,
-    example: 'pnpm playbook demo',
+    exampleArgs: 'demo',
     machineReadable: false
   },
   {
@@ -314,7 +314,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: false,
-    example: 'pnpm playbook init',
+    exampleArgs: 'init',
     machineReadable: true
   },
   {
@@ -327,7 +327,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: false,
-    example: 'pnpm playbook fix --dry-run',
+    exampleArgs: 'fix --dry-run',
     machineReadable: true
   },
   {
@@ -340,7 +340,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: false,
-    example: 'pnpm playbook status --json',
+    exampleArgs: 'status --json',
     machineReadable: true
   },
   {
@@ -353,7 +353,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: false,
-    example: 'pnpm playbook upgrade --check --json',
+    exampleArgs: 'upgrade --check --json',
     machineReadable: true
   },
   {
@@ -366,7 +366,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: false,
-    example: 'pnpm playbook session --help',
+    exampleArgs: 'session --help',
     machineReadable: true
   }
 ];

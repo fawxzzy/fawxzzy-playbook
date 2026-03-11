@@ -120,6 +120,19 @@ pnpm playbook demo
 
 `pnpm playbook demo` follows the same canonical serious-user ladder (`ai-context -> ai-contract -> context -> index -> query/explain -> verify -> plan -> apply -> verify`) and does not use `fix` as the primary onboarding path.
 
+### External repo targeting
+
+Use `--repo <path>` to run Playbook from this monorepo against another local repository without changing directories:
+
+```bash
+pnpm playbook --repo ../fawxzzy-fitness ai-context --json
+pnpm playbook --repo ../fawxzzy-fitness index --json
+pnpm playbook --repo ../fawxzzy-fitness query modules --json
+pnpm playbook --repo ../fawxzzy-fitness verify --json
+```
+
+This keeps `pnpm playbook <command>` as the canonical invocation while letting operators target external repositories deterministically from a single working checkout.
+
 ## Example Output
 
 `pnpm playbook verify` and `pnpm playbook plan` provide deterministic, reviewable output for both humans and AI agents. For complete walkthrough output, use the official demo repository:
