@@ -168,6 +168,8 @@ Do not hand-edit entries inside the managed markers.
 
 - `analyze`: Analyze project stack
   - Example: `pnpm playbook analyze --json`
+- `pilot`: Run deterministic baseline external repository analysis in one command
+  - Example: `pnpm playbook pilot --repo "./target-repo" --json`
 - `verify`: Verify governance rules
   - Example: `pnpm playbook verify --ci --json`
 - `plan`: Generate a structured fix plan from rule findings
@@ -235,6 +237,7 @@ Do not hand-edit entries inside the managed markers.
 | Command | Example |
 | --- | --- |
 | `analyze` | `pnpm playbook analyze --json` |
+| `pilot` | `pnpm playbook pilot --repo "./target-repo" --json` |
 | `verify` | `pnpm playbook verify --ci --json` |
 | `plan` | `pnpm playbook plan --json` |
 | `apply` | `pnpm playbook apply --from-plan .playbook/plan.json` |

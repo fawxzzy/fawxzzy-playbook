@@ -78,6 +78,7 @@ try {
   runCommand({ args: ['doctor'], cwd: projectDir, artifactFile: '.playbook/test-artifacts/doctor.txt' });
   runCommand({ args: ['ask', 'what architecture is this repo?'], cwd: projectDir, artifactFile: '.playbook/test-artifacts/ask.txt' });
   runCommand({ args: ['query', 'modules', '--json', '--out', '.playbook/test-artifacts/query.json'], cwd: projectDir, artifactFile: '.playbook/test-artifacts/query.json', useCliOut: true });
+  runCommand({ args: ['pilot', '--repo', projectDir, '--json'], cwd: projectDir, artifactFile: '.playbook/test-artifacts/pilot.json' });
   runCommand({ args: ['diagram', '--repo', '.', '--out', 'tmp/diagram.md'], cwd: projectDir, artifactFile: '.playbook/test-artifacts/diagram.txt' });
 
   const diagramPath = path.join(projectDir, 'tmp', 'diagram.md');

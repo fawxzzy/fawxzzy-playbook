@@ -11,10 +11,17 @@ type CommandContext = {
   quiet: boolean;
 };
 
+type CommandRunResult =
+  | number
+  | {
+      exitCode: number;
+      childCommands?: string[];
+    };
+
 type RegisteredCommand = {
   name: string;
   description: string;
-  run: (context: CommandContext) => Promise<number>;
+  run: (context: CommandContext) => Promise<CommandRunResult>;
 };
 
 const parseFlag = (allArgs: string[], flag: string): boolean => allArgs.includes(flag);
@@ -57,7 +64,7 @@ const parseAnalyzePrFormat = (allArgs: string[], globalFormat: 'text' | 'json'):
   return format === 'json' ? 'json' : 'text';
 };
 
-const commandRunners: Record<string, (context: CommandContext) => Promise<number>> = {
+const commandRunners: Record<string, (context: CommandContext) => Promise<CommandRunResult>> = {
   demo: async ({ cwd, format, quiet }) => {
     const { runDemo } = await import('./demo.js');
     return runDemo(cwd, { format, quiet });
@@ -75,6 +82,14 @@ const commandRunners: Record<string, (context: CommandContext) => Promise<number
   analyze: async ({ cwd, ci, explain, format, quiet }) => {
     const { runAnalyze } = await import('./analyze.js');
     return runAnalyze(cwd, { ci, explain, format, quiet });
+  },
+  pilot: async ({ cwd, commandArgs, format, quiet }) => {
+    const { runPilot } = await import('./pilot.js');
+    return runPilot(cwd, {
+      format,
+      quiet,
+      repo: parseOptionValue(commandArgs, '--repo')
+    });
   },
   'analyze-pr': async ({ cwd, commandArgs, format, quiet }) => {
     const { runAnalyzePr } = await import('./analyzePr.js');
@@ -235,6 +250,7 @@ const commandOrder = [
   'demo',
   'init',
   'analyze',
+  'pilot',
   'analyze-pr',
   'verify',
   'plan',
@@ -284,11 +300,24 @@ export const listRegisteredCommands = (): RegisteredCommand[] => [...commandRegi
 
 export const hasRegisteredCommand = (commandName: string): boolean => commandMap.has(commandName);
 
-export const runRegisteredCommand = async (commandName: string, context: CommandContext): Promise<number> => {
+export type CommandExecutionResult = {
+  exitCode: number;
+  childCommands: string[];
+};
+
+export const runRegisteredCommand = async (commandName: string, context: CommandContext): Promise<CommandExecutionResult> => {
   const command = commandMap.get(commandName);
   if (!command) {
-    return ExitCode.Failure;
+    return { exitCode: ExitCode.Failure, childCommands: [] };
   }
 
-  return command.run(context);
+  const result = await command.run(context);
+  if (typeof result === 'number') {
+    return { exitCode: result, childCommands: [] };
+  }
+
+  return {
+    exitCode: result.exitCode,
+    childCommands: result.childCommands ?? []
+  };
 };

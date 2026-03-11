@@ -86,4 +86,117 @@ describe('runtime observability artifacts', () => {
     expect(coverageTrend.entries.length).toBeGreaterThanOrEqual(2);
     expect(analyzerHistory.find((entry) => entry.analyzer_contract_version === '1.0')?.runs).toBeGreaterThanOrEqual(2);
   });
+
+  it('records pilot as one top-level cycle with child phases', () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-pilot-runtime-'));
+    const targetRepo = path.join(tempRoot, 'pilot-target');
+    fs.mkdirSync(path.join(targetRepo, 'src', 'features'), { recursive: true });
+    fs.writeFileSync(
+      path.join(targetRepo, 'package.json'),
+      JSON.stringify({ name: 'pilot-target', version: '0.0.1', scripts: { test: 'echo ok' } }, null, 2),
+      'utf8'
+    );
+    fs.writeFileSync(path.join(targetRepo, 'src', 'features', 'index.ts'), 'export const ready = true;\n', 'utf8');
+    fs.mkdirSync(path.join(targetRepo, '.next', 'cache', 'webpack'), { recursive: true });
+    fs.writeFileSync(path.join(targetRepo, '.next', 'cache', 'webpack', 'state.pack'), 'cached-build-output\n', 'utf8');
+    fs.mkdirSync(path.join(targetRepo, 'playwright-report'), { recursive: true });
+    fs.writeFileSync(path.join(targetRepo, 'playwright-report', 'index.html'), '<html>report</html>\n', 'utf8');
+    fs.writeFileSync(path.join(targetRepo, 'tmp_file.txt'), 'temporary output\n', 'utf8');
+
+    const scriptPath = path.resolve(process.cwd(), '..', '..', 'scripts', 'run-playbook.mjs');
+    const pilotRaw = execFileSync('node', [scriptPath, 'pilot', '--repo', targetRepo, '--json'], {
+      cwd: process.cwd(),
+      encoding: 'utf8'
+    });
+    const pilotSummary = JSON.parse(pilotRaw.slice(pilotRaw.indexOf('{'))) as {
+      command: string;
+      artifactPathsWritten: string[];
+    };
+
+    expect(pilotSummary.command).toBe('pilot');
+    expect(pilotSummary.artifactPathsWritten).toContain('.playbook/findings.json');
+    expect(pilotSummary.artifactPathsWritten).toContain('.playbook/plan.json');
+
+    const runtimeRoot = path.join(targetRepo, '.playbook', 'runtime');
+    const coverage = JSON.parse(fs.readFileSync(path.join(runtimeRoot, 'current', 'coverage.json'), 'utf8')) as { cycle_id: string };
+    const telemetry = JSON.parse(fs.readFileSync(path.join(runtimeRoot, 'current', 'telemetry.json'), 'utf8')) as {
+      cycle_id: string;
+      command_call_count: number;
+      command_call_count_by_command: Record<string, number>;
+    };
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(runtimeRoot, 'cycles', coverage.cycle_id, 'manifest.json'), 'utf8')
+    ) as {
+      trigger_command: string;
+      child_commands: string[];
+    };
+
+    expect(telemetry.cycle_id).toBe(coverage.cycle_id);
+    expect(manifest.trigger_command).toBe('pilot');
+    expect(manifest.child_commands).toEqual(['context', 'index', 'query modules', 'verify', 'plan']);
+    expect(telemetry.command_call_count).toBe(6);
+    expect(telemetry.command_call_count_by_command.pilot).toBe(1);
+    expect(telemetry.command_call_count_by_command.context).toBe(1);
+    expect(telemetry.command_call_count_by_command.index).toBe(1);
+    expect(telemetry.command_call_count_by_command['query modules']).toBe(1);
+    expect(telemetry.command_call_count_by_command.verify).toBe(1);
+    expect(telemetry.command_call_count_by_command.plan).toBe(1);
+
+    const summaryFile = JSON.parse(
+      fs.readFileSync(path.join(targetRepo, '.playbook', 'pilot-summary.json'), 'utf8')
+    ) as {
+      scanWasteCandidates?: string[];
+      topExpensivePathClasses?: Array<{ path_class: string }>;
+      lowValuePathHandling?: { ignored_files: number; pruned_directories: number };
+    };
+    expect(summaryFile.scanWasteCandidates).toEqual(expect.arrayContaining(['.next/cache/', 'playwright-report/']));
+    expect(summaryFile.topExpensivePathClasses?.length ?? 0).toBeGreaterThan(0);
+    expect(summaryFile.lowValuePathHandling?.ignored_files ?? 0).toBeGreaterThan(0);
+  });
+
+  it('classifies low-value paths and exposes ignore candidates in coverage artifacts', () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-runtime-boundary-'));
+    const targetRepo = path.join(tempRoot, 'consumer-repo');
+    fs.mkdirSync(path.join(targetRepo, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(targetRepo, 'package.json'), JSON.stringify({ name: 'consumer', version: '0.0.1' }, null, 2), 'utf8');
+    fs.writeFileSync(path.join(targetRepo, 'src', 'index.ts'), 'export const ok = true;\n', 'utf8');
+    fs.mkdirSync(path.join(targetRepo, 'nested', '.git', 'objects', 'pack'), { recursive: true });
+    fs.writeFileSync(path.join(targetRepo, 'nested', '.git', 'objects', 'pack', 'pack.dat'), 'pack', 'utf8');
+    fs.mkdirSync(path.join(targetRepo, '.next', 'cache', 'webpack'), { recursive: true });
+    fs.writeFileSync(path.join(targetRepo, '.next', 'cache', 'webpack', 'state.pack'), 'cache', 'utf8');
+    fs.mkdirSync(path.join(targetRepo, 'playwright-report'), { recursive: true });
+    fs.writeFileSync(path.join(targetRepo, 'playwright-report', 'index.html'), '<html/>', 'utf8');
+    fs.writeFileSync(path.join(targetRepo, 'tmp_file.txt'), 'tmp', 'utf8');
+
+    const scriptPath = path.resolve(process.cwd(), '..', '..', 'scripts', 'run-playbook.mjs');
+    execFileSync('node', [scriptPath, '--repo', targetRepo, 'index', '--json'], {
+      cwd: process.cwd(),
+      encoding: 'utf8'
+    });
+
+    const coverage = JSON.parse(
+      fs.readFileSync(path.join(targetRepo, '.playbook', 'runtime', 'current', 'coverage.json'), 'utf8')
+    ) as {
+      unknown_areas: string[];
+      observations: {
+        file_inventory: {
+          pruned_directories: Array<{ path: string; path_class: string }>;
+          ignore_candidate_paths: string[];
+          path_class_counts: Record<string, number>;
+        };
+      };
+    };
+
+    expect(coverage.unknown_areas).toContain('classified-low-value-paths');
+    expect(coverage.observations.file_inventory.pruned_directories.map((entry) => entry.path)).toEqual(
+      expect.arrayContaining(['.next/cache', 'nested/.git', 'playwright-report'])
+    );
+    expect(coverage.observations.file_inventory.pruned_directories.map((entry) => entry.path_class)).toEqual(
+      expect.arrayContaining(['build-cache', 'vcs-internal', 'generated-report'])
+    );
+    expect(coverage.observations.file_inventory.ignore_candidate_paths).toEqual(
+      expect.arrayContaining(['.git/', '.next/cache/', 'playwright-report/', 'tmp_file.txt'])
+    );
+    expect(coverage.observations.file_inventory.path_class_counts.unknown).toBeGreaterThan(0);
+  });
 });

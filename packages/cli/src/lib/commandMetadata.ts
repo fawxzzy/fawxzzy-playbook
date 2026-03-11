@@ -32,6 +32,19 @@ export const commandMetadata: CommandMetadata[] = [
     machineReadable: true
   },
   {
+    name: 'pilot',
+    description: 'Run deterministic baseline external repository analysis in one command',
+    category: 'Core',
+    role: 'bootstrap',
+    lifecycle: 'canonical',
+    discoverability: 'primary',
+    onboardingPriority: null,
+    canonicalSequence: null,
+    productFacing: true,
+    exampleArgs: 'pilot --repo "./target-repo" --json',
+    machineReadable: true
+  },
+  {
     name: 'verify',
     description: 'Verify governance rules',
     category: 'Core',

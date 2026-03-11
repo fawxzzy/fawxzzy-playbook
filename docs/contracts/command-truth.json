@@ -232,6 +232,18 @@
       "example": "pnpm playbook init"
     },
     {
+      "name": "pilot",
+      "category": "Core",
+      "role": "bootstrap",
+      "lifecycle": "canonical",
+      "discoverability": "primary",
+      "onboardingPriority": null,
+      "canonicalSequence": null,
+      "productFacing": true,
+      "machineReadable": true,
+      "example": "pnpm playbook pilot --repo \"./target-repo\" --json"
+    },
+    {
       "name": "plan",
       "category": "Core",
       "role": "remediation",
@@ -342,6 +354,7 @@
     "explain",
     "graph",
     "index",
+    "pilot",
     "plan",
     "query",
     "rules",

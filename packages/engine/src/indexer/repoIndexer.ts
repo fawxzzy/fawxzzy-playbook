@@ -3,7 +3,7 @@ import path from 'node:path';
 import { loadConfig } from '../config/load.js';
 import { getCoreRules } from '../rules/coreRules.js';
 import { scanWorkspaceDeps } from '../diagrams/scanWorkspaceDeps.js';
-import { isPlaybookIgnored, parsePlaybookIgnore } from './playbookIgnore.js';
+import { getDefaultPlaybookIgnoreSuggestions, isPlaybookIgnored, parsePlaybookIgnore } from './playbookIgnore.js';
 
 export type RepositoryModule = {
   name: string;
@@ -210,9 +210,28 @@ const detectModuleDependenciesFromSrc = (
 };
 
 const detectModules = (projectRoot: string, architecture: string): RepositoryModule[] => {
-  const workspaceIgnoreRules = parsePlaybookIgnore(projectRoot).filter((rule) => !rule.negated).map((rule) => rule.pattern);
+  const explicitIgnoreRules = parsePlaybookIgnore(projectRoot)
+    .filter((rule) => !rule.negated)
+    .map((rule) => rule.pattern);
+  const defaultIgnoreRules = getDefaultPlaybookIgnoreSuggestions().map((entry) => {
+    const normalized = entry.trim().replace(/\\/g, '/').replace(/^\//, '');
+    if (normalized.length === 0) {
+      return '';
+    }
+    if (normalized.endsWith('/')) {
+      return `${normalized}**`;
+    }
+    if (!normalized.includes('*') && !normalized.includes('/')) {
+      return `**/${normalized}/**`;
+    }
+    if (!normalized.includes('*') && normalized.includes('/')) {
+      return `${normalized}/**`;
+    }
+    return normalized;
+  }).filter((entry) => entry.length > 0);
+  const workspaceIgnoreRules = Array.from(new Set([...defaultIgnoreRules, ...explicitIgnoreRules]));
   const workspaceGraph = scanWorkspaceDeps(projectRoot, {
-    excludeGlobs: workspaceIgnoreRules
+    excludeGlobs: workspaceIgnoreRules.length > 0 ? workspaceIgnoreRules : undefined
   });
   if (workspaceGraph.workspaces.length > 0) {
     const depMap = new Map(workspaceGraph.workspaces.map((workspace) => [workspace.name, new Set<string>()]));

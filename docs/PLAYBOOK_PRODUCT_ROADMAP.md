@@ -1,4 +1,4 @@
-PLAYBOOK – 12 MONTH PRODUCT ROADMAP
+﻿PLAYBOOK â€“ 12 MONTH PRODUCT ROADMAP
 
 Deterministic Repo Runtime and Trust Layer for Software Engineering
 
@@ -31,15 +31,15 @@ prevents architectural drift
 Playbook sits between humans/AI coding agents and repositories as a contract-first operating layer.
 
 Humans + AI Agents
-        ↓
+        â†“
      Playbook
-        ↓
+        â†“
    Repository
 CORE PRINCIPLES
 
 These rules guide all development decisions.
 
-1️⃣ CLI First
+1ï¸âƒ£ CLI First
 
 Playbook must always function:
 
@@ -57,7 +57,7 @@ pnpm playbook verify
 
 must always work independently.
 
-2️⃣ Deterministic Governance
+2ï¸âƒ£ Deterministic Governance
 
 Rules must be:
 
@@ -78,22 +78,22 @@ CI contract stance:
 
 Failure Mode: If CI mixes product validation with maintenance tasks, pipelines become slow and fragile.
 
-3️⃣ Knowledge Lifecycle (Internal-First)
+3ï¸âƒ£ Knowledge Lifecycle (Internal-First)
 
 Every meaningful engineering change should produce evidence, but evidence is not automatically reusable knowledge.
 
 Playbook must enforce a deterministic knowledge lifecycle:
 
 Observation / Extraction
-      ↓
+      â†“
 Canonicalization
-      ↓
+      â†“
 Deterministic Comparison
-      ↓
+      â†“
 Bucketing / Compaction
-      ↓
+      â†“
 Promotion
-      ↓
+      â†“
 Retirement
 
 Reasoning-engine lifecycle bridge (implementation-facing):
@@ -193,9 +193,9 @@ Failure Mode:
 Using a second repo too early without bounded rollout turns a proving ground into a noise amplifier.
 
 
-## External Pilot Integration — Fawxzzy Fitness
+## External Pilot Integration â€” Fawxzzy Fitness
 
-Status: **In progress — first-class external targeting delivered (`--repo`) with deterministic target-repo artifacts and fixture coverage, and proven on two independent pilot repositories (FawxzzyFitness and Nat1-Games). Hardening delivered: deterministic machine-written JSON artifact output via `--out` for external runtime workflows, plus deterministic invalid-artifact guardrails for risk/query readers.**
+Status: **Delivered - first-class external targeting (`--repo`) and first-class one-command baseline external analysis via `playbook pilot --repo <path>`, including deterministic findings/plan artifact writes and pilot runtime cycle phase telemetry.**
 
 This roadmap slice establishes the next operator-safe migration layer for running Playbook from this repository against the primary external pilot repository while preserving legacy pilot tooling until parity is proven.
 
@@ -204,13 +204,13 @@ Current slice establishes:
 - coexistence-first migration policy for external pilot rollout
 - legacy Playbook inventory framework (`KEEP_TEMPORARILY`, `REPLACE_WITH_NEW_PLAYBOOK`, `INVESTIGATE_USAGE`, `REMOVE_AFTER_PARITY`)
 - phased removal strategy (`Coexistence -> Capability Mapping -> Parity Validation -> Controlled Removal`)
-- pilot execution contract for canonical external-runbook commands using `pnpm playbook --repo <path> ...`
-- first-class external repository targeting via global `--repo <path>` on canonical command surface
+- pilot execution contract centered on `pnpm playbook pilot --repo <path>` for first external baseline analysis
+- first-class external repository targeting via global `--repo <path>` and command-local `playbook pilot --repo <path>` on canonical command surface
 - deterministic artifact generation in external repositories under `<target>/.playbook/`
 - coexistence-first pilot execution without legacy removal in the target repository
 - fixture-based coverage for external runtime behavior and positional parsing (`--repo <fixture> query modules --json`)
 - independent external pilot validation confirms runtime targeting works beyond the Playbook repository (FawxzzyFitness and Nat1-Games)
-- deterministic machine-written JSON artifact output for machine-consumed findings/plan flows (`--json --out`)
+- deterministic machine-written JSON artifact output for machine-consumed findings/plan flows (`--json --out`) and direct pilot-owned artifact writes (`.playbook/findings.json`, `.playbook/plan.json`)
 - deterministic invalid-artifact read guardrails for risk/query flows, including explicit corruption errors and CLI-owned regeneration guidance
 - next hardening slice converts pilot success into a generic onboarding contract (optional `playbook.config.json`, optional `.playbookignore`, and Playbook-owned `.playbook/` runtime state)
 
@@ -219,50 +219,50 @@ Reference plan:
 - `docs/roadmap/EXTERNAL_PILOT_FAWXZZY_FITNESS.md`
 
 
-Rule — Machine-Consumed Artifacts Must Be CLI-Written
+Rule â€” Machine-Consumed Artifacts Must Be CLI-Written
 If downstream commands read generated JSON artifacts, those artifacts must be written by the CLI itself rather than relying on shell redirection.
 
-Pattern — First-Class Artifact Emission
+Pattern â€” First-Class Artifact Emission
 Structured runtime artifacts should be emitted through explicit output flags with controlled encoding, directory creation, and deterministic content boundaries.
 
-Failure Mode — Shell Redirect Artifact Corruption
+Failure Mode â€” Shell Redirect Artifact Corruption
 Machine-readable JSON captured through wrappers or shell redirection can be silently corrupted by banner text, encoding differences, or shell behavior.
 
-Failure Mode — Opaque JSON Parse Crash
+Failure Mode â€” Opaque JSON Parse Crash
 When corrupted runtime artifacts are parsed without a guardrail, later commands fail far from the original write site, making the real bug harder to diagnose.
 
-Pattern — Artifact Consumers Treat Prior JSON as Untrusted Input
+Pattern â€” Artifact Consumers Treat Prior JSON as Untrusted Input
 Commands that consume prior runtime artifacts should treat those files as untrusted inputs and degrade gracefully when artifacts are missing or malformed.
 
-Failure Mode — Hidden Optional Artifact Dependency Crash
+Failure Mode â€” Hidden Optional Artifact Dependency Crash
 A secondary command like index can fail because of a hidden dependency on stale or corrupted `.playbook/*.json` artifacts produced by an earlier workflow step.
 
-Rule — Canonical Operator Surface
+Rule â€” Canonical Operator Surface
 A CLI repo must expose one canonical operator-facing invocation form across docs, templates, generated docs, and roadmap guidance.
 
-Pattern — Generator-Level Truth Enforcement
+Pattern â€” Generator-Level Truth Enforcement
 If a documentation surface is generated, command normalization must be fixed at the metadata/generator layer rather than by patching rendered markdown.
 
-Failure Mode — Command-Surface Drift
+Failure Mode â€” Command-Surface Drift
 When bare commands, npx flows, and direct internal entrypoints are all shown as if they are equivalent truth, humans and agents start planning against the wrong surface.
 
-Failure Mode — External-Repo Coupling
+Failure Mode â€” External-Repo Coupling
 A repo-intelligence system that only works when executed inside its own repo context is not yet a true external runtime.
 
 
-Rule — Optimize for Measurable Coverage, Not Imagined Completeness
+Rule â€” Optimize for Measurable Coverage, Not Imagined Completeness
 A repo-intelligence system should report how much of a repository was analyzable, analyzed, skipped, and unknown instead of claiming total understanding.
 
-Pattern — Versioned Runtime Observability
+Pattern â€” Versioned Runtime Observability
 A durable analysis system should store current state, immutable per-cycle snapshots, and compact history rollups so it can reason about both repo state and its own behavior over time.
 
-Pattern — Observation / Interpretation Split
+Pattern â€” Observation / Interpretation Split
 Observed facts and derived inferences must be stored separately so analyzer upgrades can be distinguished from repository changes.
 
-Failure Mode — Artifact Heap Without Runtime Model
+Failure Mode â€” Artifact Heap Without Runtime Model
 If `.playbook/` only accumulates outputs without cycle boundaries, coverage accounting, and telemetry, the system cannot learn, explain drift, or optimize itself reliably.
 
-Failure Mode — False 100 Percent Analysis
+Failure Mode â€” False 100 Percent Analysis
 If Playbook reports strong conclusions without modeling blind spots, skipped files, unsupported areas, and confidence boundaries, users will overtrust incomplete analysis.
 
 ## Next defining capabilities for reasoning-engine maturity
@@ -287,12 +287,12 @@ Rule:
 Every major subsystem in Playbook must contribute to knowledge formation, compression, governance, or self-reflection.
 
 Pattern:
-Playbook’s novelty is architectural synthesis, not isolated invention of underlying theory.
+Playbookâ€™s novelty is architectural synthesis, not isolated invention of underlying theory.
 
 Failure Mode:
 Treating Playbook as only a tooling layer hides its real product direction and leads to roadmap underreach.
 
-4️⃣ Developer Experience Over Features
+4ï¸âƒ£ Developer Experience Over Features
 
 Adoption depends on:
 
@@ -308,9 +308,9 @@ PRODUCT ARCHITECTURE
 Playbook evolves through three layers.
 
 Playbook CLI (Open Source)
-        ↓
+        â†“
 Governance Engine
-        ↓
+        â†“
 Playbook Cloud (Optional)
 YEAR 1 OBJECTIVE
 
@@ -412,13 +412,13 @@ Conservative non-goals for this track:
 Playbook features follow a structured lifecycle:
 
 Idea
-↓
+â†“
 Improvement Backlog
-↓
+â†“
 Roadmap
-↓
+â†“
 Implemented
-↓
+â†“
 Archived
 
 This keeps the roadmap focused on active commitments while preserving product intelligence discovered during development.
@@ -452,7 +452,7 @@ Future roadmap work should focus on enhancement quality (schema hardening, riche
 
 ## Platform Hardening
 
-Playbook’s long-term reliability depends on deterministic repository artifacts powering higher-level intelligence commands.
+Playbookâ€™s long-term reliability depends on deterministic repository artifacts powering higher-level intelligence commands.
 
 Priority hardening tracks:
 
@@ -771,27 +771,27 @@ Sequencing issues:
 
 Use a layered phase model so each phase compounds directly on the previous one:
 
-1. **Phase 1 — CLI Foundations**  
+1. **Phase 1 â€” CLI Foundations**  
    Deterministic command contracts, distribution reliability, and baseline verification UX.
-2. **Phase 2 — Repository Intelligence Substrate**  
+2. **Phase 2 â€” Repository Intelligence Substrate**  
    Formalize index contracts for modules, dependencies, test relationships, docs mapping, ownership, and architecture metadata.
-3. **Phase 3 — Repository Knowledge Graph**  
+3. **Phase 3 â€” Repository Knowledge Graph**  
    Deterministic local graph substrate generated from repository intelligence artifacts.
-4. **Phase 4 — Context Compression Layer**  
+4. **Phase 4 â€” Context Compression Layer**  
    Context bundles, module digests, cached snapshots, and deterministic change-scope assembly.
-5. **Phase 5 — Read Runtime (Query / Explain / Ask / Analyze-PR)**  
+5. **Phase 5 â€” Read Runtime (Query / Explain / Ask / Analyze-PR)**  
    Deterministic architecture reasoning and read-only repository understanding flows.
-6. **Phase 6 — Change Runtime (Verify / Plan / Apply)**  
+6. **Phase 6 â€” Change Runtime (Verify / Plan / Apply)**  
    Deterministic remediation orchestration with explicit plan contracts and mutation boundaries.
-7. **Phase 7 — Risk-Aware Execution**  
+7. **Phase 7 â€” Risk-Aware Execution**  
    Risk signals, impact-aware sequencing, and risk-shaped remediation prioritization.
-8. **Phase 8 — AI Repository Contract**  
+8. **Phase 8 â€” AI Repository Contract**  
    Machine-readable AI-operability contract and enforcement rules.
-9. **Phase 9 — AI Execution Runtime**  
+9. **Phase 9 â€” AI Execution Runtime**  
    Agent orchestration that consumes repository intelligence + AI contract and obeys deterministic mutation workflow.
-10. **Phase 10 — Autonomous Maintenance (Policy-Gated)**  
+10. **Phase 10 â€” Autonomous Maintenance (Policy-Gated)**  
    Recurring maintenance execution modes with approval and policy controls.
-11. **Phase 11 — Repository Learning Loop (Human-Reviewed)**  
+11. **Phase 11 â€” Repository Learning Loop (Human-Reviewed)**  
    Pattern detection and candidate improvements from repeated findings/remediations/query usage, including pattern mining from repeated findings, remediation clustering, candidate rule synthesis, invariant discovery, doctrine promotion candidates, memory compaction, and graph-informed learning artifacts. Outputs remain candidate knowledge artifacts until human review promotes them to enforced governance.
 
 Reasoning for reordering:
@@ -851,7 +851,7 @@ Roadmap documentation must preserve these architectural statements:
 - Future phases should prioritize intelligence quality and contract durability over command-surface growth.
 - A repository learning loop can propose rule/context improvements from observed patterns, with human review required.
 
-PHASE 1 — CLI FOUNDATIONS
+PHASE 1 â€” CLI FOUNDATIONS
 
 Goal:
 Ship a reliable local-first CLI with deterministic contracts for human and machine workflows.
@@ -861,7 +861,7 @@ Core outcomes:
 - Stable command registry and deterministic JSON outputs.
 - Verification-first baseline (`verify`, `plan`, `apply`) for governance enforcement.
 
-PHASE 2 — REPOSITORY INTELLIGENCE
+PHASE 2 â€” REPOSITORY INTELLIGENCE
 
 Goal:
 Build deterministic repository intelligence artifacts that AI systems and developers can trust.
@@ -875,7 +875,7 @@ Intelligence artifacts should include:
 - dependents
 - architecture metadata
 
-PHASE 3 — REPOSITORY KNOWLEDGE GRAPH
+PHASE 3 â€” REPOSITORY KNOWLEDGE GRAPH
 
 Goal:
 Build a deterministic local Repository Knowledge Graph artifact from repository intelligence.
@@ -935,7 +935,7 @@ Current stabilization direction:
 - avoid broad new graph command families when existing command surfaces can absorb deterministic summaries
 - add only low-cost deterministic relationships derivable from indexed repository truth (`contains`, `depends_on`, `governed_by`)
 
-PHASE 4 — AI EFFICIENCY & CONTEXT COMPRESSION
+PHASE 4 â€” AI EFFICIENCY & CONTEXT COMPRESSION
 
 Goal:
 Reduce AI cost/latency while increasing knowledge reuse quality for repository reasoning and remediation.
@@ -955,7 +955,7 @@ Key mechanisms:
 - cached context snapshots
 - deterministic patch scope
 
-PHASE 5 — QUERY SYSTEM
+PHASE 5 â€” QUERY SYSTEM
 
 Goal:
 Enable deterministic repository reasoning through command-surface intelligence queries.
@@ -992,7 +992,7 @@ Output:
 - affected rules
 - architecture boundaries touched
 
-PHASE 6 — DEPENDENCY GRAPH + IMPACT ANALYSIS
+PHASE 6 â€” DEPENDENCY GRAPH + IMPACT ANALYSIS
 
 Goal:
 Use repository dependency edges to make change impact deterministic.
@@ -1006,7 +1006,7 @@ Expected outcomes:
 - expose architectural blast radius for proposed changes
 - prioritize low-impact remediation paths first
 
-PHASE 7 — RISK ANALYSIS
+PHASE 7 â€” RISK ANALYSIS
 
 Goal:
 Add deterministic module-level risk scoring for safer AI and human remediation planning.
@@ -1023,7 +1023,7 @@ Risk model signals should include:
 Expected outcome:
 - safer prioritization of change sequencing and rollout planning.
 
-PHASE 8 — AI REPOSITORY CONTRACT
+PHASE 8 â€” AI REPOSITORY CONTRACT
 
 Status: **Baseline implemented** via `pnpm playbook ai-contract` and `.playbook/ai-contract.json`.
 
@@ -1075,7 +1075,7 @@ This phase formalizes Playbook's repository-to-AI protocol, ensuring AI behavior
 Future standardization direction:
 - Publish `docs/AI_CONTRACT_SPEC.md` as a public AI Contract specification for AI-operable repositories.
 
-PHASE 9 — AI EXECUTION RUNTIME (PLAYBOOK AGENT)
+PHASE 9 â€” AI EXECUTION RUNTIME (PLAYBOOK AGENT)
 
 Goal:
 Introduce **Playbook Agent** as an AI execution runtime for repositories.
@@ -1139,7 +1139,7 @@ Playbook should analyze PRs but not author them.
 
 Rule: **Playbook analyzes changes rather than rewriting developer intent.**
 
-PHASE 10 — AUTONOMOUS REPOSITORY MAINTENANCE
+PHASE 10 â€” AUTONOMOUS REPOSITORY MAINTENANCE
 
 Goal:
 Extend Playbook Agent into recurring and CI-driven repository maintenance modes.
@@ -1176,7 +1176,7 @@ Key product pillars:
 
 ## Security Program
 
-Security is a first-class product program for Playbook and is implemented as deterministic, automated process—not manual review.
+Security is a first-class product program for Playbook and is implemented as deterministic, automated processâ€”not manual review.
 
 ### Deterministic Mutation Architecture
 
@@ -1194,11 +1194,11 @@ This execution pipeline preserves both automation and control:
 
 Playbook intentionally separates analysis (`verify`), planning (`plan`), and execution (`apply`) so automated repository changes remain reviewable, policy-gated, and reproducible.
 
-### 1️⃣ Execution Safety (Highest Priority)
+### 1ï¸âƒ£ Execution Safety (Highest Priority)
 
 Secure the core lifecycle:
 
-`index → query/ask/explain → verify → plan → validate → policy → apply → verify`
+`index â†’ query/ask/explain â†’ verify â†’ plan â†’ validate â†’ policy â†’ apply â†’ verify`
 
 Key guarantees:
 
@@ -1220,7 +1220,7 @@ Roadmap milestones:
 - [ ] policy engine gate before apply
 - [ ] deterministic remediation contracts with strict schema + task invariants
 
-### 2️⃣ Release and Supply Chain Integrity
+### 2ï¸âƒ£ Release and Supply Chain Integrity
 
 Ensure Playbook releases are verifiable and tamper-resistant.
 
@@ -1240,7 +1240,7 @@ Automated artifacts:
 - `/artifacts/provenance.json`
 - `/artifacts/signature.cosign`
 
-### 3️⃣ Self-Auditing Security Features
+### 3ï¸âƒ£ Self-Auditing Security Features
 
 Playbook will provide built-in deterministic security intelligence via the same query/verify engine contracts.
 
@@ -1254,15 +1254,15 @@ Planned command surface:
 
 Documentation patterns and rules to encode:
 
-- Rule — No Unreviewed Writes: Playbook must never modify repository files without a diff-based plan and explicit apply step.
-- Rule — Repo Root Security Boundary: all file reads and writes must resolve within the repository root.
-- Pattern — Policy-Gated Remediation: `finding → plan → validation → policy → apply → verify`.
-- Pattern — Evidence-Bound Outputs: plans must reference deterministic findings and source evidence.
-- Failure Mode — Prompt Poisoning via Repository Content: repository text is untrusted evidence and must not influence runtime policy behavior.
-- Failure Mode — Boundary Drift: new commands must not expand file access scope without explicit security review.
-- Rule — Roadmap Automation Check: every new CLI command must include a security verification checklist (path boundary protection, deterministic outputs, plan/apply compatibility, and snapshot tests).
+- Rule â€” No Unreviewed Writes: Playbook must never modify repository files without a diff-based plan and explicit apply step.
+- Rule â€” Repo Root Security Boundary: all file reads and writes must resolve within the repository root.
+- Pattern â€” Policy-Gated Remediation: `finding â†’ plan â†’ validation â†’ policy â†’ apply â†’ verify`.
+- Pattern â€” Evidence-Bound Outputs: plans must reference deterministic findings and source evidence.
+- Failure Mode â€” Prompt Poisoning via Repository Content: repository text is untrusted evidence and must not influence runtime policy behavior.
+- Failure Mode â€” Boundary Drift: new commands must not expand file access scope without explicit security review.
+- Rule â€” Roadmap Automation Check: every new CLI command must include a security verification checklist (path boundary protection, deterministic outputs, plan/apply compatibility, and snapshot tests).
 
-FUTURE DIRECTION — PLAYBOOK PLATFORM VISION
+FUTURE DIRECTION â€” PLAYBOOK PLATFORM VISION
 
 Playbook starts as a CLI-first developer tool, but the platform is intentionally architected so the same analysis engine can power multiple product surfaces.
 
@@ -1293,10 +1293,10 @@ Playbook becomes the governance infrastructure for AI-assisted development.
 
 Equivalent ecosystem role:
 
-Git → version control
-CI → builds
-Sentry → runtime errors
-Playbook → architecture governance
+Git â†’ version control
+CI â†’ builds
+Sentry â†’ runtime errors
+Playbook â†’ architecture governance
 NORTH STAR METRICS
 
 Year 1:
@@ -1351,7 +1351,7 @@ Pattern: **Reviewed Intent Before Execution**
 
 The safest automation model is to generate a machine-readable plan, review it, then execute that exact artifact.
 
-Pattern: **Two-tier backlog (Improvement Backlog → Roadmap)**.
+Pattern: **Two-tier backlog (Improvement Backlog â†’ Roadmap)**.
 
 Use `docs/PLAYBOOK_IMPROVEMENTS.md` to capture emerging ideas; promote only prioritized capabilities into this roadmap.
 
@@ -1525,7 +1525,7 @@ Future enhancement:
 - Added contract-driven security verification stage (`pnpm test:security`) for CI regression protection.
 
 
-## Feature: PB-V1-DEMO-REFRESH-001 — PR-based demo repository refresh automation
+## Feature: PB-V1-DEMO-REFRESH-001 â€” PR-based demo repository refresh automation
 
 Goal: keep committed demo artifacts/docs in `ZachariahRedfield/playbook-demo` synchronized using the branch-accurate local Playbook CLI build without polluting correctness CI.
 
@@ -1544,3 +1544,4 @@ Contract:
 - fail on non-allowlisted mutations
 - configure explicit git author identity and explicit token-based push auth in `--push` mode (`PLAYBOOK_GIT_AUTHOR_*`, `PLAYBOOK_DEMO_GH_TOKEN`/`GH_TOKEN`)
 - open/update PRs only (no direct push to `main`)
+

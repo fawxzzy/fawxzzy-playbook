@@ -3,7 +3,19 @@ import path from 'node:path';
 import { minimatch } from 'minimatch';
 import { toPosixPath } from '../util/paths.js';
 
-const DEFAULT_PLAYBOOK_IGNORE = ['node_modules', 'dist', 'build', 'coverage', '.next', '.playbook/cache'];
+const DEFAULT_PLAYBOOK_IGNORE = [
+  '.git',
+  'node_modules',
+  '.next/cache',
+  'playwright-report',
+  'dist',
+  'build',
+  'coverage',
+  '.playbook/cache',
+  '*.tmp',
+  'tmp',
+  'temp'
+];
 
 export type PlaybookIgnoreRule = {
   pattern: string;

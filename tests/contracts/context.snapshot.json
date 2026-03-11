@@ -21,6 +21,7 @@
       "demo",
       "init",
       "analyze",
+      "pilot",
       "analyze-pr",
       "verify",
       "plan",

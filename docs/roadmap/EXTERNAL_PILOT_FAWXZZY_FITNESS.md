@@ -89,14 +89,10 @@ Use the following deterministic categories while mapping every legacy surface:
 These commands are the canonical execution contract for the pilot:
 
 ```bash
-pnpm playbook --repo ../fawxzzy-fitness context --json
-pnpm playbook --repo ../fawxzzy-fitness index --json
-pnpm playbook --repo ../fawxzzy-fitness query modules --json
-pnpm playbook --repo ../fawxzzy-fitness verify --json --out ../fawxzzy-fitness/.playbook/findings.json
-pnpm playbook --repo ../fawxzzy-fitness plan --json --out ../fawxzzy-fitness/.playbook/plan.json
+pnpm playbook pilot --repo ../fawxzzy-fitness
 ```
 
 Implementation note:
 
-- `--repo` is available in this branch and should be used for external pilot execution.
+- `playbook pilot --repo <path>` is the canonical top-level surface for first external baseline analysis.
 - If the target repository is not present locally, treat the command list as runbook contract and execute when the pilot workspace is mounted.

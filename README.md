@@ -1,4 +1,4 @@
-# Playbook
+﻿# Playbook
 
 Deterministic repo runtime and trust layer for humans and AI agents.
 
@@ -126,39 +126,50 @@ Use `--repo <path>` to run Playbook from this monorepo against another local rep
 
 ```bash
 TARGET_REPO_PATH="../my-repo"
-pnpm playbook --repo "$TARGET_REPO_PATH" context --json
 pnpm playbook --repo "$TARGET_REPO_PATH" index --json
 pnpm playbook --repo "$TARGET_REPO_PATH" query modules --json
-pnpm playbook --repo "$TARGET_REPO_PATH" verify --json --out "$TARGET_REPO_PATH/.playbook/findings.json"
-pnpm playbook --repo "$TARGET_REPO_PATH" plan --json --out "$TARGET_REPO_PATH/.playbook/plan.json"
 ```
 
 This keeps `pnpm playbook <command>` as the canonical invocation while letting operators target external repositories deterministically from a single working checkout.
 
-When `--repo` is set, runtime artifacts are written into the target repository under `.playbook/` (for example `repo-index.json`, `repo-graph.json`, `findings.json`, and `plan.json`).
+When `--repo` is set, runtime artifacts are written into the target repository under `.playbook/` (for example `repo-index.json`, `repo-graph.json`, `findings.json`, `plan.json`, and runtime cycle artifacts).
 
 For machine-consumed JSON artifacts, use CLI-owned output flags (for example `--json --out ...`). Shell redirection is not a supported canonical artifact-generation path.
 
 ### External Repo Pilot
 
-Run the canonical external-repository analysis pipeline with one command:
+Canonical command:
+
+```bash
+pnpm playbook pilot --repo "C:\Users\zjhre\dev\FawxzzyFitness"
+```
+
+Optional convenience alias:
 
 ```bash
 pnpm pilot "C:\Users\zjhre\dev\FawxzzyFitness"
 ```
 
-The pilot runner executes `context -> index -> query modules -> verify -> plan` and writes deterministic artifacts into the target repository:
+`playbook pilot` executes one deterministic baseline cycle (`context -> index -> query modules -> verify -> plan`), writes machine-readable artifacts directly, records one top-level runtime cycle with child phases, and emits a compact final summary.
+
+Artifacts written in the target repository:
 
 - `.playbook/repo-index.json`
 - `.playbook/repo-graph.json`
 - `.playbook/findings.json`
 - `.playbook/plan.json`
+- `.playbook/pilot-summary.json`
+- `.playbook/runtime/current/*`
+- `.playbook/runtime/cycles/*`
+- `.playbook/runtime/history/*`
 
-Rule — External Repo Analysis Should Be One Command.
+Rule - Repeated Multi-Step Operator Flows Deserve a First-Class Command.
 
-Pattern — CLI Playbook Workflow Runner.
+Pattern - Orchestrated Baseline Analysis.
 
-Failure Mode — Operator Command Drift.
+Failure Mode - Manual Workflow Drift.
+
+Failure Mode - Helper Script Becomes Shadow Product Surface.
 
 External onboarding contract (minimal):
 
@@ -476,11 +487,11 @@ Other documentation such as `docs/PROJECT_GOVERNANCE.md` may be present dependin
 
 ## CLI command contract patterns
 
-- Pattern: CLI Command Contract — Playbook CLI commands that produce JSON must maintain stable output contracts so AI agents and automation can rely on deterministic fields.
-- Pattern: CLI Snapshot Contract Testing — `packages/cli/test/cliContracts.test.ts` snapshots deterministic JSON payloads for `rules --json`, `explain <target> --json`, `index --json`, `verify --json`, and `plan --json` into `tests/contracts/*.snapshot.json`; run `pnpm test:update-snapshots` only when contract changes are intentional.
-- Pattern: CLI Smoke Testing — All CLI commands should be exercised by an automated smoke test to prevent runtime regressions.
-- Rule: CLI Business Logic Location — CLI commands must remain thin wrappers around engine functionality.
-- Pattern: Demo Alignment — The Playbook core repository must guarantee that commands used by the demo repository remain stable and testable.
+- Pattern: CLI Command Contract â€” Playbook CLI commands that produce JSON must maintain stable output contracts so AI agents and automation can rely on deterministic fields.
+- Pattern: CLI Snapshot Contract Testing â€” `packages/cli/test/cliContracts.test.ts` snapshots deterministic JSON payloads for `rules --json`, `explain <target> --json`, `index --json`, `verify --json`, and `plan --json` into `tests/contracts/*.snapshot.json`; run `pnpm test:update-snapshots` only when contract changes are intentional.
+- Pattern: CLI Smoke Testing â€” All CLI commands should be exercised by an automated smoke test to prevent runtime regressions.
+- Rule: CLI Business Logic Location â€” CLI commands must remain thin wrappers around engine functionality.
+- Pattern: Demo Alignment â€” The Playbook core repository must guarantee that commands used by the demo repository remain stable and testable.
 
 ## Architecture
 
@@ -639,3 +650,4 @@ A full local example is available at `.github/workflows/playbook-action-example.
 
 
 `pnpm test:security` runs security contract and regression tests.
+

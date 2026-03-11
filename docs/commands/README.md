@@ -1,4 +1,4 @@
-# Playbook Command Status Index
+﻿# Playbook Command Status Index
 
 This is the authoritative command-state snapshot for Playbook product docs.
 
@@ -18,6 +18,7 @@ Do not hand-edit entries inside the managed markers.
 | Command / Artifact | Purpose | Lifecycle | Role | Discoverability | Onboarding | Status | Example |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `analyze` | Analyze project stack | compatibility | compatibility | hidden-compatibility | — | Current (implemented) | `pnpm playbook analyze --json` |
+| `pilot` | Run deterministic baseline external repository analysis in one command | canonical | bootstrap | primary | — | Current (implemented) | `pnpm playbook pilot --repo "./target-repo" --json` |
 | `verify` | Verify governance rules | canonical | governance | primary | 8 | Current (implemented) | `pnpm playbook verify --ci --json` |
 | `plan` | Generate a structured fix plan from rule findings | canonical | remediation | primary | 9 | Current (implemented) | `pnpm playbook plan --json` |
 | `apply` | Execute deterministic auto-fixable plan tasks | canonical | remediation | primary | 10 | Current (implemented) | `pnpm playbook apply --from-plan .playbook/plan.json` |
@@ -44,18 +45,22 @@ Do not hand-edit entries inside the managed markers.
 
 - Canonical local invocation remains `pnpm playbook <command>`.
 - Use `pnpm playbook --repo <path> <command>` to execute against an external repository without changing directories.
-- External analysis writes deterministic runtime artifacts into the target repo’s `.playbook/` directory.
+- External analysis writes deterministic runtime artifacts into the target repo's `.playbook/` directory.
 
-Canonical external runtime flow:
+Canonical one-command baseline flow:
 
 ```bash
 TARGET_REPO_PATH="../my-repo"
-pnpm playbook --repo "$TARGET_REPO_PATH" context --json
-pnpm playbook --repo "$TARGET_REPO_PATH" index --json
-pnpm playbook --repo "$TARGET_REPO_PATH" query modules --json
-pnpm playbook --repo "$TARGET_REPO_PATH" verify --json --out "$TARGET_REPO_PATH/.playbook/findings.json"
-pnpm playbook --repo "$TARGET_REPO_PATH" plan --json --out "$TARGET_REPO_PATH/.playbook/plan.json"
+pnpm playbook pilot --repo "$TARGET_REPO_PATH"
 ```
+
+Optional convenience alias:
+
+```bash
+pnpm pilot "$TARGET_REPO_PATH"
+```
+
+`playbook pilot` deterministically executes `context -> index -> query modules -> verify -> plan`, writes machine-readable artifacts directly (`.playbook/findings.json`, `.playbook/plan.json`, `.playbook/pilot-summary.json`), and records one top-level runtime cycle with child phases.
 
 Minimal external onboarding contract:
 
@@ -63,17 +68,25 @@ Minimal external onboarding contract:
 - `.playbookignore` is optional and should be added when scan scope needs tuning.
 - `.playbook/` is runtime-generated and owned by Playbook in the target repository.
 
-Rule — External Runtime Writes Belong to the Target Repo
+Rule - External Runtime Writes Belong to the Target Repo
 When a repo-intelligence CLI analyzes an external repository, all generated runtime artifacts must land in the target repo, not the tool repo.
 
-Pattern — Coexistence-First External Runtime
+Pattern - Coexistence-First External Runtime
 When introducing a new repo runtime into a real project with legacy tooling, run alongside the old system first and isolate outputs under deterministic artifact boundaries.
 
-Failure Mode — Tool-Repo Gravity
-If external analysis still reads from or writes to the tool’s own repo context, the system is not actually operating as an external runtime.
+Failure Mode - Tool-Repo Gravity
+If external analysis still reads from or writes to the tool's own repo context, the system is not actually operating as an external runtime.
 
-Failure Mode — Positional Parse Regression
+Failure Mode - Positional Parse Regression
 Adding global options before positional subcommands can silently break commands like `query modules` unless argv normalization is handled centrally and tested.
+
+Rule - Repeated Multi-Step Operator Flows Deserve a First-Class Command.
+
+Pattern - Orchestrated Baseline Analysis.
+
+Failure Mode - Manual Workflow Drift.
+
+Failure Mode - Helper Script Becomes Shadow Product Surface.
 
 ## Additional implemented CLI utility commands
 
@@ -216,7 +229,7 @@ Pattern: Module-scoped and diff-scoped reasoning should share the same underlyin
 
 Pattern: Change review workflows become much more trustworthy when blast radius is derived from indexed structure and actual changed files together.
 
-Failure Mode: Diff-aware reasoning becomes misleading when the tool silently expands from “changed files” into full-repo inference without telling the user.
+Failure Mode: Diff-aware reasoning becomes misleading when the tool silently expands from â€œchanged filesâ€ into full-repo inference without telling the user.
 
 In JSON mode, ask keeps the existing answer payload and includes deterministic provenance metadata in `context.sources` (for example `repo-index`, `module`, `diff`, `docs`, `rule-registry`, and `ai-contract`) plus `repoContext` hydration metadata. Provenance descriptors include only source metadata (paths/names/files), never raw repository file content.
 
@@ -271,25 +284,25 @@ Rule: Generated runtime artifacts should be gitignored unless intentionally comm
 Rule: Playbook remains local/private-first by default.
 Failure Mode: Recommitting regenerated artifacts on every run causes unnecessary repo-history growth and noisy diffs.
 
-Rule — Machine-Consumed Artifacts Must Be CLI-Written
+Rule â€” Machine-Consumed Artifacts Must Be CLI-Written
 If a CLI expects downstream commands to read generated JSON artifacts, those artifacts must be written by the CLI itself rather than relying on shell redirection.
 
-Pattern — First-Class Artifact Emission
+Pattern â€” First-Class Artifact Emission
 Structured runtime artifacts should be emitted through explicit flags with controlled encoding, directory creation, and content boundaries.
 
-Failure Mode — Shell Redirection Artifact Corruption
+Failure Mode â€” Shell Redirection Artifact Corruption
 When JSON artifacts are captured through script wrappers and shell redirection, banner text or encoding differences can silently corrupt machine-readable files.
 
-Failure Mode — Human-Readable Wrapper Leakage
+Failure Mode â€” Human-Readable Wrapper Leakage
 Operator-friendly wrapper output is acceptable on stdout, but it must never leak into persisted JSON artifacts that are intended for later programmatic reads.
 
-Failure Mode — Opaque JSON Parse Crash
+Failure Mode â€” Opaque JSON Parse Crash
 When corrupted runtime artifacts are parsed without a guardrail, later commands fail far from the original write site, making the real bug harder to diagnose.
 
-Pattern — Artifact Consumers Treat Prior JSON as Untrusted Input
+Pattern â€” Artifact Consumers Treat Prior JSON as Untrusted Input
 Commands that consume prior runtime artifacts should treat those files as untrusted inputs and degrade gracefully when artifacts are missing or malformed.
 
-Failure Mode — Hidden Optional Artifact Dependency Crash
+Failure Mode â€” Hidden Optional Artifact Dependency Crash
 A secondary command like index can fail because of a hidden dependency on stale or corrupted `.playbook/*.json` artifacts produced by an earlier workflow step.
 
 `.playbookignore` support is available for repository intelligence scans (`pnpm playbook index` and related repository scans). The file uses `.gitignore`-style syntax and should be used to exclude high-churn directories (for example `node_modules`, `dist`, `build`, `coverage`, `.next`, and `.playbook/cache`).
@@ -328,3 +341,4 @@ Suggested remediation IDs:
 `pnpm playbook query impact <module>` converts indexed module/dependency data plus graph/digest context (`.playbook/repo-graph.json`, `.playbook/context/modules/*.json`) into deterministic module blast-radius analysis, including dependencies, reverse dependencies, docs/tests/rules, and risk signals when available.
 
 Rule: Module impact and module-scoped ask rely on Playbook-managed index artifacts, not ad-hoc rescans.
+

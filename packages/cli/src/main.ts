@@ -26,6 +26,7 @@ const commandArg = args.find((arg) => !arg.startsWith('-'));
 const commandIndex = commandArg ? args.indexOf(commandArg) : -1;
 const command = commandArg ?? '';
 const commandArgs = commandIndex >= 0 ? args.slice(commandIndex + 1) : [];
+const pilotRepoFromCommandArgs = command === 'pilot' ? parseOptionValue(commandArgs, '--repo') : undefined;
 
 const ci = parseFlag(args, '--ci');
 const format = formatFromArgs(args);
@@ -75,7 +76,7 @@ const run = async () => {
 
   let targetCwd = '';
   try {
-    targetCwd = resolveTargetRepoRoot(process.cwd(), repo);
+    targetCwd = resolveTargetRepoRoot(process.cwd(), repo ?? pilotRepoFromCommandArgs);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(message);
@@ -93,7 +94,7 @@ const run = async () => {
   const startedAt = Date.now();
 
   try {
-    const exitCode = await runRegisteredCommand(command, {
+    const commandResult = await runRegisteredCommand(command, {
       cwd: targetCwd,
       args,
       commandArgs,
@@ -102,12 +103,13 @@ const run = async () => {
       format,
       quiet
     });
+    cycle.childCommands = commandResult.childCommands;
 
     endRuntimeCycle(cycle, {
-      exitCode,
+      exitCode: commandResult.exitCode,
       durationMs: Date.now() - startedAt
     });
-    process.exit(exitCode);
+    process.exit(commandResult.exitCode);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     endRuntimeCycle(cycle, {
