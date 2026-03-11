@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-03-09",
+  "updatedAt": "2026-03-11",
   "features": [
     {
       "feature_id": "PB-V03-INDEX-001",
@@ -527,6 +527,335 @@
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-core",
         "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
+      "feature_id": "PB-V09-PLATFORM-OBSERVATION-001",
+      "version": "v0.9",
+      "title": "Platform observation layer evolution",
+      "goal": "Extend the existing deterministic repo-intelligence and governance observation substrate into a broader platform observation layer without expanding the current 4-week delivery scope.",
+      "commands": [],
+      "contracts": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "tests": [
+        "scripts/validate-roadmap-contract.mjs"
+      ],
+      "docs": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/README.md"
+      ],
+      "dependencies": [
+        "PB-V03-INDEX-001",
+        "PB-V03-QUERY-001",
+        "PB-V07-ARCH-INTELLIGENCE-GRAPH-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "directional",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
+      "feature_id": "PB-V09-KNOWLEDGE-PERSISTENCE-001",
+      "version": "v0.9",
+      "title": "Knowledge persistence layer",
+      "goal": "Define the post-observation persistence layer that retains deterministic evidence and knowledge artifacts with explicit lifecycle boundaries before broader platform scheduling.",
+      "commands": [],
+      "contracts": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "tests": [
+        "scripts/validate-roadmap-contract.mjs"
+      ],
+      "docs": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/README.md",
+        "docs/roadmap/IMPROVEMENTS_BACKLOG.md"
+      ],
+      "dependencies": [
+        "PB-V09-PLATFORM-OBSERVATION-001",
+        "PB-V08-KNOWLEDGE-COMPACTION-SPEC-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "planned-later",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
+      "feature_id": "PB-V09-KNOWLEDGE-COMPACTION-PROMOTION-001",
+      "version": "v0.9",
+      "title": "Knowledge compaction and promotion layer",
+      "goal": "Sequence durable knowledge compaction, promotion, and retirement behavior after persistence foundations while keeping current work limited to deterministic internal-first groundwork.",
+      "commands": [],
+      "contracts": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "tests": [
+        "scripts/validate-roadmap-contract.mjs"
+      ],
+      "docs": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/README.md",
+        "docs/roadmap/IMPROVEMENTS_BACKLOG.md"
+      ],
+      "dependencies": [
+        "PB-V09-KNOWLEDGE-PERSISTENCE-001",
+        "PB-V08-KNOWLEDGE-BUCKETING-001",
+        "PB-V08-PATTERN-CARD-STORAGE-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "planned-later",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
+      "feature_id": "PB-V09-LONGITUDINAL-STATE-001",
+      "version": "v0.9",
+      "title": "Repository longitudinal state and learning layer",
+      "goal": "Define versioned cycle history and drift-aware repository state learning only after persistence and compaction foundations are stable.",
+      "commands": [],
+      "contracts": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "tests": [
+        "scripts/validate-roadmap-contract.mjs"
+      ],
+      "docs": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/README.md"
+      ],
+      "dependencies": [
+        "PB-V09-KNOWLEDGE-COMPACTION-PROMOTION-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "planned-later",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
+      "feature_id": "PB-V09-TRUST-EVIDENCE-001",
+      "version": "v0.9",
+      "title": "Platform trust and evidence model",
+      "goal": "Evolve current evidence-linked remediation and private-first trust boundaries into a broader platform trust model after persistence and longitudinal state foundations exist.",
+      "commands": [],
+      "contracts": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "tests": [
+        "scripts/validate-roadmap-contract.mjs"
+      ],
+      "docs": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/README.md"
+      ],
+      "dependencies": [
+        "PB-V09-LONGITUDINAL-STATE-001",
+        "PB-V04-PLAN-APPLY-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "planned-later",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine",
+        "@zachariahredfield/playbook-core"
+      ]
+    },
+    {
+      "feature_id": "PB-V09-CONTROL-PLANE-001",
+      "version": "v0.9",
+      "title": "Policy and control plane",
+      "goal": "Define a portable policy/control-plane layer over deterministic remediation and governance once trust/evidence contracts are strong enough to schedule it.",
+      "commands": [],
+      "contracts": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "tests": [
+        "scripts/validate-roadmap-contract.mjs"
+      ],
+      "docs": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/README.md"
+      ],
+      "dependencies": [
+        "PB-V09-TRUST-EVIDENCE-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "backlog",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine",
+        "@zachariahredfield/playbook-core"
+      ]
+    },
+    {
+      "feature_id": "PB-V09-EXECUTION-ORCHESTRATION-001",
+      "version": "v0.9",
+      "title": "Execution orchestration hardening",
+      "goal": "Extend the current verify/plan/apply runtime into broader policy-gated orchestration only after control-plane foundations exist, without broadening the current 4-week implementation scope.",
+      "commands": [],
+      "contracts": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "tests": [
+        "scripts/validate-roadmap-contract.mjs"
+      ],
+      "docs": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/README.md",
+        "docs/roadmap/IMPLEMENTATION_PLAN_NEXT_4_WEEKS.md"
+      ],
+      "dependencies": [
+        "PB-V09-CONTROL-PLANE-001",
+        "PB-V04-PLAN-APPLY-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "backlog",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine",
+        "@zachariahredfield/playbook-node"
+      ]
+    },
+    {
+      "feature_id": "PB-V09-MULTI-REPO-TRANSFER-001",
+      "version": "v0.9",
+      "title": "Multi-repo knowledge transfer",
+      "goal": "Promote validated reusable knowledge across repositories only after execution orchestration and trust boundaries are mature enough to preserve local-context separation.",
+      "commands": [],
+      "contracts": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "tests": [
+        "scripts/validate-roadmap-contract.mjs"
+      ],
+      "docs": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/README.md"
+      ],
+      "dependencies": [
+        "PB-V09-EXECUTION-ORCHESTRATION-001",
+        "PB-V1-DEMO-REFRESH-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "backlog",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine",
+        "@zachariahredfield/playbook-node"
+      ]
+    },
+    {
+      "feature_id": "PB-V09-INTERFACE-SURFACES-001",
+      "version": "v0.9",
+      "title": "Platform interface surfaces",
+      "goal": "Sequence broader interface surfaces over the deterministic runtime after multi-repo transfer and core control layers are defined, without treating those surfaces as present commitments.",
+      "commands": [],
+      "contracts": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "tests": [
+        "scripts/validate-roadmap-contract.mjs"
+      ],
+      "docs": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/README.md",
+        "docs/commands/README.md"
+      ],
+      "dependencies": [
+        "PB-V09-MULTI-REPO-TRANSFER-001",
+        "PB-V1-PRODUCT-TRUTH-PACKAGING-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "directional",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine",
+        "@zachariahredfield/playbook-node"
+      ]
+    },
+    {
+      "feature_id": "PB-V09-CAPABILITY-ROUTING-001",
+      "version": "v0.9",
+      "title": "Capability and model routing",
+      "goal": "Define explicit capability-routing and any future bounded model-routing policy only after interface surfaces are grounded on the deterministic platform runtime.",
+      "commands": [],
+      "contracts": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "tests": [
+        "scripts/validate-roadmap-contract.mjs"
+      ],
+      "docs": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/README.md"
+      ],
+      "dependencies": [
+        "PB-V09-INTERFACE-SURFACES-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "directional",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine",
+        "@zachariahredfield/playbook-core"
       ]
     }
   ]

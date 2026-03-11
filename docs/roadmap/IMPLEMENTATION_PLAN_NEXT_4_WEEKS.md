@@ -2,6 +2,8 @@
 
 This plan operationalizes the existing roadmap and execution-system baseline for the next 4 weeks. It preserves accepted contracts and focuses on implementation sequence.
 
+Longer-horizon platform evolution is tracked in `../PLAYBOOK_PRODUCT_ROADMAP.md` and `ROADMAP.json`. Those dependency-ordered platform layers are not part of this 4-week commitment unless they already appear here as accepted execution work.
+
 ## 1) Executive Decisions
 
 1. **Canonical command ownership**: all command behavior is canonical in `@zachariahredfield/playbook-engine`; CLI remains thin transport and rendering.

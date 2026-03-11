@@ -378,6 +378,144 @@ Roadmap entries describe implementation intent and may include planned command f
 
 Toroidal Flow initiative (`PB-V08-TOROIDAL-FLOW-001`) is roadmap-scoped architecture framing that overlays current behavior. It does not introduce runtime behavior changes in this pass.
 
+## Platform evolution: deterministic runtime first, platform second
+
+Playbook develops from **deterministic repo intelligence + governance + remediation runtime** into a broader engineering intelligence platform over time. That growth is layered, dependency-ordered, and explicitly separated from the active delivery window.
+
+Pattern: Platform growth should be layered, not feature-accumulated.
+Pattern: Deterministic core first, compounding intelligence second.
+Rule: Roadmap must distinguish active delivery from architectural direction.
+Rule: Future platform layers should be dependency-ordered before scheduling.
+Failure Mode: Research captured in docs but not integrated into roadmap execution shape.
+Failure Mode: Roadmap inflation from treating platform direction as near-term commitment.
+
+### Delivery boundary
+
+- **Implemented runtime today**: deterministic repository intelligence, governance validation, risk/docs/ownership intelligence, PR analysis, and reviewed `verify -> plan -> apply -> verify` remediation loops.
+- **Near-term execution window**: packaging/product-truth sync, delivery-system hardening, command-boundary convergence, external pilot/runtime hardening, and knowledge-compaction foundations already accepted elsewhere in this roadmap and in `docs/roadmap/IMPLEMENTATION_PLAN_NEXT_4_WEEKS.md`.
+- **Long-term platform direction**: the layers below describe how the current runtime compounds into a broader engineering intelligence platform.
+- **Unscheduled backlog themes**: layers marked outside the near-term execution window are directional/backlog work and are not committed as part of the current 4-week plan.
+
+### Recommended sequencing for later platform layers
+
+1. knowledge persistence
+2. knowledge compaction / promotion
+3. repo longitudinal state
+4. trust / evidence model
+5. control plane
+6. execution orchestration hardening
+7. multi-repo transfer
+8. interface surfaces
+9. capability / model routing
+
+This ordering is a dependency recommendation, not an active delivery commitment.
+
+### Platform layers
+
+#### 1. Observation
+
+- **Already exists today**
+  - `index`, `query`, `graph`, `explain`, `ask --repo-context`, `analyze-pr`, `doctor`, and `verify` already produce deterministic repository and governance observations.
+  - `.playbook/repo-index.json`, `.playbook/repo-graph.json`, module context artifacts, and findings/plan artifacts provide the present observation substrate.
+- **Partially defined**
+  - coverage accounting, telemetry shaping, and observation-versus-interpretation boundaries are defined in current roadmap and architecture docs but are not yet a full longitudinal observation system.
+- **Future work**
+  - richer cycle telemetry, explicit blind-spot accounting, and stronger repository/runtime self-observation.
+- **Execution window**
+  - inside the current near-term execution window only where observation hardens the deterministic core; broader observation expansion is later.
+
+#### 2. Knowledge Persistence / Compaction
+
+- **Already exists today**
+  - internal-first knowledge lifecycle framing, candidate/compacted/promoted/retired artifact modeling, and evidence-linked compaction foundations are already part of the roadmap and architecture direction.
+- **Partially defined**
+  - candidate extraction, deterministic bucketing, and pattern-card storage are in-progress as internal foundations.
+- **Future work**
+  - durable knowledge persistence, promotion gates, retirement workflows, and replayable compaction/promotion artifacts.
+- **Execution window**
+  - inside the near-term window only for current deterministic compaction foundations; broader persistence/promotion runtime is outside the current 4-week plan.
+
+#### 3. Trust / Evidence
+
+- **Already exists today**
+  - deterministic findings, evidence-linked plans, remediation trust boundaries, and private-first local execution are current product constraints.
+- **Partially defined**
+  - observation-versus-interpretation split, promotion thresholds, and evidence lineage expectations are documented but not yet a full trust/evidence model across all layers.
+- **Future work**
+  - evidence scoring, stronger lineage contracts, trust thresholds for promotion/control actions, and richer proof surfaces for platform-level decisions.
+- **Execution window**
+  - outside the current near-term execution window beyond existing remediation/evidence hardening already underway.
+
+#### 4. Policy / Control Plane
+
+- **Already exists today**
+  - `verify`, remediation safety rules, CI validation, and docs/roadmap contract enforcement already function as local deterministic policy gates.
+- **Partially defined**
+  - approval/policy checkpoints around `apply` and future governance controls are documented as architecture direction.
+- **Future work**
+  - explicit control-plane policy objects, environment-aware approvals, and portable governance policy across runtime surfaces.
+- **Execution window**
+  - outside the current near-term execution window except for active delivery-system and remediation-hardening work already committed elsewhere.
+
+#### 5. Execution Orchestration
+
+- **Already exists today**
+  - reviewed `verify -> plan -> apply -> verify` execution loops, CLI-first execution, and CI-safe remediation workflows are implemented.
+- **Partially defined**
+  - serialized plan execution, approval layers, autonomous maintenance modes, and automation-synthesis staging are defined as future operating models.
+- **Future work**
+  - orchestration hardening across recurring workflows, maintenance runtimes, and policy-gated non-interactive execution.
+- **Execution window**
+  - near-term work is limited to current remediation contract hardening; broader orchestration expansion is outside the 4-week plan.
+
+#### 6. Longitudinal State / Learning
+
+- **Already exists today**
+  - current artifacts preserve point-in-time repository intelligence, findings, plans, and some internal knowledge lifecycle state.
+- **Partially defined**
+  - cycle history, observation snapshots, and self-observation concepts are present in architecture/roadmap language but not yet first-class runtime state.
+- **Future work**
+  - versioned run history, drift-aware state comparison, learning loops from repeated outcomes, and compact historical rollups.
+- **Execution window**
+  - outside the current near-term execution window.
+
+#### 7. Multi-Repo Knowledge Transfer
+
+- **Already exists today**
+  - external repository targeting and bounded pilot execution exist today through `--repo` and `playbook pilot --repo <path>`.
+- **Partially defined**
+  - phased proof strategy (`self-host -> bounded pilot -> controlled cross-repo transfer`) is defined, and promotion boundaries between local observations and upstream product learnings are documented.
+- **Future work**
+  - transfer of validated reusable knowledge across repositories without collapsing local context boundaries or trust guarantees.
+- **Execution window**
+  - outside the current near-term execution window beyond current external pilot/runtime hardening.
+
+#### 8. Interface Surfaces
+
+- **Already exists today**
+  - CLI, JSON command contracts, GitHub/CI formatting surfaces, AI contract/bootstrap artifacts, and demo/docs surfaces are implemented.
+- **Partially defined**
+  - app-integrated runtime/API surfaces, optional dashboards, and broader operator experiences are described as future directions.
+- **Future work**
+  - durable API/server surfaces, richer UX layers, and broader interface packaging over the same deterministic runtime.
+- **Execution window**
+  - outside the current near-term execution window except for current product-truth/documentation packaging work.
+
+#### 9. Capability / Model Routing
+
+- **Already exists today**
+  - deterministic routing is presently command- and contract-driven rather than model-driven; Playbook prefers explicit command surfaces and repository intelligence artifacts over open-ended inference.
+- **Partially defined**
+  - architecture docs describe thin interfaces over trusted runtime layers, but capability-selection and model-routing policy are not yet a committed product surface.
+- **Future work**
+  - capability routing across deterministic engines, explain/query/reasoning paths, and any future bounded model usage under explicit trust and policy controls.
+- **Execution window**
+  - outside the current near-term execution window.
+
+### Current planning stance
+
+The active 4-week execution plan remains intentionally focused on already accepted runtime, delivery-system, and compaction-foundation work. The platform layers above provide the dependency-ordered direction for later planning, not a commitment to deliver all layers now.
+
 ## Product Truth Packaging and Narrative Sync
 
 The current gap is not a lack of raw deterministic analysis capability. The gap is packaging: explicit canon, priority, discoverability, and synchronization guidance that makes product truth easy to find and hard to misinterpret.
