@@ -53,6 +53,22 @@ export type IgnoreRecommendationArtifact = {
   };
 };
 
+export type PlaybookIgnoreApplyOutcomeArtifact = {
+  schemaVersion: '1.0';
+  cycle_id: string;
+  observed_at: string;
+  considered_count: number;
+  safe_default_candidates_count: number;
+  applied_count: number;
+  already_present_count: number;
+  deferred_count: number;
+  review_first_count: number;
+  applied_paths: string[];
+  already_present_paths: string[];
+  deferred_paths: string[];
+  review_first_paths: string[];
+};
+
 export type PlaybookIgnoreSuggestion = IgnoreRecommendation & {
   already_covered: boolean;
   eligible_for_safe_apply: boolean;
@@ -159,6 +175,18 @@ const normalizeIgnoreEntry = (repoRoot: string, value: string): string => {
 
   return withTrailingSlash;
 };
+
+const ensureRuntimeDir = (targetDir: string): void => {
+  fs.mkdirSync(targetDir, { recursive: true });
+};
+
+const writeJson = (targetPath: string, payload: unknown): void => {
+  ensureRuntimeDir(path.dirname(targetPath));
+  fs.writeFileSync(targetPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+};
+
+const dedupeSortedEntries = (entries: string[]): string[] =>
+  Array.from(new Set(entries.filter((entry) => entry.length > 0))).sort((left, right) => left.localeCompare(right));
 
 const parsePlaybookIgnoreLines = (lines: string[]): PlaybookIgnoreRule[] =>
   lines
@@ -317,6 +345,7 @@ const renderManagedIgnoreBlock = (entries: string[]): string =>
 
 export const applySafePlaybookIgnoreRecommendations = (repoRoot: string): PlaybookIgnoreApplyResult => {
   const suggestionResult = suggestPlaybookIgnore(repoRoot);
+  const recommendationArtifact = requireIgnoreRecommendationArtifact(repoRoot);
   const ignorePath = path.join(repoRoot, '.playbookignore');
   const fileExisted = fs.existsSync(ignorePath);
   const currentContent = fileExisted ? fs.readFileSync(ignorePath, 'utf8') : '';
@@ -342,6 +371,7 @@ export const applySafePlaybookIgnoreRecommendations = (repoRoot: string): Playbo
     .map((entry) => normalizeIgnoreEntry(repoRoot, entry.path))
     .sort(compareEntries);
   const deferredEntries = suggestionResult.review_required.map((entry) => normalizeIgnoreEntry(repoRoot, entry.path)).sort(compareEntries);
+  const reviewFirstEntries = dedupeSortedEntries(deferredEntries);
 
   const userContent = contentWithoutManagedBlock.trimEnd();
   const managedBlock = uniqueNextManagedEntries.length > 0 ? renderManagedIgnoreBlock(uniqueNextManagedEntries) : '';
@@ -354,6 +384,25 @@ export const applySafePlaybookIgnoreRecommendations = (repoRoot: string): Playbo
   if (changed) {
     fs.writeFileSync(ignorePath, nextContent, 'utf8');
   }
+  const outcome: PlaybookIgnoreApplyOutcomeArtifact = {
+    schemaVersion: '1.0',
+    cycle_id: recommendationArtifact.cycle_id,
+    observed_at: new Date().toISOString(),
+    considered_count: suggestionResult.summary.total_recommendations,
+    safe_default_candidates_count: safeRecommendations.length,
+    applied_count: appliedEntries.length,
+    already_present_count: alreadyCoveredEntries.length,
+    deferred_count: deferredEntries.length,
+    review_first_count: reviewFirstEntries.length,
+    applied_paths: dedupeSortedEntries(appliedEntries),
+    already_present_paths: dedupeSortedEntries(alreadyCoveredEntries),
+    deferred_paths: dedupeSortedEntries(deferredEntries),
+    review_first_paths: reviewFirstEntries
+  };
+  const runtimeRoot = path.join(repoRoot, '.playbook', 'runtime');
+  writeJson(path.join(runtimeRoot, 'current', 'ignore-apply.json'), outcome);
+  const cycleDir = path.join(runtimeRoot, 'cycles', outcome.cycle_id);
+  writeJson(path.join(cycleDir, 'ignore-apply.json'), outcome);
 
   return {
     schemaVersion: '1.0',

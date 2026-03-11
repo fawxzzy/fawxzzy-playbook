@@ -38,7 +38,8 @@ const printApplyText = (result: PlaybookIgnoreApplyResult): void => {
   console.log(`Applied: ${result.summary.applied_count}`);
   console.log(`Retained: ${result.summary.retained_count}`);
   console.log(`Already covered: ${result.summary.already_covered_count}`);
-  console.log(`Deferred review: ${result.summary.deferred_count}`);
+  console.log(`Deferred: ${result.summary.deferred_count}`);
+  console.log(`Review-first retained: ${result.summary.deferred_count}`);
 
   if (result.applied_entries.length > 0) {
     console.log('Added entries:');
