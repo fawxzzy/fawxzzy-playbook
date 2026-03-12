@@ -1,116 +1,78 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildOrchestratorContract, writeOrchestratorArtifact } from '../src/orchestrator/index.js';
+import { buildOrchestratorPlan, parseOrchestratorContract } from '../src/orchestrator.js';
 
-describe('orchestrator planner', () => {
-  it('builds deterministically ordered lanes with stable ids and dependency mapping', () => {
-    const contract = buildOrchestratorContract({
-      repoRoot: '/repo',
-      goal: 'ship orchestrator',
+const FIXTURE_DIR = path.resolve(path.dirname(new URL(import.meta.url).pathname), '__fixtures__', 'orchestrator');
+const fixture = (name: string): string => fs.readFileSync(path.join(FIXTURE_DIR, name), 'utf8');
+
+describe('orchestrator contracts', () => {
+  it('parses deterministic orchestration contracts', () => {
+    const contract = parseOrchestratorContract({
+      schemaVersion: '1.0',
+      goal: 'coordinate lanes',
       lanes: [
-        {
-          goal: 'add writer',
-          wave: 2,
-          dependsOn: ['add planner'],
-          allowedPaths: ['packages/engine/src/orchestrator/writer.ts'],
-          forbiddenPaths: ['packages/cli/**']
-        },
-        {
-          goal: 'add planner',
-          wave: 1,
-          allowedPaths: ['packages/engine/src/orchestrator/planner.ts'],
-          sharedPaths: ['README.md']
-        }
+        { id: 'engine', allowedPaths: ['packages/engine'], wave: 2, dependsOn: ['core'] },
+        { id: 'core', allowedPaths: ['packages/core'], wave: 1 }
       ]
     });
 
-    expect(contract.generatedAt).toBe('deterministic');
-    expect(contract.lanes.map((lane) => lane.id)).toEqual(['lane-1', 'lane-2']);
-    expect(contract.lanes.map((lane) => lane.goal)).toEqual(['add planner', 'add writer']);
-    expect(contract.lanes[1]?.dependsOn).toEqual(['lane-1']);
-    expect(contract.lanes[0]?.allowedPaths).toEqual(['packages/engine/src/orchestrator/planner.ts']);
-    expect(contract.lanes[1]?.forbiddenPaths).toEqual(['packages/cli/**']);
-  });
-
-  it('fails on overlapping allowed paths in fail mode', () => {
-    expect(() =>
-      buildOrchestratorContract({
-        repoRoot: '/repo',
-        goal: 'ship orchestrator',
-        overlapStrategy: 'fail',
-        lanes: [
-          { goal: 'lane one', allowedPaths: ['README.md'] },
-          { goal: 'lane two', allowedPaths: ['README.md'] }
-        ]
-      })
-    ).toThrow('Overlapping allowedPaths detected: README.md.');
-  });
-
-  it('migrates overlapping allowed paths into shared paths deterministically', () => {
-    const contract = buildOrchestratorContract({
-      repoRoot: '/repo',
-      goal: 'ship orchestrator',
-      overlapStrategy: 'migrate-to-shared',
+    expect(contract).toEqual({
+      schemaVersion: '1.0',
+      goal: 'coordinate lanes',
+      sharedPaths: [],
       lanes: [
-        { goal: 'lane one', allowedPaths: ['README.md'] },
-        { goal: 'lane two', allowedPaths: ['README.md'] }
+        { id: 'core', allowedPaths: ['packages/core'], sharedPaths: [], wave: 1, dependsOn: [] },
+        { id: 'engine', allowedPaths: ['packages/engine'], sharedPaths: [], wave: 2, dependsOn: ['core'] }
       ]
     });
-
-    expect(contract.lanes.map((lane) => lane.allowedPaths)).toEqual([[], []]);
-    expect(contract.lanes.map((lane) => lane.sharedPaths)).toEqual([['README.md'], ['README.md']]);
   });
 
-  it('creates explicit shared-file policy entries for governance files', () => {
-    const contract = buildOrchestratorContract({
-      repoRoot: '/repo',
-      goal: 'ship orchestrator',
-      lanes: [
-        { goal: 'lane one', allowedPaths: ['README.md'] },
-        { goal: 'lane two', allowedPaths: ['docs/CHANGELOG.md', 'packages/engine/src/orchestrator/types.ts'] }
-      ]
-    });
+  it('enforces allowedPaths exclusivity across lanes unless shared policy is explicit', () => {
+    expect(() => buildOrchestratorPlan(fixture('overlap-fail.contract.json'), { modules: [] })).toThrow(
+      'orchestrator: overlapping allowedPaths require shared policy: packages/shared'
+    );
+  });
 
-    expect(contract.sharedFilePolicy).toEqual([
+  it('accepts overlap when shared paths are explicit globally and per-lane', () => {
+    const plan = buildOrchestratorPlan(fixture('overlap-shared.contract.json'), { modules: [] });
+
+    expect(plan.lanes).toEqual([
       {
-        path: 'README.md',
-        handling: 'single-owner',
-        ownerLaneId: 'lane-1',
-        notes: 'lane-1 is the single owner for README.md.'
+        id: 'lane-a',
+        wave: 1,
+        dependsOn: [],
+        allowedPaths: ['packages/shared'],
+        sharedPaths: ['packages/shared']
       },
       {
-        path: 'docs/CHANGELOG.md',
-        handling: 'single-owner',
-        ownerLaneId: 'lane-2',
-        notes: 'lane-2 is the single owner for docs/CHANGELOG.md.'
-      },
-      {
-        path: 'docs/PLAYBOOK_PRODUCT_ROADMAP.md',
-        handling: 'deferred-merge',
-        ownerLaneId: null,
-        notes: 'No lane currently owns docs/PLAYBOOK_PRODUCT_ROADMAP.md; defer edits until a dedicated merge lane is defined.'
+        id: 'lane-b',
+        wave: 2,
+        dependsOn: ['lane-a'],
+        allowedPaths: ['packages/shared'],
+        sharedPaths: ['packages/shared']
       }
     ]);
   });
-});
 
-describe('orchestrator artifact writer', () => {
-  it('writes orchestrator json and lane prompt artifacts', () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'orchestrator-artifact-'));
+  it('enforces wave and dependsOn consistency', () => {
+    expect(() => buildOrchestratorPlan({
+      schemaVersion: '1.0',
+      goal: 'bad wave',
+      lanes: [
+        { id: 'first', allowedPaths: ['packages/first'], wave: 2, dependsOn: [] },
+        { id: 'second', allowedPaths: ['packages/second'], wave: 1, dependsOn: ['first'] }
+      ]
+    }, { modules: [] })).toThrow('orchestrator: lane second must have wave greater than dependsOn lane first');
+  });
 
-    const contract = buildOrchestratorContract({
-      repoRoot: '/repo',
-      goal: 'ship orchestrator',
-      lanes: [{ goal: 'lane one', allowedPaths: ['packages/engine/src/orchestrator/planner.ts'] }]
-    });
+  it('returns identical output for identical input and repo shape', () => {
+    const contract = fixture('overlap-shared.contract.json');
+    const repoShape = { modules: [{ name: 'engine', path: 'packages/engine' }, { name: 'core', path: 'packages/core' }] };
 
-    const result = writeOrchestratorArtifact(contract, path.join(tmpDir, 'out'));
+    const first = buildOrchestratorPlan(contract, repoShape);
+    const second = buildOrchestratorPlan(contract, repoShape);
 
-    expect(fs.existsSync(result.orchestratorPath)).toBe(true);
-    expect(result.lanePromptPaths).toHaveLength(1);
-    expect(fs.readFileSync(result.lanePromptPaths[0]!, 'utf8')).toContain('# lane-1 Prompt');
-    expect(fs.readFileSync(result.orchestratorPath, 'utf8')).toContain('"sharedFilePolicy"');
+    expect(first).toEqual(second);
   });
 });
