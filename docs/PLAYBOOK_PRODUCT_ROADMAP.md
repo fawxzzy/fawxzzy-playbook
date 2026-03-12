@@ -1709,7 +1709,10 @@ Implemented baseline: `pnpm playbook index` (paired with `query`, `deps`, `ask`,
 - Output path: `.playbook/repo-index.json`.
 - Current index coverage:
   - modules (including modular-monolith `src/features/*` modules as first-class indexed/explainable module targets)
-  - dependencies
+  - dependency edges (workspace manifest links, root manifest links, and source import relationships)
+  - workspace topology (`packages/*` relationships and package roles)
+  - module test presence mapping (`tests_present` + deterministic `coverage_estimate: unknown`)
+  - config surface inventory (eslint, tsconfig, jest, vitest, and command inventory from package scripts)
   - database schema
   - framework
   - architecture contracts

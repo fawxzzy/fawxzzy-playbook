@@ -24,6 +24,10 @@ const writeRepoIndex = (repo: string): void => {
           { name: 'workouts', dependencies: ['auth'] },
           { name: 'analytics', dependencies: ['workouts'] }
         ],
+        dependencies: [{ from: 'workouts', to: 'auth', type: 'source-import' }],
+        workspace: [{ name: 'engine', path: 'packages/engine', role: 'engine', dependsOn: [] }],
+        tests: [{ module: 'auth', tests_present: true, coverage_estimate: 'unknown' }],
+        configs: [{ name: 'tsconfig', path: 'tsconfig.json', present: true }],
         database: 'supabase',
         rules: ['requireNotesOnChanges']
       },
@@ -80,6 +84,26 @@ describe('runQuery', () => {
 
     expect(exitCode).toBe(ExitCode.Success);
     expect(logSpy.mock.calls.map((call) => String(call[0]))).toEqual(['Modules', '───────', 'auth: none', 'workouts: auth', 'analytics: workouts']);
+
+    logSpy.mockRestore();
+  });
+
+
+  it('supports deps and tests repository query fields', async () => {
+    const repo = createRepo('playbook-cli-query-new-fields');
+    writeRepoIndex(repo);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const depsExit = await runQuery(repo, ['deps'], { format: 'json', quiet: false });
+    expect(depsExit).toBe(ExitCode.Success);
+    const depsPayload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(depsPayload.field).toBe('dependencies');
+
+    logSpy.mockClear();
+    const testsExit = await runQuery(repo, ['tests'], { format: 'json', quiet: false });
+    expect(testsExit).toBe(ExitCode.Success);
+    const testsPayload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(testsPayload.field).toBe('tests');
 
     logSpy.mockRestore();
   });
@@ -732,7 +756,7 @@ describe('runQuery', () => {
 
     expect(exitCode).toBe(ExitCode.Failure);
     expect(errorSpy).toHaveBeenCalledWith(
-      'playbook query: unsupported field "docs". Supported fields: architecture, framework, language, modules, database, rules.'
+      'playbook query: unsupported field "docs". Supported fields: architecture, framework, language, modules, dependencies, workspace, tests, configs, database, rules.'
     );
 
     errorSpy.mockRestore();

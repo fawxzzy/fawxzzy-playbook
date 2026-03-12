@@ -32,13 +32,13 @@ type QueryOptions = {
 type QueryResult = {
   command: 'query';
   field: RepositoryQueryField;
-  result: string | string[] | RepositoryModule[];
+  result: string | string[] | RepositoryModule[] | Array<Record<string, unknown>>;
   graphNeighborhood?: GraphNeighborhoodSummary;
 };
 
 const firstPositionalArg = (args: string[]): string | undefined => args.find((arg) => !arg.startsWith('-'));
 
-const printText = (field: RepositoryQueryField, result: string | string[] | RepositoryModule[]): void => {
+const printText = (field: RepositoryQueryField, result: string | string[] | RepositoryModule[] | Array<Record<string, unknown>>): void => {
   const heading = field.charAt(0).toUpperCase() + field.slice(1);
   console.log(heading);
   console.log('───────');
@@ -57,8 +57,15 @@ const printText = (field: RepositoryQueryField, result: string | string[] | Repo
       return;
     }
 
-    for (const value of result as string[]) {
-      console.log(value);
+    if (typeof firstValue === 'string') {
+      for (const value of result as string[]) {
+        console.log(value);
+      }
+      return;
+    }
+
+    for (const value of result as Array<Record<string, unknown>>) {
+      console.log(JSON.stringify(value));
     }
     return;
   }
