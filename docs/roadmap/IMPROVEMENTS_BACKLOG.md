@@ -276,6 +276,35 @@ Failure Mode: Cross-repo transfer without sanitization.
 Failure Mode: Imported pattern treated as enforced governance by default.
 Failure Mode: Hidden telemetry disguised as learning.
 
+
+---
+
+## Platform direction: Governed Interface / API Surfaces for Multi-Repo Control Planes
+
+Backlog scope:
+
+- Define canonical control-plane request envelope contract (actor, scope, operation, mode, idempotency/session identity, evidence/policy context, approval context, output format).
+- Define deterministic multi-repo batch-read semantics with composed per-repo outputs.
+- Define per-repo evidence drill-down contracts for aggregated control-plane views.
+- Define server-side validated action surfaces for dashboards/internal platforms/CI control planes.
+- Define actor and permission taxonomy for governed interface/API actions.
+- Define idempotency/session contracts for API actions and retries.
+- Define batch mutation guardrails and exceptional-policy requirements.
+- Define optional hosted/self-hosted control-plane deployment model that preserves CLI-first/offline/private-first baselines.
+
+Pattern: Thin Interfaces Over One Deterministic Runtime.
+Pattern: Multi-Repo Control Planes Coordinate, They Do Not Collapse Repo Boundaries.
+Pattern: Aggregation With Per-Repo Evidence Drill-Down.
+Rule: Browser clients use validated server/API actions, not arbitrary CLI execution.
+Rule: Repo-local facts stay local unless intentionally promoted/exported.
+Rule: Aggregated control-plane views must preserve per-repo provenance.
+Rule: Batch mutation is exceptional and strongly policy-gated.
+Failure Mode: Cloud shell disguised as control plane.
+Failure Mode: Aggregated UI that loses per-repo evidence lineage.
+Failure Mode: Browser-side arbitrary command execution.
+Failure Mode: One repo’s local policy silently becoming org-wide truth.
+Failure Mode: Multi-repo data pooling without explicit governance.
+
 ---
 
 ## Platform direction: Capability / Model Routing Layer

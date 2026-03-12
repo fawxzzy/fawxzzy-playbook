@@ -922,6 +922,41 @@
       ]
     },
     {
+      "feature_id": "PB-V09-GOVERNED-INTERFACE-API-001",
+      "version": "v0.9",
+      "title": "Governed interface/API surfaces for multi-repo control planes",
+      "goal": "Define optional, policy-aware server/API interface surfaces that coordinate many Playbook-enabled repositories over one deterministic runtime without collapsing per-repo boundaries.",
+      "commands": [],
+      "contracts": [
+        "docs/architecture/PLAYBOOK_GOVERNED_INTERFACE_API_SURFACES_FOR_MULTI_REPO_CONTROL_PLANES.md",
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "tests": [
+        "scripts/validate-roadmap-contract.mjs"
+      ],
+      "docs": [
+        "docs/architecture/PLAYBOOK_GOVERNED_INTERFACE_API_SURFACES_FOR_MULTI_REPO_CONTROL_PLANES.md",
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/IMPROVEMENTS_BACKLOG.md",
+        "docs/CONSUMER_INTEGRATION_CONTRACT.md",
+        "docs/AUTOMATION_SYNTHESIS_VISION.md"
+      ],
+      "dependencies": [
+        "PB-V09-MULTI-REPO-TRANSFER-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "backlog",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine",
+        "@zachariahredfield/playbook-node"
+      ]
+    },
+    {
       "feature_id": "PB-V09-INTERFACE-SURFACES-001",
       "version": "v0.9",
       "title": "Platform interface surfaces",
@@ -941,7 +976,7 @@
         "docs/commands/README.md"
       ],
       "dependencies": [
-        "PB-V09-MULTI-REPO-TRANSFER-001",
+        "PB-V09-GOVERNED-INTERFACE-API-001",
         "PB-V1-PRODUCT-TRUTH-PACKAGING-001"
       ],
       "verification_commands": [

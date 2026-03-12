@@ -171,6 +171,7 @@ Automation Synthesis should remain downstream of Playbook's deterministic trust 
 - **Session + evidence layer:** synthesis should consume session-scoped evidence envelopes (trigger context, command lineage, artifacts, findings, approvals) before any memory/promotion path is considered.
 - **Evidence graph / trust model:** generated automations should carry evidence links from trigger -> synthesis -> verification -> approval, with provenance preserved for later audits.
 - **Policy/control plane:** approval, permission, and execution boundaries should be centrally governed across CLI/CI/API surfaces.
+- **Governed interface/API surfaces:** deployment/orchestration adapters should call validated control-plane interface actions over the same deterministic runtime, preserving per-repo policy, provenance, and approval boundaries.
 - **Human approval surfaces:** PR checks, CI gates, and future dashboard/API review flows should expose explicit approve/deny transitions.
 - **Longitudinal runtime learning:** post-deployment outcomes should feed deterministic learning loops for template refinement and rollback policy tightening via provenance-linked outcome feedback artifacts.
 - **Promoted knowledge artifacts:** trigger classification and synthesis template selection should consume promoted/reviewed knowledge artifacts (not raw candidate memory), with lineage preserved.

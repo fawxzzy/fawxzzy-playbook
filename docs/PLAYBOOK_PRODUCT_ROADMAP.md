@@ -407,8 +407,9 @@ Failure Mode: Roadmap inflation from treating platform direction as near-term co
 7. outcome feedback / automation runtime learning
 8. broader execution orchestration hardening
 9. multi-repo transfer (explicit promotion only)
-10. interface surfaces
-11. capability / model routing
+10. governed interface/API surfaces for multi-repo control planes
+11. broader interface surfaces
+12. capability / model routing
 
 This ordering is a dependency recommendation, not an active delivery commitment.
 
@@ -551,7 +552,21 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - dependency-ordered after Outcome Feedback + Automation Runtime Learning and before broader interface/platform expansion; outside the current near-term execution window unless explicitly promoted in roadmap status.
 
-#### 12. Review + Execution Orchestration
+#### 12. Governed Interface / API Surfaces for Multi-Repo Control Planes
+
+- **Already exists today**
+  - CLI-first deterministic runtime contracts and control-plane guardrails establish the base semantics that future server/API wrappers must preserve.
+- **Partially defined**
+  - directional app/server examples (`/api/playbook/ask`, `/api/playbook/query`, `/api/playbook/explain`, `/api/playbook/index`) exist, but canonical multi-repo request/response envelope, actor taxonomy, and batch semantics were not yet centralized in one architecture slice.
+- **Future work**
+  - formalize the canonical architecture in `docs/architecture/PLAYBOOK_GOVERNED_INTERFACE_API_SURFACES_FOR_MULTI_REPO_CONTROL_PLANES.md`.
+  - require governed interface actions to preserve session/evidence lineage, control-plane policy decisions, and per-repo provenance boundaries.
+  - require browser clients to call validated server/API actions only; do not allow arbitrary browser-side CLI execution.
+  - keep hosted/cloud control planes optional and avoid turning interface surfaces into generic remote shell behavior.
+- **Execution window**
+  - dependency-ordered after Governed Cross-Repo Pattern Promotion / Transfer and before broader interface packaging; outside the current near-term execution window unless explicitly promoted in roadmap status.
+
+#### 13. Review + Execution Orchestration
 
 - **Already exists today**
   - reviewed `verify -> plan -> apply -> verify` execution loops, CLI-first execution, and CI-safe remediation workflows are implemented.
@@ -562,7 +577,7 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - near-term work is limited to current remediation contract hardening; broader orchestration expansion is outside the 4-week plan.
 
-#### 13. Interface Surfaces
+#### 14. Interface Surfaces
 
 - **Already exists today**
   - CLI, JSON command contracts, GitHub/CI formatting surfaces, AI contract/bootstrap artifacts, and demo/docs surfaces are implemented.
@@ -573,7 +588,7 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - outside the current near-term execution window except for current product-truth/documentation packaging work.
 
-#### 14. Capability / Model Routing
+#### 15. Capability / Model Routing
 
 - **Already exists today**
   - deterministic routing is presently command- and contract-driven rather than model-driven; Playbook prefers explicit command surfaces and repository intelligence artifacts over open-ended inference.
@@ -1040,9 +1055,11 @@ Use a layered phase model so each phase compounds directly on the previous one:
    Governed feedback loops that convert verified runtime outcomes, rollback/deactivation events, and later regressions into provenance-linked repo-local candidate learning artifacts (confidence, template suitability, trigger quality, rollback heuristics, stale-knowledge flags, and trend updates). Outputs remain candidate artifacts until explicit human-reviewed promotion/demotion/supersession.
 16. **Phase 16 â€” Governed Cross-Repo Pattern Promotion / Transfer**  
    Controlled compounding of reusable engineering knowledge across repositories through explicit, provenance-preserving, sanitization-verified, compatibility-gated transfer packages. Imported patterns are candidate inputs until locally reviewed; no hidden telemetry or automatic global sync.
-17. **Phase 17 â€” Autonomous Maintenance (Policy-Gated)**  
-   Recurring maintenance execution modes with approval and policy controls, layered after governed synthesis, outcome-feedback, and governed cross-repo transfer contracts.
-18. **Phase 18 â€” Repository Learning Loop Expansion (Human-Reviewed)**  
+17. **Phase 17 â€” Governed Interface / API Surfaces for Multi-Repo Control Planes**  
+   Optional interface expansion that exposes validated server/API action surfaces over the same deterministic runtime, preserving per-repo policy/provenance boundaries while enabling coordinated multi-repo control-plane workflows.
+18. **Phase 18 â€” Autonomous Maintenance (Policy-Gated)**  
+   Recurring maintenance execution modes with approval and policy controls, layered after governed synthesis, outcome-feedback, cross-repo transfer, and governed control-plane interface contracts.
+19. **Phase 19 â€” Repository Learning Loop Expansion (Human-Reviewed)**  
    Broader pattern detection and candidate improvements from repeated findings/remediations/query usage, including advanced clustering, graph-informed learning artifacts, and higher-order synthesis inputs. Outputs remain candidate knowledge artifacts until human review promotes them to enforced governance.
 
 Reasoning for reordering:

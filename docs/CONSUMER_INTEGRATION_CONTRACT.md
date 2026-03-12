@@ -161,24 +161,47 @@ Avoid this anti-pattern:
 
 Extension-first customization preserves upgradeability, deterministic behavior, and clear ownership boundaries.
 
-## 6) Embedded Runtime / API Direction
+## 6) Governed Interface / API and Control-Plane Direction
 
-Future integration direction is server-integrated Playbook functions exposed through application APIs, for example:
+Future integration direction expands from embedded runtime examples to a broader governed interface/control-plane model.
+
+Canonical model:
+
+- shared Playbook Core remains the deterministic runtime
+- each consumer repository retains project-local Playbook state ownership
+- server/API control planes coordinate repositories through governed interface actions
+- interface surfaces are thin wrappers over canonical runtime/session/evidence/control-plane behavior
+- interfaces do not redefine engine semantics
+
+Directional interface families include:
 
 - `/api/playbook/ask`
 - `/api/playbook/query`
 - `/api/playbook/explain`
 - `/api/playbook/index`
+- future session/evidence inspection endpoints
+- future knowledge inspection endpoints
+- future governed transfer/import endpoints
+- future approved orchestration endpoints
 
-Integration rules for application clients:
+Control-plane boundary rules:
 
 - Browser clients should call validated server APIs/actions.
 - Browser clients should not execute arbitrary local CLI commands directly.
-- Deterministic governance and policy enforcement should remain server-side and route through shared control-plane checks.
-- Memory inspection remains repo-local/private-first by default, including longitudinal state and candidate/promoted knowledge views.
-- Future app/server integrations should expose validated read-only knowledge inspection surfaces rather than arbitrary local execution or implicit sync/export behavior.
+- Deterministic governance and policy enforcement remain server-side and route through shared control-plane checks.
+- Multi-repo control planes coordinate repositories; they do not erase per-repo boundaries.
+- Local CLI operation remains valid even when server/API surfaces exist.
+- Hosted/cloud control planes remain optional, not required for baseline local use.
 
-This direction enables safer product integrations (dashboards, control planes, internal platforms) without weakening governance boundaries.
+Privacy/locality posture for control planes:
+
+- repo-local facts remain local by default
+- no hidden telemetry
+- export/sync remains explicit opt-in
+- multi-repo surfaces should consume governed summaries and approved artifacts by default, not unrestricted raw repo memory
+- aggregated views must preserve per-repo provenance and evidence drill-down
+
+Governed-interface architecture reference: `docs/architecture/PLAYBOOK_GOVERNED_INTERFACE_API_SURFACES_FOR_MULTI_REPO_CONTROL_PLANES.md`.
 
 ## 7) Example Consumer Repository Layout
 
