@@ -1,133 +1,127 @@
 # OUTCOME_LEARNING_AND_POLICY_IMPROVEMENT_V1
 
+- feature_id: PB-V09-OUTCOME-LEARNING-001
+- status: canonical future-state specification (v1)
+- workflow anchor: `verify -> plan -> apply -> verify`
+
 ## Purpose
 
-Define the canonical future-state specification for **outcome learning** and **policy improvement** in Playbook's deterministic remediation workflow.
+Define the canonical future-state contract for outcome learning and policy improvement in deterministic remediation planning.
 
-This specification governs how evidence from `verify -> plan -> apply -> verify` is captured, interpreted, and fed back into future planning **without** violating deterministic trust boundaries.
+This spec establishes how Playbook learns from remediation evidence while preserving deterministic trust boundaries, explicit control surfaces, and auditability.
 
 ## Scope
 
 This document defines:
 
-- A data model for lifecycle evidence.
-- Safe learning boundaries and control constraints.
-- Recording semantics for successful and failed remediation patterns.
-- Confidence/support and scope condition handling.
-- Policy-improvement influence points in future deterministic planning.
-- Non-goals and expected failure modes.
-- Candidate Rule / Pattern / Failure Mode notes for governance integration.
+- The data model for learning from verify findings, generated plans, apply outcomes, and post-apply verify results.
+- Safe learning boundaries that prevent hidden autonomy.
+- Evidence recording semantics for successful and failed remediation attempts.
+- Confidence, support, and scope-condition handling.
+- Bounded planning improvements driven by learned outcomes.
+- Non-goals and explicit failure modes.
+- Rule / Pattern / Failure Mode note candidates for Playbook Notes promotion.
 
-This document does **not** authorize autonomous mutation of deterministic rule execution behavior.
-
----
-
-## 1) Outcome learning in deterministic remediation
-
-Playbook's canonical deterministic remediation workflow remains:
-
-1. `verify`
-2. `plan`
-3. `apply`
-4. `verify`
-
-Outcome learning augments this flow by producing a transparent, auditable evidence layer that informs:
-
-- template candidate ranking,
-- task ordering preferences,
-- prevention-target suggestions,
-
-while preserving explicit, inspectable, deterministic plan generation and application semantics.
+This document does **not** authorize autonomous policy mutation, hidden runtime behavior changes, or opaque reinforcement behavior that replaces deterministic rules.
 
 ---
 
-## 2) Canonical learning data model
+## 1) Canonical remediation evidence lifecycle
 
-Outcome learning should operate on immutable event records tied to a single remediation cycle.
+Outcome learning is downstream of deterministic execution. The canonical lifecycle is:
 
-## 2.1 Entity model
+1. `verify` produces pre-apply findings.
+2. `plan` produces deterministic remediation tasks.
+3. `apply` produces task-level execution outcomes.
+4. `verify` produces post-apply findings.
+5. `assess` computes net effect and emits bounded policy-improvement signals.
+
+Learning is therefore an evidence interpretation layer, not an execution authority layer.
+
+---
+
+## 2) Data model for outcome learning
+
+All learning artifacts are immutable, run-linked, and schema-versioned.
+
+### 2.1 Core entities
 
 ### A. `RemediationRun`
 
-Represents one full or partial execution of deterministic remediation.
+Top-level record for a single remediation cycle.
 
-Suggested fields:
+Required fields:
 
-- `run_id` (stable unique id)
-- `repo_fingerprint` (repo identity + branch/revision context)
+- `run_id`
+- `repo_fingerprint` (repo identity + revision + policy profile)
 - `started_at`, `ended_at`
 - `initiator` (`human`, `ci`, `automation`)
 - `playbook_version`
-- `workflow_version` (schema/version for the remediation lifecycle)
+- `workflow_version`
 
 ### B. `VerifySnapshot`
 
-Represents one invocation of `verify` within a `RemediationRun`.
+Captured for both pre-apply and post-apply verify invocations.
 
-Suggested fields:
+Required fields:
 
 - `verify_snapshot_id`
 - `run_id`
 - `phase` (`pre_apply`, `post_apply`, optional `intermediate`)
-- `findings` (normalized set)
+- `findings[]`:
+  - `finding_fingerprint`
   - `rule_id`
   - `severity`
   - `module_scope`
   - `file_scope`
-  - `finding_fingerprint`
   - `message`
   - `metadata`
-- `summary`
-  - counts by severity
-  - counts by rule
+- `summary` (counts by severity, rule, and scope)
 
 ### C. `PlanSnapshot`
 
-Represents generated plan state from `plan`.
+Deterministic planning output tied to a source verify snapshot.
 
-Suggested fields:
+Required fields:
 
 - `plan_snapshot_id`
 - `run_id`
 - `source_verify_snapshot_id`
-- `tasks`
+- `tasks[]`:
   - `task_id`
   - `task_type`
   - `target_rule_id`
   - `target_scope`
-  - `candidate_template_ids` (ranked candidates considered)
+  - `candidate_template_ids` (ordered)
   - `selected_template_id`
-  - `deterministic_rationale` (machine-readable reason codes)
+  - `deterministic_rationale_codes`
   - `depends_on`
-- `plan_order` (ordered task ids)
-- `plan_hash` (canonical content hash)
+- `plan_order`
+- `plan_hash`
 
 ### D. `ApplySnapshot`
 
-Represents observed outcomes from `apply`.
+Task-level execution outcomes tied to plan snapshot.
 
-Suggested fields:
+Required fields:
 
 - `apply_snapshot_id`
 - `run_id`
 - `source_plan_snapshot_id`
-- `task_outcomes`
+- `task_outcomes[]`:
   - `task_id`
   - `status` (`applied`, `skipped`, `failed`, `blocked`)
-  - `failure_category` (if failed/blocked)
+  - `failure_category`
   - `error_signature`
-  - `artifact_delta` (high-level diff stats + touched scope)
+  - `artifact_delta`
   - `execution_time_ms`
 - `apply_summary`
-  - applied count
-  - failed count
-  - skipped/blocked counts
 
 ### E. `OutcomeAssessment`
 
-Represents deltas between pre/post verification and plan/apply trace.
+Computed effect of the remediation cycle.
 
-Suggested fields:
+Required fields:
 
 - `assessment_id`
 - `run_id`
@@ -135,234 +129,186 @@ Suggested fields:
 - `post_verify_snapshot_id`
 - `plan_snapshot_id`
 - `apply_snapshot_id`
-- `resolved_findings` (fingerprints closed)
-- `unresolved_findings`
-- `regressed_findings` (new or worsened)
-- `net_effect`
+- `resolved_findings[]`
+- `unresolved_findings[]`
+- `regressed_findings[]`
+- `net_effect`:
   - `resolution_rate`
   - `regression_rate`
-  - weighted improvement score
+  - `weighted_improvement_score`
 
-## 2.2 Linkable pattern evidence model
+### 2.2 Learning entities
 
 ### F. `PatternOutcomeRecord`
 
-Evidence row linking an attempted remediation strategy to a result.
+Evidence row binding an attempted pattern/template to an observed outcome.
 
-Suggested fields:
+Required fields:
 
 - `pattern_outcome_id`
-- `pattern_id` (or template id if pre-promotion)
+- `pattern_or_template_id`
 - `rule_id`
-- `scope_conditions` (normalized)
-  - language/runtime
-  - framework
-  - module type
-  - file archetype
-  - constraint flags
+- `scope_conditions`:
+  - runtime/language/framework
+  - module archetype/file archetype
+  - environment constraints
+  - policy profile
 - `attempt_context`
-  - repo/profile class
-  - plan task type
-  - execution environment class
 - `outcome_class` (`success`, `partial`, `failure`, `regression`)
-- `support_weight` (derived from evidence quality and count)
+- `support_weight`
 - `confidence_band` (`low`, `medium`, `high`)
 - `first_seen_at`, `last_seen_at`
+- `evidence_refs` (run/snapshot identifiers)
 
 ### G. `PolicyImprovementSignal`
 
-Derived, non-executable recommendation signal for future planning.
+Non-executable signal derived from repeated evidence.
 
-Suggested fields:
+Required fields:
 
 - `signal_id`
 - `signal_type` (`ranking_bias`, `ordering_bias`, `prevention_suggestion`)
 - `target`
-  - template id / task type / rule-prevention pair
 - `scope_conditions`
 - `signal_strength`
-- `evidence_refs` (list of `pattern_outcome_id` / `assessment_id`)
-- `explanation` (traceable reason codes)
+- `support_weight`
+- `confidence_band`
+- `evidence_refs`
+- `explanation_codes`
 - `status` (`candidate`, `approved`, `rejected`, `expired`)
 
 ---
 
 ## 3) Safe learning boundaries
 
-Outcome learning must remain subordinate to deterministic governance.
+### 3.1 No silent autonomous mutation
 
-## 3.1 Boundary: no silent autonomous mutation
+- Learning outputs MUST NOT mutate verify, plan, or apply logic implicitly.
+- Behavior-impacting changes MUST pass explicit deterministic governance control surfaces.
+- Every active signal MUST be inspectable and attributable to evidence.
 
-- Learning outputs must **not** directly mutate verify rules, plan generation logic, or apply behavior at runtime.
-- Any behavior-impacting change must enter explicit deterministic configuration or reviewed promotion flow.
-- Every influence from learned evidence must be inspectable and attributable.
+### 3.2 No opaque reinforcement replacing deterministic rules
 
-## 3.2 Boundary: no opaque reinforcement replacing deterministic rules
+- Learned outcomes MUST NOT replace rule semantics.
+- Verify findings remain rule-defined, deterministic, and transparent.
+- Learning may tune ranking/ordering among valid deterministic candidates only.
 
-- Learned signals cannot replace rule semantics.
-- Rule interpretation and violation detection remain deterministic and transparent.
-- Ranking improvements may influence *which candidate is preferred*, not whether a rule is enforced.
+### 3.3 Policy improvement informs ranking/template selection, not hidden action
 
-## 3.3 Boundary: policy improvement is advisory and bounded
+- Signals may influence candidate ranking and task ordering.
+- Signals MUST NOT create hidden tasks, hidden side effects, or undeclared execution.
+- Plan output MUST retain deterministic rationale regardless of learned influence.
 
-- Policy improvements may inform ranking/template selection and ordering.
-- Policy improvements must not trigger hidden actions outside declared plan tasks.
-- Deterministic plan output must preserve explicit rationale for each selected action.
+### 3.4 Controlled activation only
 
-## 3.4 Boundary: explicit control surfaces only
-
-- Learned signal activation should occur only via known control surfaces (e.g., policy profile, approved signal set).
-- Unsupported contexts should gracefully fall back to baseline deterministic behavior.
+- Signals become active only through explicit policy state (e.g., approved signal set/profile).
+- Unsupported or low-confidence contexts MUST fall back to baseline deterministic behavior.
 
 ---
 
-## 4) Recording semantics for remediation outcomes
+## 4) Outcome recording contract
 
-## 4.1 Successful remediation patterns
+### 4.1 Successful remediation patterns
 
 Playbook records success when:
 
-- targeted finding fingerprints are resolved post-apply,
-- no material regressions are introduced,
-- task/application succeeded under declared scope conditions.
+- targeted findings resolve in post-apply verify,
+- no material regression is introduced,
+- apply outcomes match intended scope and complete successfully.
 
-Success records should include:
+Success recording includes:
 
-- the template/pattern attempted,
-- scope conditions,
-- before/after verify evidence,
-- confidence/support updates.
+- pattern/template identifier,
+- full scope conditions,
+- pre/post verify evidence references,
+- updated support/confidence with explanation codes.
 
-## 4.2 Failed remediation attempts
+### 4.2 Failed remediation attempts
 
 Playbook records failure when:
 
 - apply fails or is blocked,
-- post-apply verify does not resolve targeted findings,
-- regressions exceed tolerated threshold.
+- findings remain unresolved,
+- regressions exceed tolerance,
+- or environmental constraints invalidate expected execution.
 
-Failure records should include:
+Failure recording includes:
 
 - normalized failure category,
-- error signature,
-- affected scope,
-- whether failure is environmental, semantic, or ordering-related.
+- error signature and impacted scope,
+- classification (`environmental`, `semantic`, `ordering`, `unknown`),
+- evidence links equivalent in fidelity to success recording.
 
-## 4.3 Confidence and support
+### 4.3 Confidence and support
 
-Confidence is a bounded interpretation of evidence quality and consistency.
+- `support_weight` measures evidence quantity and independence.
+- `confidence_band` expresses reliability under matched scope conditions.
+- Confidence rises with repeated, independent, stable outcomes.
+- Confidence decays or caps under contradictory outcomes.
+- Low-support evidence remains advisory and weakly weighted.
 
-Suggested principles:
+### 4.4 Scope conditions
 
-- **Support** grows with independent successful observations in matching scope conditions.
-- **Confidence** increases when outcomes are stable across repositories and contexts.
-- Confidence decays or is capped when contradictory outcomes accumulate.
-- Low-support signals should remain advisory with conservative weight.
+No generalized learning decision is valid without explicit scope conditions.
 
-## 4.4 Scope conditions
-
-Scope conditions are mandatory for safe generalization.
-
-Minimum condition families:
+Minimum scope condition families:
 
 - repository/runtime profile,
-- language + framework,
-- module archetype,
-- rule id and finding class,
-- environmental constraints (CI/local, permissions, tooling availability).
-
-Signals lacking explicit scope conditions should not influence planning.
+- language/framework/toolchain,
+- module and file archetype,
+- rule and finding class,
+- execution environment and constraints.
 
 ---
 
-## 5) Policy-improvement effects on future planning
+## 5) Future planning impact (bounded)
 
-Outcome learning affects future planning at bounded decision points.
+### 5.1 Candidate template ranking
 
-## 5.1 Candidate template ranking
+At plan-time, deterministic candidate enumeration remains unchanged; learned signals only reorder candidates within that deterministic candidate set.
 
-During plan generation:
+### 5.2 Remediation ordering
 
-- candidate templates for a task are enumerated deterministically,
-- learned ranking bias reorders candidates by scoped evidence,
-- planner still emits deterministic rationale including why candidate A outranked B.
+For multi-task plans, learned ordering bias may promote sequences with better historical unblock/resolution outcomes, while preserving dependency correctness.
 
-If evidence is insufficient or conflicting, fallback to baseline ranking.
+### 5.3 Prevention-target suggestions
 
-## 5.2 Remediation ordering
-
-For multi-task plans:
-
-- learned ordering bias can prioritize historically unblock-first sequences,
-- ordering changes must preserve dependency correctness,
-- ordering rationale must cite evidence class (e.g., reduced failures for specific ordering under matching conditions).
-
-## 5.3 Prevention-target suggestions
-
-Post-remediation analysis may emit prevention suggestions, such as:
-
-- candidate guardrail tightening,
-- docs/process hardening opportunities,
-- recurring root-cause prevention candidates.
-
-These suggestions are advisory outputs for human/governance review, not implicit rule mutations.
+Post-assessment signals may suggest prevention targets (guardrail, documentation, process hardening opportunities) for review. Suggestions are advisory and non-mutating.
 
 ---
 
 ## 6) Non-goals
 
-- Building a self-modifying autonomous remediation agent.
-- Replacing deterministic verify rules with opaque learned policies.
-- Applying learned actions that bypass explicit plan artifacts.
-- Optimizing solely for short-term pass rate at the expense of governance transparency.
-- Generalizing patterns across scopes without explicit scope condition compatibility.
+- Autonomous self-modifying remediation behavior.
+- Hidden runtime mutation of deterministic control logic.
+- Opaque policy engines that bypass explicit plan artifacts.
+- Unscoped generalization across incompatible repositories/environments.
+- Optimizing short-term pass-rate at the expense of explainability and governance.
 
 ---
 
 ## 7) Failure modes
 
-## 7.1 AI contract drift via hidden behavior changes
-
-Learning signals silently alter plan/apply behavior without explicit surfaced policy state.
-
-## 7.2 Scope collapse / unsafe over-generalization
-
-Outcomes from narrow contexts are applied broadly, reducing reliability and increasing regressions.
-
-## 7.3 Survivorship bias in pattern promotion
-
-Only successful runs are captured; failed attempts are under-recorded, causing inflated confidence.
-
-## 7.4 Feedback loop lock-in
-
-Early high-confidence signals dominate ranking and suppress exploration, preserving suboptimal policy choices.
-
-## 7.5 Environment-confounded learning
-
-Environmental failures are misclassified as template/pattern failures, contaminating policy signals.
-
-## 7.6 Opaque confidence inflation
-
-Confidence scores rise without auditable support traces or independent corroboration.
+- **Opaque Policy Drift:** learned influence changes behavior without explicit policy visibility.
+- **Scope Collapse:** narrow-context evidence over-generalized into incompatible contexts.
+- **Survivorship Bias:** failures under-recorded relative to successes.
+- **Feedback Lock-In:** early signals suppress alternative candidates prematurely.
+- **Environment Confounding:** environmental failures misattributed to template quality.
+- **Confidence Inflation:** confidence rises without auditable support.
 
 ---
 
 ## 8) Rule / Pattern / Failure Mode note candidates
 
-Candidate governance notes for future integration:
-
-- **Rule candidate:** Outcome learning signals must remain advisory unless explicitly promoted through deterministic governance controls.
-- **Rule candidate:** Planning influenced by learned signals must emit deterministic rationale with evidence references.
-- **Rule candidate:** Pattern promotion requires both success and failure evidence accounting for matched scope conditions.
-- **Pattern candidate:** Store remediation outcome evidence as immutable run-linked snapshots to preserve auditability.
-- **Pattern candidate:** Prefer scoped ranking biases over direct behavioral mutation for safe policy improvement.
-- **Failure Mode candidate:** Outcome-learning drift occurs when signals influence action selection outside explicit policy control surfaces.
-- **Failure Mode candidate:** Evidence skew occurs when failed remediation attempts are not captured with the same fidelity as successful attempts.
+- **Pattern:** Learn From Reviewed Outcomes, Not Hidden Autonomy.
+- **Rule:** Outcome Learning Tunes Ranking, Not Mutation Authority.
+- **Failure Mode:** Opaque Policy Drift.
+- **Rule candidate:** Learned influence must remain traceable to immutable remediation evidence.
+- **Pattern candidate:** Record failed remediation attempts with equal fidelity to successful attempts.
+- **Failure Mode candidate:** Scope-tag omission causes unsafe policy transfer.
 
 ---
 
 ## 9) Canonical operating statement
 
-Playbook's future-state outcome learning architecture is **evidence-driven, scope-bounded, and governance-gated**.
-
-Learning improves deterministic planning quality by shaping ranked choices and prevention suggestions, while deterministic rules, explicit plans, and transparent apply behavior remain the canonical enforcement and execution contract.
+For `feature_id: PB-V09-OUTCOME-LEARNING-001`, Playbook outcome learning is evidence-driven, scope-bounded, and governance-gated: it improves deterministic planning quality through transparent ranking, ordering, and prevention suggestions without acquiring hidden mutation authority.
