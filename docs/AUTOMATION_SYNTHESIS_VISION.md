@@ -10,6 +10,8 @@ This track should align with the long-term platform layering in `docs/architectu
 
 Control-plane architecture reference: `docs/architecture/PLAYBOOK_CONTROL_PLANE_ARCHITECTURE.md`.
 
+Governed knowledge-consumption architecture reference: `docs/architecture/PLAYBOOK_AUTOMATION_SYNTHESIS_GOVERNED_KNOWLEDGE_CONSUMPTION.md`.
+
 ## Problem statement
 
 Engineering teams repeatedly perform recurring operational and repository-maintenance work (triage loops, repetitive remediation flows, recurring CI hygiene, and runbook-based updates).
@@ -40,6 +42,27 @@ Automation Synthesis should follow a staged architecture aligned with Playbook's
    - Track production behavior and support fast rollback/deactivation.
 
 Generated automations are untrusted until verification and approvals pass, and every synthesis decision should remain traceable to session-scoped evidence and approval history.
+
+
+## Governed knowledge-consumption contract
+
+Automation Synthesis is downstream of governed knowledge and must consume approved, inspectable artifacts instead of opaque conversational memory.
+
+Required input constraints:
+
+- trigger classification, template selection, and context packaging must consume approved knowledge artifacts
+- candidate vs promoted knowledge classes must remain explicit
+- provenance for all synthesis inputs must be inspectable before operationalization
+
+Disallowed input constraints:
+
+- no direct synthesis from raw chat transcripts
+- no direct synthesis from opaque prompt memory
+- no direct synthesis from unreviewed candidate knowledge
+- no undocumented ad-hoc repository inference as automation-grade context
+
+Rule: automation synthesis may only consume governed/promoted knowledge artifacts that are inspectable and provenance-linked.
+Rule: candidate knowledge is not automation-grade input until explicit review/promotion.
 
 ## Candidate trigger sources
 

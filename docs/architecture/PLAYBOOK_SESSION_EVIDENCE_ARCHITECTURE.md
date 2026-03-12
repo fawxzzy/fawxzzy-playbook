@@ -114,3 +114,5 @@ This ordering is architecture direction and backlog sequencing guidance, not a c
 - Backlog staging: `docs/roadmap/IMPROVEMENTS_BACKLOG.md`
 - Automation synthesis direction: `docs/AUTOMATION_SYNTHESIS_VISION.md`
 - Consumer promotion/privacy constraints: `docs/CONSUMER_INTEGRATION_CONTRACT.md`
+
+- `docs/architecture/PLAYBOOK_AUTOMATION_SYNTHESIS_GOVERNED_KNOWLEDGE_CONSUMPTION.md`

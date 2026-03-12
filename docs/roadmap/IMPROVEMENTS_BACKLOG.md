@@ -198,6 +198,32 @@ Failure Mode: Query surfaces imply enforcement.
 
 ---
 
+## Platform direction: Automation Synthesis consuming governed/promoted knowledge
+
+Backlog scope (directional, not current-sprint commitment):
+
+- Define governed knowledge eligibility rules for synthesis inputs.
+- Define a synthesis context packaging contract with explicit candidate/promoted class separation.
+- Define provenance-linked automation generation contracts that attach knowledge/evidence lineage.
+- Define stale-knowledge exclusion and explicit override policy contracts.
+- Define synthesis outcome feedback contracts into repo longitudinal memory.
+- Define template-to-knowledge input contracts for approved pattern families and required metadata.
+
+Pattern: Governed Knowledge Before Automation.
+Pattern: Inspectable Knowledge as Synthesis Input.
+Pattern: Provenance-Linked Automation Generation.
+Rule: Automation Synthesis may only consume governed/promoted knowledge.
+Rule: Candidate knowledge is not automation-grade input.
+Rule: Verification remains the trust boundary.
+Rule: Repo-local knowledge stays local unless intentionally promoted.
+Failure Mode: Automation synthesized from raw chat memory.
+Failure Mode: Candidate knowledge operationalized before review.
+Failure Mode: Provenance-free automation generation.
+Failure Mode: Cross-repo leakage through synthesis context.
+Failure Mode: Automation consumes stale or superseded knowledge.
+
+---
+
 ## Platform direction: Multi-Repo Knowledge Transfer Model
 
 Backlog scope:

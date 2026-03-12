@@ -124,6 +124,18 @@ Boundary rules:
 - Candidate knowledge is not enforceable governance until explicit human review promotes it.
 - Stale or contradicted promoted knowledge must be demotable/supersedable through explicit review.
 
+### Downstream automation synthesis inheritance rules
+
+If consumer repositories adopt future automation synthesis features, synthesized automations must inherit this contract:
+
+- synthesis consumes governed/promoted, inspectable, provenance-linked knowledge artifacts only
+- candidate knowledge and raw conversation memory are not automation-grade inputs
+- repo-local/private-first boundaries apply to synthesis context packaging and deployment policy
+- promoted reusable patterns may inform shared automation patterns only through intentional governance paths
+- no hidden telemetry or implicit upstream synchronization is introduced by synthesis surfaces
+
+Automation synthesis reference: `docs/architecture/PLAYBOOK_AUTOMATION_SYNTHESIS_GOVERNED_KNOWLEDGE_CONSUMPTION.md`.
+
 ## 5) Extension Model
 
 Preferred customization mechanisms inside consumer repositories:

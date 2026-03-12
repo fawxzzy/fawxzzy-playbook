@@ -508,7 +508,20 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - dependency-ordered after Repo Longitudinal State + Knowledge Promotion and before broader automation synthesis or expanded agent/runtime surfaces.
 
-#### 9. Review + Execution Orchestration
+#### 9. Automation Synthesis (Governed Knowledge Consumption)
+
+- **Already exists today**
+  - directional architecture/vision language establishes that synthesis remains future-scoped and governance-gated.
+- **Partially defined**
+  - future synthesis sequencing exists, but first-class governed input eligibility and provenance-linked context packaging contracts were previously implicit across multiple docs.
+- **Future work**
+  - formalize the canonical architecture in `docs/architecture/PLAYBOOK_AUTOMATION_SYNTHESIS_GOVERNED_KNOWLEDGE_CONSUMPTION.md`.
+  - require synthesis to consume only governed/promoted, inspectable, provenance-linked knowledge artifacts and template contracts.
+  - require stale/superseded exclusion rules, explicit override policy, and lineage-attached generation outputs before any operationalization path.
+- **Execution window**
+  - dependency-ordered after Knowledge Query / Inspection Surfaces and before broader orchestration/interface expansion; remains outside the current near-term execution window unless explicitly promoted in roadmap status.
+
+#### 10. Review + Execution Orchestration
 
 - **Already exists today**
   - reviewed `verify -> plan -> apply -> verify` execution loops, CLI-first execution, and CI-safe remediation workflows are implemented.
@@ -519,7 +532,7 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - near-term work is limited to current remediation contract hardening; broader orchestration expansion is outside the 4-week plan.
 
-#### 10. Multi-Repo Knowledge Transfer
+#### 11. Multi-Repo Knowledge Transfer
 
 - **Already exists today**
   - external repository targeting and bounded pilot execution exist today through `--repo` and `playbook pilot --repo <path>`.
@@ -530,7 +543,7 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - outside the current near-term execution window beyond current external pilot/runtime hardening.
 
-#### 11. Interface Surfaces
+#### 12. Interface Surfaces
 
 - **Already exists today**
   - CLI, JSON command contracts, GitHub/CI formatting surfaces, AI contract/bootstrap artifacts, and demo/docs surfaces are implemented.
@@ -541,7 +554,7 @@ This ordering is a dependency recommendation, not an active delivery commitment.
 - **Execution window**
   - outside the current near-term execution window except for current product-truth/documentation packaging work.
 
-#### 12. Capability / Model Routing
+#### 13. Capability / Model Routing
 
 - **Already exists today**
   - deterministic routing is presently command- and contract-driven rather than model-driven; Playbook prefers explicit command surfaces and repository intelligence artifacts over open-ended inference.
@@ -1000,9 +1013,11 @@ Use a layered phase model so each phase compounds directly on the previous one:
    Repo-local-first longitudinal repository learning built from deterministic evidence, with candidate extraction, compaction, provenance-preserving promotion review, and demotion/supersession handling. This layer is dependency-ordered after Session + Evidence, Control Plane, and PR Review Loop.
 13. **Phase 13 â€” Knowledge Query / Inspection Surfaces (Read Runtime)**  
    Deterministic, provenance-preserving read-runtime inspection of repository memory and promoted knowledge so humans/CI can query, compare, and audit candidate/promoted/stale states before broader automation consumption.
-14. **Phase 14 â€” Autonomous Maintenance (Policy-Gated)**  
-   Recurring maintenance execution modes with approval and policy controls.
-15. **Phase 15 â€” Repository Learning Loop Expansion (Human-Reviewed)**  
+14. **Phase 14 â€” Automation Synthesis (Governed Knowledge Consumption)**  
+   Future controlled synthesis that consumes only governed/promoted, inspectable, provenance-linked knowledge artifacts after knowledge query/inspection surfaces are in place. This phase explicitly excludes raw chat memory, unreviewed candidate knowledge, and undocumented inference as automation-grade input.
+15. **Phase 15 â€” Autonomous Maintenance (Policy-Gated)**  
+   Recurring maintenance execution modes with approval and policy controls, layered after governed knowledge-consuming synthesis contracts.
+16. **Phase 16 â€” Repository Learning Loop Expansion (Human-Reviewed)**  
    Broader pattern detection and candidate improvements from repeated findings/remediations/query usage, including advanced clustering, graph-informed learning artifacts, and higher-order synthesis inputs. Outputs remain candidate knowledge artifacts until human review promotes them to enforced governance.
 
 Reasoning for reordering:
@@ -1581,7 +1596,7 @@ If `apply --from-plan` silently re-runs planning logic and diverges from the rev
 
 ## Future Capability Track: Automation Synthesis / Playbook Agent
 
-Detailed product direction: see `docs/AUTOMATION_SYNTHESIS_VISION.md`.
+Detailed product direction: see `docs/AUTOMATION_SYNTHESIS_VISION.md` and `docs/architecture/PLAYBOOK_AUTOMATION_SYNTHESIS_GOVERNED_KNOWLEDGE_CONSUMPTION.md`.
 
 Goal:
 Extend Playbook from deterministic remediation into a future **Automation Synthesis** platform that can propose and safely operationalize recurring engineering automations without bypassing governance.
@@ -1595,14 +1610,16 @@ Why this matters:
 
 Core concept:
 - detect recurring work signals (for example from verify/plan/apply history and approved remediation patterns)
-- classify work into known automation patterns/templates
-- synthesize candidate automation logic and runbooks
+- classify work into known automation patterns/templates using approved trigger taxonomy and promoted/reviewed pattern knowledge
+- synthesize candidate automation logic and runbooks from governed, inspectable, provenance-linked knowledge context packages
 - treat generated automations as untrusted until verified in isolated sandboxes
 - route verified candidates through explicit approval gates before deployment to orchestration backends
 - monitor runtime behavior with rollback-ready controls
 
 Foundational requirements:
 - deterministic contracts for automation definitions, approvals, and execution states
+- synthesis input eligibility rules that exclude raw chat memory, unreviewed candidate knowledge, and evidence-free inferred rules
+- provenance-linked synthesis outputs that attach lineage to governed knowledge/evidence inputs
 - reusable template and policy packs tied to docs-backed governance behavior
 - sandboxed verification before any production orchestration action
 - human-reviewable outputs (diffs, risk summaries, and execution intent)

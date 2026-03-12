@@ -167,3 +167,5 @@ This sequence is architecture direction and roadmap sequencing guidance, not a c
 - Improvements backlog: `docs/roadmap/IMPROVEMENTS_BACKLOG.md`
 - Consumer integration contract: `docs/CONSUMER_INTEGRATION_CONTRACT.md`
 - Automation synthesis vision: `docs/AUTOMATION_SYNTHESIS_VISION.md`
+
+- `docs/architecture/PLAYBOOK_AUTOMATION_SYNTHESIS_GOVERNED_KNOWLEDGE_CONSUMPTION.md`
