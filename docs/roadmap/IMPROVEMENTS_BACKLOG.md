@@ -28,6 +28,9 @@ If an item is already architecture-defined with clear dependency placement, remo
 
 ## Current emerging ideas (unscheduled)
 
+Canonical roadmap directions for Repository Memory System, Control Plane / Agent Runtime v1, and Outcome Learning / Policy Improvement are intentionally excluded from this backlog.
+
+
 ### 1) Narrative and truth-surface drift checks
 
 - Add lightweight checks for wording drift across roadmap/docs/demo surfaces so planned-vs-live language stays clear.
