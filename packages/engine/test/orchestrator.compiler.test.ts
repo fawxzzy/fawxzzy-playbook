@@ -1,5 +1,8 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildOrchestratorContract } from '../src/orchestrator/index.js';
+import { buildOrchestratorContract, compileOrchestratorArtifacts } from '../src/orchestrator/index.js';
 
 describe('buildOrchestratorContract', () => {
   it('builds deterministic lane contracts with explicit ownership metadata', () => {
@@ -61,5 +64,30 @@ describe('buildOrchestratorContract', () => {
     expect(contract.warnings).toEqual([
       'Requested 7 lanes; reduced to 4 because v1 supports up to four deterministic ownership buckets.'
     ]);
+  });
+
+
+  it('writes worker bundles for each produced lane', () => {
+    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-orchestrator-worker-bundles-'));
+
+    const result = compileOrchestratorArtifacts({
+      cwd: repoDir,
+      goal: 'Emit worker bundles',
+      laneCountRequested: 3,
+      outDir: '.playbook/orchestrator',
+      artifactFormat: 'json'
+    });
+
+    const workersDir = path.join(repoDir, '.playbook', 'orchestrator', 'workers');
+    expect(fs.existsSync(workersDir)).toBe(true);
+
+    const workerLaneDirs = fs.readdirSync(workersDir);
+    expect(workerLaneDirs).toHaveLength(result.contract.laneCountProduced);
+    expect(result.artifact.workerBundleDirs).toHaveLength(result.contract.laneCountProduced);
+
+    workerLaneDirs.forEach((laneId) => {
+      expect(fs.existsSync(path.join(workersDir, laneId, 'prompt.md'))).toBe(true);
+      expect(fs.existsSync(path.join(workersDir, laneId, 'contract.json'))).toBe(true);
+    });
   });
 });

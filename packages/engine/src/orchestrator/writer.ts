@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { writeLanePrompts } from '../execution/lanePrompts.js';
+import { renderLanePrompt, writeLanePrompts } from '../execution/lanePrompts.js';
 import type { LanePromptSpec } from '../execution/lanePrompts.js';
-import type { OrchestratorArtifactWriteResult, OrchestratorContract } from './types.js';
+import type { OrchestratorArtifactWriteResult, OrchestratorContract, OrchestratorLaneContract } from './types.js';
 
 const toPromptSpec = (contract: OrchestratorContract): LanePromptSpec[] =>
   contract.lanes.map((lane) => ({
@@ -29,6 +29,17 @@ const toPromptSpec = (contract: OrchestratorContract): LanePromptSpec[] =>
     ]
   }));
 
+const buildWorkerContract = (lane: OrchestratorLaneContract, goal: string) => ({
+  laneId: lane.id,
+  goal,
+  allowedPaths: lane.allowedPaths,
+  forbiddenPaths: lane.forbiddenPaths,
+  sharedPaths: lane.sharedPaths,
+  wave: lane.wave,
+  dependsOn: lane.dependsOn,
+  verification: lane.verification
+});
+
 export const writeOrchestratorArtifact = (
   contract: OrchestratorContract,
   outDir: string,
@@ -43,9 +54,26 @@ export const writeOrchestratorArtifact = (
 
   const lanePromptPaths = artifactFormat === 'json' ? [] : writeLanePrompts({ outputDir: outDir, lanes: toPromptSpec(contract) });
 
+  const promptSpecs = toPromptSpec(contract);
+  const workerBundleDirs: string[] = [];
+  contract.lanes.forEach((lane, index) => {
+    const workerDir = path.join(outDir, 'workers', lane.id);
+    fs.mkdirSync(workerDir, { recursive: true });
+
+    const workerPromptPath = path.join(workerDir, 'prompt.md');
+    const workerPrompt = renderLanePrompt({ laneNumber: index + 1, lane: promptSpecs[index] ?? promptSpecs[0] });
+    fs.writeFileSync(workerPromptPath, `${workerPrompt.endsWith('\n') ? workerPrompt : `${workerPrompt}\n`}`, 'utf8');
+
+    const workerContractPath = path.join(workerDir, 'contract.json');
+    fs.writeFileSync(workerContractPath, `${JSON.stringify(buildWorkerContract(lane, contract.goal), null, 2)}\n`, 'utf8');
+
+    workerBundleDirs.push(workerDir);
+  });
+
   return {
     outputDir: outDir,
     orchestratorPath,
-    lanePromptPaths
+    lanePromptPaths,
+    workerBundleDirs
   };
 };

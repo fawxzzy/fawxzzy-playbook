@@ -43,9 +43,11 @@ describe('runOrchestrate', () => {
 
     const jsonArtifact = path.join(repoDir, '.playbook', 'orchestrator', 'orchestrator.json');
     const lane1Prompt = path.join(repoDir, '.playbook', 'orchestrator', 'lane-1.prompt.md');
+    const workersDir = path.join(repoDir, '.playbook', 'orchestrator', 'workers');
 
     expect(fs.existsSync(jsonArtifact)).toBe(true);
     expect(fs.existsSync(lane1Prompt)).toBe(true);
+    expect(fs.existsSync(workersDir)).toBe(true);
 
     const artifactPayload = JSON.parse(fs.readFileSync(jsonArtifact, 'utf8')) as {
       goal: string;
@@ -56,6 +58,36 @@ describe('runOrchestrate', () => {
     expect(artifactPayload.goal).toBe('ship orchestration command');
     expect(artifactPayload.laneCountProduced).toBe(3);
     expect(artifactPayload.sharedPaths).toEqual(['README.md', 'docs/CHANGELOG.md', 'docs/PLAYBOOK_PRODUCT_ROADMAP.md']);
+
+    const workerDirs = fs.readdirSync(workersDir);
+    expect(workerDirs).toHaveLength(artifactPayload.laneCountProduced);
+
+    workerDirs.forEach((laneId) => {
+      expect(fs.existsSync(path.join(workersDir, laneId, 'prompt.md'))).toBe(true);
+      expect(fs.existsSync(path.join(workersDir, laneId, 'contract.json'))).toBe(true);
+    });
+
+    const lane1WorkerContract = JSON.parse(fs.readFileSync(path.join(workersDir, 'lane-1', 'contract.json'), 'utf8')) as {
+      laneId: string;
+      goal: string;
+      allowedPaths: string[];
+      forbiddenPaths: string[];
+      sharedPaths: string[];
+      wave: number;
+      dependsOn: string[];
+      verification: string[];
+    };
+
+    expect(lane1WorkerContract).toMatchObject({
+      laneId: 'lane-1',
+      goal: 'ship orchestration command',
+      allowedPaths: expect.any(Array),
+      forbiddenPaths: expect.any(Array),
+      sharedPaths: expect.any(Array),
+      wave: expect.any(Number),
+      dependsOn: expect.any(Array),
+      verification: expect.any(Array)
+    });
 
     const owned = new Set<string>();
     artifactPayload.lanes.forEach((lane) => {
@@ -95,6 +127,8 @@ describe('runOrchestrate', () => {
 
     expect(artifactPayload.laneCountProduced).toBe(1);
     expect(fs.existsSync(path.join(repoDir, '.playbook', 'orchestrator', 'lane-1.prompt.md'))).toBe(false);
+    expect(fs.existsSync(path.join(repoDir, '.playbook', 'orchestrator', 'workers', 'lane-1', 'prompt.md'))).toBe(true);
+    expect(fs.existsSync(path.join(repoDir, '.playbook', 'orchestrator', 'workers', 'lane-1', 'contract.json'))).toBe(true);
 
     logSpy.mockRestore();
   });
