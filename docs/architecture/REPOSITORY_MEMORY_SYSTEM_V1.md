@@ -1,171 +1,122 @@
-# Repository Memory System V1 (Future State Specification)
+# Repository Memory System v1 (Canonical Future-State Specification)
 
 ## Purpose
 
-Define a future-state repository memory system that separates short-lived execution context from reviewed durable knowledge so Playbook-enabled workflows can retain useful history without compromising deterministic governance.
+Define the canonical memory model for Playbook-enabled repositories so temporal engineering memory is captured, promoted, and reused without weakening deterministic governance.
 
-This specification describes the intended operating model, artifact boundaries, and promotion controls for memory within this repository.
+This spec establishes the memory-layer taxonomy, artifact boundaries under `.playbook/`, promotion controls, provenance expectations, privacy stance, and explicit non-goals.
 
-## Scope
+## Canonical memory layers
 
-This document covers:
+### 1) Working memory
 
-- Memory categories and their intended roles.
-- Artifact placement under `.playbook/`.
-- Promotion rules from ephemeral context to durable memory.
-- Provenance and traceability requirements for memory artifacts.
-- Integration boundaries with doctrine, rules, contracts, and docs surfaces.
+Working memory is ephemeral execution context used during an active task/session.
 
-This document does not define implementation details for storage engines, APIs, or transport protocols.
+- Scope: current run, short-lived local context, in-flight scaffolding.
+- Characteristics: overwriteable, pruneable, non-authoritative.
+- Primary use: help agents/tools complete a current workflow, not define durable truth.
 
-## Memory taxonomy
+### 2) Episodic memory
 
-### Working memory (ephemeral)
+Episodic memory is time-ordered engineering history.
 
-Short-lived, task-local context used during active execution.
+- Scope: events and outcomes across runs (verify/plan/apply cycles, decisions, command invocations).
+- Characteristics: append-oriented, timestamped, actor/process attributed.
+- Primary use: replay, audit trails, and source evidence for future promotion.
 
-- Typical contents: transient reasoning scaffolds, active task state, temporary summaries.
-- Lifecycle: created and consumed within a session; not authoritative by default.
-- Durability: low; should be pruned aggressively.
+### 3) Semantic memory
 
-### Episodic memory (event history)
+Semantic memory is reviewed durable repository knowledge distilled from episodes.
 
-Time-ordered records of notable repository and workflow events.
+- Scope: reusable insights, validated mappings, stable repository facts.
+- Characteristics: versioned, provenance-backed, promotion-gated.
+- Primary use: cross-session reuse with explicit evidence and review lineage.
 
-- Typical contents: verification runs, planning/apply outcomes, command invocations, decision events.
-- Lifecycle: append-oriented event log with retention policy.
-- Durability: medium-to-high, depending on governance retention settings.
+### 4) Doctrine / procedural memory
 
-### Semantic memory (knowledge)
+Doctrine/procedural memory is normative guidance that governs behavior.
 
-Curated, reusable knowledge abstractions derived from multiple episodes.
+- Scope: rules, contracts, operating doctrine, approved procedures.
+- Characteristics: PR-reviewed, version-controlled, policy authoritative.
+- Primary use: define what is allowed, required, and canonical for repository operation.
 
-- Typical contents: reusable insights, stable mappings, distilled repository facts, validated heuristics.
-- Lifecycle: promoted only after explicit review.
-- Durability: high; intended for reuse across sessions.
+## Canonical artifact layout under `.playbook/`
 
-### Doctrine / procedural memory (normative guidance)
+### Structural runtime artifacts (not temporal memory)
 
-Reviewed, policy-level guidance that governs behavior.
+The following artifacts remain structural runtime intelligence artifacts:
 
-- Typical contents: canonical rules, operating contracts, approved procedural patterns, authoritative docs.
-- Lifecycle: human-reviewed and versioned through standard repository governance.
-- Durability: highest; treated as normative source material.
+- `.playbook/repo-index.json`
+- `.playbook/repo-graph.json`
 
-## Artifact layout under `.playbook/` (future state)
+These files represent repository shape/intelligence used by command surfaces (`index/query/graph/ask/explain`) and are **not** temporal engineering memory stores.
 
-### `.playbook/context/*`
+### Temporal engineering memory root
 
-Ephemeral working-memory surfaces for current or recent execution windows.
+All temporal engineering memory lives under:
 
-Concrete examples:
+- `.playbook/memory/*`
 
-- `.playbook/context/session-current.json`
-- `.playbook/context/task-queue.snapshot.json`
-- `.playbook/context/agent-bootstrap.cache.json`
+Canonical sub-layout:
 
-Expected properties:
+- Working memory: `.playbook/memory/working/*`
+- Episodic memory: `.playbook/memory/episodic/*`
+- Semantic memory: `.playbook/memory/semantic/*`
+- Doctrine/procedural memory snapshots or machine-readable derivatives (optional, non-authoritative mirrors only): `.playbook/memory/doctrine/*`
 
-- Session-scoped or short-retention.
-- Replaceable/regenerable.
-- Not directly treated as durable knowledge.
-
-### `.playbook/memory/events/*`
-
-Episodic event streams and normalized event envelopes.
-
-Concrete examples:
-
-- `.playbook/memory/events/2026-01-15.verify-run.ndjson`
-- `.playbook/memory/events/2026-01-15.plan-apply-cycle.ndjson`
-- `.playbook/memory/events/command-invocations/2026-W03.jsonl`
-
-Expected properties:
-
-- Append-oriented.
-- Timestamped and actor-attributed.
-- Suitable as provenance input for later knowledge promotion.
-
-### `.playbook/memory/knowledge/*`
-
-Reviewed durable semantic memory artifacts.
-
-Concrete examples:
-
-- `.playbook/memory/knowledge/patterns/repo-bootstrap-order.v1.json`
-- `.playbook/memory/knowledge/modules/ownership-map.v2.json`
-- `.playbook/memory/knowledge/lessons/rule-remediation-sequences.v1.md`
-
-Expected properties:
-
-- Promotion-gated.
-- Versioned.
-- Backed by provenance references to events and source docs.
-
-### Doctrine / rules / contracts / docs surfaces
-
-Normative and procedural memory remains in governed repository surfaces (not only under `.playbook/memory/knowledge`).
-
-Concrete examples:
-
-- Doctrine: `AGENTS.md`.
-- Rules: rule definitions and governance rule sources used by `verify`.
-- Contracts: machine-readable contracts such as `.playbook/ai-contract.json` and related schemas.
-- Docs: repository documentation surfaces (for example, command references and architecture docs).
-
-Expected properties:
-
-- Human-reviewed and PR-governed.
-- Version-controlled and auditable.
-- Authoritative for policy and behavior constraints.
+Normative doctrine still lives in governed repository surfaces (for example `AGENTS.md`, docs, rules, and contracts) even if derived mirrors exist under `.playbook/memory/doctrine/*`.
 
 ## Promotion boundary: ephemeral context -> reviewed durable knowledge
 
-Promotion from `.playbook/context/*` and raw `.playbook/memory/events/*` into `.playbook/memory/knowledge/*` MUST cross an explicit review boundary.
+Promotion from ephemeral memory (working + episodic) into durable reusable knowledge (semantic and/or doctrine-level adoption) MUST cross an explicit review boundary.
 
-Minimum promotion gates:
+Promotion gates (minimum):
 
-1. **Evidence threshold**: candidate knowledge references sufficient episodic evidence.
-2. **Stability threshold**: pattern/insight is observed across more than one episode or run.
-3. **Review threshold**: explicit reviewer approval (human or policy-authorized governance process).
-4. **Versioning threshold**: durable artifact receives version metadata and change rationale.
+1. **Evidence gate**: candidate references concrete episodic evidence.
+2. **Repeatability gate**: signal appears across multiple episodes or contexts.
+3. **Review gate**: explicit reviewer/policy approval is recorded.
+4. **Versioning gate**: promoted artifact receives stable ID/version and rationale.
+5. **Traceability gate**: provenance links allow backward traversal from claim -> source evidence.
 
-Until these gates are satisfied, context and event artifacts remain non-normative inputs.
+Until all gates pass, artifacts remain candidates and MUST NOT be treated as normative policy.
 
 ## Provenance requirements
 
-All durable memory artifacts MUST include provenance metadata adequate for audit and replay.
+Durable memory artifacts MUST carry provenance sufficient for deterministic audit/replay.
 
-Required provenance fields (minimum):
+Minimum provenance fields:
 
-- Artifact identifier and version.
-- Created/updated timestamps.
-- Actor or process identity.
-- Source references (event file IDs, commit SHAs, document/rule references).
-- Promotion rationale (why this moved from candidate to durable).
-- Review record (who/what approved promotion and when).
+- Artifact ID and version.
+- Created-at and updated-at timestamps.
+- Author/actor/process identity.
+- Source evidence references (event IDs, file paths, commit SHAs, command outputs).
+- Promotion rationale.
+- Review decision metadata (reviewer/policy, timestamp, decision outcome).
 
-Provenance should enable a reviewer to trace each durable claim back to episodic evidence.
+## Privacy and local-first stance
 
-## Structural truth boundary
+Repository memory is local-first by default.
 
-`.playbook/repo-graph.json` remains the structural repository truth for topology, module relationships, and architecture shape.
+- Memory artifacts are stored inside repository-controlled `.playbook/*` surfaces unless explicitly exported by user/operator intent.
+- No cloud/remote synchronization is implied by this specification.
+- Teams should treat memory content as potentially sensitive engineering context and apply least-privilege access, redaction, and retention controls.
 
-It is **not** the temporal memory store and MUST NOT be treated as an event history or long-term temporal memory ledger.
+## Explicit non-goals
 
-## Non-goals
+This v1 specification does **not**:
 
-- Defining a specific database, queue, or storage backend.
-- Replacing deterministic command outputs with opaque memory retrieval.
-- Allowing unreviewed ephemeral context to become normative policy.
-- Collapsing structural intelligence (`repo-graph`) into temporal event memory.
+- Mandate a specific storage backend (database, queue, or external service).
+- Replace deterministic command outputs with opaque memory retrieval.
+- Allow unreviewed ephemeral context to become doctrine.
+- Reclassify `.playbook/repo-index.json` or `.playbook/repo-graph.json` as temporal memory.
+- Define hosted multi-tenant memory operations.
 
-## Notes candidates
+## Playbook Notes candidates
 
-Potential candidate note classes for future deterministic capture and promotion workflows:
+Candidate note classes for governed promotion workflows:
 
-- **Rule**: candidate normative constraints derived from recurring verified findings.
-- **Pattern**: candidate reusable implementation or remediation templates validated across episodes.
-- **Failure Mode**: candidate anti-pattern or recurring breakdown with conditions, signals, and mitigations.
+- **Rule**: candidate normative constraint inferred from recurring validated findings.
+- **Pattern**: candidate reusable solution/remediation approach validated across episodes.
+- **Failure Mode**: candidate recurring breakdown with triggers, signals, and mitigations.
 
-These candidates should begin as draft artifacts and only become durable or normative after passing promotion and review gates.
+These notes begin as non-normative candidates and become durable knowledge/doctrine only after passing promotion and review gates.
