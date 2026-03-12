@@ -540,6 +540,7 @@ The next queued wave starts **only after** the current stabilization commitments
 ### Dependency gate
 - Memory-system and control-plane work is dependency-gated on completion of the current stabilization window.
 - No new command-state commitments are introduced in this queued wave section.
+- These queued items are roadmap-directional and future-state only; they do not advertise new live commands during the current stabilization window.
 
 ### Queued wave sequence (dependency-ordered)
 1. **Repository Memory System**

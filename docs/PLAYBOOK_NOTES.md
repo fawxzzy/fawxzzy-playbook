@@ -184,7 +184,7 @@ Reason:
 Workspace filters rely on package names that may change or be incorrectly guessed by automation. Directory targeting is stable and deterministic.
 
 - Pattern: Two-tier backlog system
-  Keep emerging ideas in `docs/PLAYBOOK_IMPROVEMENTS.md` and move only prioritized, committed capabilities into `docs/PLAYBOOK_PRODUCT_ROADMAP.md`.
+  Keep emerging ideas in `docs/roadmap/IMPROVEMENTS_BACKLOG.md` and move only prioritized, committed capabilities into `docs/PLAYBOOK_PRODUCT_ROADMAP.md`.
 
 - Pattern: Improvement backlog rotation
   Keep the active improvement backlog concise and rotate completed or stale items into timestamped archive files under `docs/archive/`.
@@ -237,6 +237,14 @@ Workspace filters rely on package names that may change or be incorrectly guesse
 
 - Rule: Replay and memory consolidation are review-oriented
   Replay/consolidation must never silently mutate durable governance doctrine without explicit human-reviewed promotion flow.
+
+- Rule: Memory/query/control-plane phases are future-state roadmap sequencing until promoted into ROADMAP.json with explicit feature IDs and verification contracts.
+
+- Pattern: Outcome learning is policy-improvement input, not autonomous policy mutation
+  Outcome records and policy-improvement signals stay advisory until explicitly approved through deterministic governance promotion paths.
+
+- Pattern: Fast memory and slow doctrine serve different trust roles
+  Fast episodic memory supports replay and investigation velocity; slow doctrine remains reviewed, compact, and normative.
 
 - Failure Mode: Control-plane-first autonomy
   If autonomy expands before policy, mutation-scope, and evidence gates are enforceable, trust boundaries collapse and fail-open behavior emerges.

@@ -1184,7 +1184,10 @@ Reasoning for reordering:
 
 Current-state command surfaces remain the canonical implemented interface and are unchanged by this section. Future sequencing below describes architecture maturity order only.
 
+TODO (roadmap contract alignment): add explicit feature IDs, dependencies, and verification commands in `docs/roadmap/ROADMAP.json` for Repository Memory System, Control Plane / Agent Runtime v1, and Outcome Learning / Policy Improvement only after those slices are commitment-ready for CI-enforced contract validation.
+
 1. **Repository Memory System (next major platform phase)**
+   - Clarify that structural graph (`.playbook/repo-graph.json` and `.playbook/repo-index.json`) remains repository-shape intelligence, while temporal memory remains under `.playbook/memory/*`.
    - Positioned after graph/failure-intelligence maturity and before deeper agent-runtime expansion.
    - Formalizes **fast memory vs slow doctrine**:
      - fast memory = episodic/session evidence and replay inputs
@@ -1800,7 +1803,7 @@ The safest automation model is to generate a machine-readable plan, review it, t
 
 Pattern: **Two-tier backlog (Improvement Backlog â†’ Roadmap)**.
 
-Use `docs/PLAYBOOK_IMPROVEMENTS.md` to capture emerging ideas; promote only prioritized capabilities into this roadmap.
+Use `docs/roadmap/IMPROVEMENTS_BACKLOG.md` to capture emerging ideas; promote only prioritized capabilities into this roadmap.
 
 ## Phase: Serialized Execution Contracts & Automation Hardening (Next)
 
@@ -1966,7 +1969,7 @@ Future enhancement:
 ## Documentation governance contract
 
 - Deliver deterministic documentation governance through `pnpm playbook docs audit` for humans, CI, and AI.
-- Maintain a single strategic roadmap (`docs/PLAYBOOK_PRODUCT_ROADMAP.md`) and separate improvements backlog (`docs/PLAYBOOK_IMPROVEMENTS.md`).
+- Maintain a single strategic roadmap (`docs/PLAYBOOK_PRODUCT_ROADMAP.md`) and separate improvements backlog (`docs/roadmap/IMPROVEMENTS_BACKLOG.md`).
 - Keep cleanup/migration guidance out of long-lived policy docs once governance is command-enforced.
 
 
