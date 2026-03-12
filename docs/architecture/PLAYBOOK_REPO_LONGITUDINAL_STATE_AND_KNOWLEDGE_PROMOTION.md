@@ -157,3 +157,4 @@ Directional examples (non-final schema names):
 - `docs/roadmap/IMPROVEMENTS_BACKLOG.md`
 - `docs/CONSUMER_INTEGRATION_CONTRACT.md`
 - `docs/AUTOMATION_SYNTHESIS_VISION.md`
+- `docs/architecture/PLAYBOOK_AUTOMATION_SYNTHESIS_GOVERNED_KNOWLEDGE_CONSUMPTION.md`
