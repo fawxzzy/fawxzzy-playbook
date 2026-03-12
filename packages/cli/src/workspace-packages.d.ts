@@ -47,9 +47,12 @@ declare module "@zachariahredfield/playbook-engine" {
       warnings: string[];
     };
     artifact: {
+      outputDir: string;
       orchestratorPath: string;
       lanePromptPaths: string[];
+      workerBundleDirs: string[];
     };
+    outputDir: string;
     relativeOutputDir: string;
   };
   export const compileOrchestratorArtifacts: (...args: any[]) => CompileOrchestratorArtifactsResult;

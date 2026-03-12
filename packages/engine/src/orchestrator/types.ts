@@ -32,6 +32,7 @@ export interface OrchestratorArtifactWriteResult {
   outputDir: string;
   orchestratorPath: string;
   lanePromptPaths: string[];
+  workerBundleDirs: string[];
 }
 
 export interface CompileOrchestratorArtifactsInput {

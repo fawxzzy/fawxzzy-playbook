@@ -80,8 +80,9 @@ export const runOrchestrate = async (cwd: string, options: OrchestrateOptions): 
     ],
     nextActions: [
       `Review ${path.relative(cwd, compilation.artifact.orchestratorPath)} lane contracts.`,
+      `Distribute ${compilation.artifact.workerBundleDirs.length} worker bundles from ${path.relative(cwd, path.join(compilation.outputDir, 'workers'))} to parallel Codex plan-mode workers.`,
       ...(compilation.artifact.lanePromptPaths.length > 0
-        ? [`Distribute ${compilation.artifact.lanePromptPaths.length} lane prompt files to parallel Codex plan-mode workers.`]
+        ? [`Legacy lane prompts remain available at ${compilation.relativeOutputDir} for backward compatibility.`]
         : [])
     ]
   });
