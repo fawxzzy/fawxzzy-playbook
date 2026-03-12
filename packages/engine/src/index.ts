@@ -17,7 +17,7 @@ export { generateRepositoryHealth } from './doctor/index.js';
 export type { RepositoryHealth, GovernanceStatusItem, ArtifactHygieneReport } from './doctor/index.js';
 
 export { generateRepositoryIndex } from './indexer/repoIndexer.js';
-export type { RepositoryIndex, RepositoryModule } from './indexer/repoIndexer.js';
+export type { RepositoryIndex, RepositoryModule, RepositoryDependencyEdge, RepositoryWorkspaceNode, RepositoryTestCoverage, RepositoryConfigEntry } from './indexer/repoIndexer.js';
 export {
   parsePlaybookIgnore,
   parsePlaybookIgnoreContent,
