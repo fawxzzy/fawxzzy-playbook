@@ -4,7 +4,7 @@
   "status": "error",
   "summary": {
     "errors": 13,
-    "warnings": 9,
+    "warnings": 10,
     "info": 2
   },
   "findings": [
@@ -129,6 +129,12 @@
       "message": "SCM/git context normalization layer: Centralize SCM normalization in shared git-context utilities and document boundaries in docs/architecture/SCM_CONTEXT_LAYER.md."
     },
     {
+      "category": "Memory",
+      "severity": "warning",
+      "id": "doctor.memory.memory-artifacts-missing",
+      "message": "Missing required memory artifacts: .playbook/memory/index.json, .playbook/memory/candidates.json Regenerate missing memory artifacts before relying on replay or promotion diagnostics."
+    },
+    {
       "category": "Testing",
       "severity": "warning",
       "id": "doctor.testing.verify.warning.base-selection",
@@ -175,5 +181,26 @@
     },
     "findings": [],
     "suggestions": []
+  },
+  "memoryDiagnostics": {
+    "findings": [
+      {
+        "code": "memory-artifacts-missing",
+        "severity": "warning",
+        "message": "Missing required memory artifacts: .playbook/memory/index.json, .playbook/memory/candidates.json",
+        "recommendation": "Regenerate missing memory artifacts before relying on replay or promotion diagnostics."
+      }
+    ],
+    "suggestions": [
+      {
+        "id": "PB015",
+        "title": "Repair memory artifact integrity",
+        "actions": [
+          "Rebuild .playbook/memory/index.json",
+          "Regenerate .playbook/memory/candidates.json",
+          "Validate JSON artifacts before commit"
+        ]
+      }
+    ]
   }
 }

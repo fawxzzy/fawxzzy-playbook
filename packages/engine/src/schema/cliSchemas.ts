@@ -350,7 +350,8 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
           'intelligence_sources',
           'queries',
           'remediation',
-          'rules'
+          'rules',
+          'memory'
         ],
         properties: {
           schemaVersion: { const: '1.0' },
@@ -388,6 +389,70 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
               requireIndexBeforeQuery: { type: 'boolean' },
               preferPlaybookCommandsOverAdHocInspection: { type: 'boolean' },
               allowDirectEditsWithoutPlan: { type: 'boolean' }
+            }
+          },
+          memory: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['artifactLocations', 'promotedKnowledgePolicy', 'retrieval'],
+            properties: {
+              artifactLocations: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['events', 'candidates', 'promotedKnowledge'],
+                properties: {
+                  events: { const: '.playbook/memory/events' },
+                  candidates: { const: '.playbook/memory/candidates.json' },
+                  promotedKnowledge: {
+                    type: 'array',
+                    prefixItems: [
+                      { const: '.playbook/memory/knowledge/decisions.json' },
+                      { const: '.playbook/memory/knowledge/patterns.json' },
+                      { const: '.playbook/memory/knowledge/failure-modes.json' },
+                      { const: '.playbook/memory/knowledge/invariants.json' }
+                    ],
+                    items: false,
+                    minItems: 4,
+                    maxItems: 4
+                  }
+                }
+              },
+              promotedKnowledgePolicy: {
+                type: 'object',
+                additionalProperties: false,
+                required: [
+                  'preferPromotedKnowledgeForRetrieval',
+                  'candidatesAreAdvisoryOnlyUntilReviewedPromotion',
+                  'reviewedPromotionRequired',
+                  'noHiddenMutation'
+                ],
+                properties: {
+                  preferPromotedKnowledgeForRetrieval: { const: true },
+                  candidatesAreAdvisoryOnlyUntilReviewedPromotion: { const: true },
+                  reviewedPromotionRequired: { const: true },
+                  noHiddenMutation: { const: true }
+                }
+              },
+              retrieval: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['requireProvenance', 'provenanceFields'],
+                properties: {
+                  requireProvenance: { const: true },
+                  provenanceFields: {
+                    type: 'array',
+                    prefixItems: [
+                      { const: 'knowledgeId' },
+                      { const: 'eventId' },
+                      { const: 'sourcePath' },
+                      { const: 'fingerprint' }
+                    ],
+                    items: false,
+                    minItems: 4,
+                    maxItems: 4
+                  }
+                }
+              }
             }
           },
           ownership: {
@@ -580,7 +645,7 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
     title: 'PlaybookDoctorOutput',
     type: 'object',
     additionalProperties: false,
-    required: ['schemaVersion', 'command', 'status', 'summary', 'findings', 'artifactHygiene'],
+    required: ['schemaVersion', 'command', 'status', 'summary', 'findings', 'artifactHygiene', 'memoryDiagnostics'],
     properties: {
       schemaVersion: { const: '1.0' },
       command: { const: 'doctor' },
@@ -602,7 +667,7 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
           additionalProperties: false,
           required: ['category', 'severity', 'id', 'message'],
           properties: {
-            category: { enum: ['Architecture', 'Docs', 'Testing', 'Risk'] },
+            category: { enum: ['Architecture', 'Docs', 'Testing', 'Risk', 'Memory'] },
             severity: { enum: ['error', 'warning', 'info'] },
             id: { type: 'string' },
             message: { type: 'string' }
@@ -650,6 +715,51 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
                 id: { enum: ['PB012', 'PB013', 'PB014'] },
                 title: { type: 'string' },
                 entries: { type: 'array', items: { type: 'string' } }
+              }
+            }
+          }
+        }
+      },
+      memoryDiagnostics: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['findings', 'suggestions'],
+        properties: {
+          findings: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['code', 'severity', 'message', 'recommendation'],
+              properties: {
+                code: {
+                  enum: [
+                    'memory-artifacts-absent',
+                    'memory-artifacts-missing',
+                    'memory-artifacts-malformed',
+                    'candidate-hoarding-risk',
+                    'superseded-knowledge-lingering',
+                    'replay-output-inconsistent',
+                    'promoted-knowledge-provenance-gap',
+                    'memory-lifecycle-healthy'
+                  ]
+                },
+                severity: { enum: ['info', 'warning'] },
+                message: { type: 'string' },
+                recommendation: { type: 'string' }
+              }
+            }
+          },
+          suggestions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['id', 'title', 'actions'],
+              properties: {
+                id: { enum: ['PB015', 'PB016', 'PB017', 'PB018'] },
+                title: { type: 'string' },
+                actions: { type: 'array', items: { type: 'string' } }
               }
             }
           }
@@ -1259,13 +1369,14 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
           preferredCommandOrder: {
             type: 'array',
             items: { type: 'string' },
-            minItems: 8,
-            maxItems: 8
+            minItems: 10,
+            maxItems: 10
           },
           recommendedBootstrap: {
             type: 'array',
             items: { type: 'string' },
-            minItems: 2
+            minItems: 3,
+            maxItems: 3
           },
           remediationWorkflow: {
             type: 'array',
@@ -1291,12 +1402,41 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
       guidance: {
         type: 'object',
         additionalProperties: false,
-        required: ['preferPlaybookCommands', 'authorityRule', 'localExecutionRule', 'failureMode'],
+        required: [
+          'preferPlaybookCommands',
+          'authorityRule',
+          'localExecutionRule',
+          'failureMode',
+          'memoryCommandFamily',
+          'promotedKnowledgeGuidance',
+          'candidateKnowledgeGuidance'
+        ],
         properties: {
           preferPlaybookCommands: { const: true },
           authorityRule: { type: 'string' },
           localExecutionRule: { type: 'string' },
-          failureMode: { type: 'string' }
+          failureMode: { type: 'string' },
+          memoryCommandFamily: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['available', 'preferredCommands'],
+            properties: {
+              available: { type: 'boolean' },
+              preferredCommands: {
+                type: 'array',
+                prefixItems: [
+                  { const: 'memory events --json' },
+                  { const: 'memory knowledge --json' },
+                  { const: 'memory candidates --json' }
+                ],
+                items: false,
+                minItems: 3,
+                maxItems: 3
+              }
+            }
+          },
+          promotedKnowledgeGuidance: { type: 'string' },
+          candidateKnowledgeGuidance: { type: 'string' }
         }
       }
     }
