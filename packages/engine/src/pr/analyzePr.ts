@@ -6,6 +6,8 @@ import { resolveDiffAskContext } from '../ask/diffContext.js';
 import { execFileSync } from 'node:child_process';
 import { resolveScmDiffBase } from '../git/context.js';
 import { captureMemoryEventSafe } from '../memory/index.js';
+import { expandMemoryProvenance, lookupPromotedMemoryKnowledge } from '../memory/inspection.js';
+import type { MemoryKnowledgeEntry } from '../memory/knowledge.js';
 
 type RiskLevel = 'low' | 'medium' | 'high';
 
@@ -16,7 +18,32 @@ type AnalyzePrContextSource =
   | { type: 'module-risk'; modules: string[] }
   | { type: 'docs-coverage'; modules: string[] }
   | { type: 'module-owners'; path: '.playbook/module-owners.json' | 'generated-default' }
-  | { type: 'rule-owners'; rules: string[] };
+  | { type: 'rule-owners'; rules: string[] }
+  | { type: 'promoted-knowledge'; knowledgeIds: string[] };
+
+type PreventionGuidance = {
+  target: {
+    module: string;
+    ruleId: string;
+    failureShape: string;
+  };
+  rationale: string;
+  nextBestActions: string[];
+  provenance: {
+    knowledgeId: string;
+    kind: MemoryKnowledgeEntry['kind'];
+    sourceCandidateIds: string[];
+    sourceEventFingerprints: string[];
+    evidenceChain: Array<{
+      eventId: string;
+      sourcePath: string;
+      fingerprint: string;
+      runId: string | null;
+      outcomeStatus: string | null;
+      outcomeSummary: string | null;
+    }>;
+  };
+};
 
 export type AnalyzePullRequestResult = {
   schemaVersion: '1.0';
@@ -75,10 +102,13 @@ export type AnalyzePullRequestResult = {
     line?: number;
   }>;
   reviewGuidance: string[];
+  preventionGuidance: PreventionGuidance[];
   context: {
     sources: AnalyzePrContextSource[];
   };
 };
+
+const KNOWLEDGE_STALE_DAYS = 180;
 
 const parseAddedLineFromPatch = (patch: string): number | undefined => {
   const match = patch.match(/^@@\s+-\d+(?:,\d+)?\s+\+(\d+)(?:,\d+)?\s+@@/m);
@@ -121,6 +151,106 @@ const resolveChangedLineMap = (projectRoot: string, baseRef: string, changedFile
 };
 
 const uniqueSorted = (values: string[]): string[] => Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
+
+const toComparableTimestamp = (value: string | undefined): number => {
+  if (typeof value !== 'string') {
+    return 0;
+  }
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const isStalePromotedKnowledge = (entry: MemoryKnowledgeEntry): boolean => {
+  if (entry.status !== 'active') {
+    return true;
+  }
+
+  const promotedAt = toComparableTimestamp(entry.promotedAt);
+  if (promotedAt === 0) {
+    return false;
+  }
+
+  const cutoff = Date.now() - KNOWLEDGE_STALE_DAYS * 24 * 60 * 60 * 1000;
+  return promotedAt < cutoff;
+};
+
+const resolvePreventionActions = (entry: MemoryKnowledgeEntry): string[] => {
+  const actions = [
+    `Review promoted knowledge ${entry.knowledgeId} before merge and validate guardrails for ${entry.module}.`,
+    `Run \`playbook verify --json\` and confirm ${entry.ruleId} stays compliant in this change set.`
+  ];
+
+  if (entry.failureShape.toLowerCase().includes('docs')) {
+    actions.push('Confirm documentation updates are included for impacted behavior.');
+  }
+
+  return actions;
+};
+
+const derivePreventionGuidance = (projectRoot: string, analysis: {
+  affectedModules: string[];
+  relatedRules: string[];
+  findings: AnalyzePullRequestResult['findings'];
+}): PreventionGuidance[] => {
+  const matchedRuleIds = new Set<string>([
+    ...analysis.relatedRules,
+    ...analysis.findings.map((finding) => finding.ruleId)
+  ]);
+  const matchedModules = new Set<string>(analysis.affectedModules);
+
+  const promotedKnowledge = lookupPromotedMemoryKnowledge(projectRoot)
+    .filter((entry) => !isStalePromotedKnowledge(entry))
+    .filter((entry) => matchedModules.has(entry.module) || matchedRuleIds.has(entry.ruleId));
+
+  return promotedKnowledge
+    .map((entry) => {
+      const expanded = expandMemoryProvenance(projectRoot, entry.provenance);
+      const evidenceChain = expanded.map((provenance) => ({
+        eventId: provenance.eventId,
+        sourcePath: provenance.sourcePath,
+        fingerprint: provenance.fingerprint,
+        runId: provenance.runId,
+        outcomeStatus: provenance.event?.outcome.status ?? null,
+        outcomeSummary: provenance.event?.outcome.summary ?? null
+      }));
+
+      const moduleMatch = matchedModules.has(entry.module) ? 1 : 0;
+      const ruleMatch = matchedRuleIds.has(entry.ruleId) ? 1 : 0;
+      const relevanceScore = moduleMatch + ruleMatch;
+
+      return {
+        guidance: {
+          target: {
+            module: entry.module,
+            ruleId: entry.ruleId,
+            failureShape: entry.failureShape
+          },
+          rationale: entry.summary,
+          nextBestActions: resolvePreventionActions(entry),
+          provenance: {
+            knowledgeId: entry.knowledgeId,
+            kind: entry.kind,
+            sourceCandidateIds: [...entry.sourceCandidateIds],
+            sourceEventFingerprints: [...entry.sourceEventFingerprints],
+            evidenceChain
+          }
+        } satisfies PreventionGuidance,
+        relevanceScore,
+        promotedAt: toComparableTimestamp(entry.promotedAt),
+        knowledgeId: entry.knowledgeId
+      };
+    })
+    .sort((left, right) => {
+      if (right.relevanceScore !== left.relevanceScore) {
+        return right.relevanceScore - left.relevanceScore;
+      }
+      if (right.promotedAt !== left.promotedAt) {
+        return right.promotedAt - left.promotedAt;
+      }
+      return left.knowledgeId.localeCompare(right.knowledgeId);
+    })
+    .map((entry) => entry.guidance);
+};
 
 const classifyFinding = (finding: AnalyzePullRequestResult['findings'][number]): string => {
   if (finding.ruleId === 'playbook.pr.risk.module') {
@@ -435,6 +565,12 @@ export const analyzePullRequest = (projectRoot: string, options?: { baseRef?: st
     });
   }
 
+  const preventionGuidance = derivePreventionGuidance(projectRoot, {
+    affectedModules,
+    relatedRules,
+    findings
+  });
+
   const result: AnalyzePullRequestResult = {
     schemaVersion: '1.0',
     command: 'analyze-pr',
@@ -466,6 +602,7 @@ export const analyzePullRequest = (projectRoot: string, options?: { baseRef?: st
     moduleOwners: affectedModuleOwners,
     findings,
     reviewGuidance,
+    preventionGuidance,
     context: {
       sources: [
         { type: 'git-diff', baseRef: diffContext.baseRef },
@@ -474,7 +611,8 @@ export const analyzePullRequest = (projectRoot: string, options?: { baseRef?: st
         { type: 'module-risk', modules: affectedModules },
         { type: 'docs-coverage', modules: affectedModules },
         { type: 'module-owners', path: moduleOwnersList.length > 0 ? '.playbook/module-owners.json' : 'generated-default' },
-        { type: 'rule-owners', rules: relatedRules }
+        { type: 'rule-owners', rules: relatedRules },
+        { type: 'promoted-knowledge', knowledgeIds: preventionGuidance.map((entry) => entry.provenance.knowledgeId) }
       ]
     }
   };

@@ -42,6 +42,77 @@ const writeRepoIndex = (repo: string): void => {
   );
 };
 
+const writePromotedKnowledge = (
+  repo: string,
+  kind: 'decision' | 'pattern' | 'failure_mode' | 'invariant',
+  entries: Array<{
+    knowledgeId: string;
+    candidateId: string;
+    sourceCandidateIds: string[];
+    sourceEventFingerprints: string[];
+    title: string;
+    summary: string;
+    fingerprint: string;
+    module: string;
+    ruleId: string;
+    failureShape: string;
+    promotedAt: string;
+    status: 'active' | 'superseded' | 'retired';
+    supersedes: string[];
+    supersededBy: string[];
+    provenance: Array<{ eventId: string; sourcePath: string; fingerprint: string; runId: string | null }>;
+  }>
+): void => {
+  const artifactPath = path.join(repo, '.playbook', 'memory', 'knowledge', `${kind === 'failure_mode' ? 'failure-modes' : `${kind}s`}.json`);
+  fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
+  fs.writeFileSync(
+    artifactPath,
+    JSON.stringify(
+      {
+        schemaVersion: '1.0',
+        artifact: 'memory-knowledge',
+        kind,
+        generatedAt: new Date('2025-01-01T00:00:00.000Z').toISOString(),
+        entries
+      },
+      null,
+      2
+    )
+  );
+};
+
+const recentPromotedAt = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+const writeMemoryEvent = (repo: string, eventId: string, fingerprint: string, summary: string): void => {
+  const eventPath = path.join(repo, '.playbook', 'memory', 'events', `${eventId}.json`);
+  fs.mkdirSync(path.dirname(eventPath), { recursive: true });
+  fs.writeFileSync(
+    eventPath,
+    JSON.stringify(
+      {
+        schemaVersion: '1.0',
+        eventInstanceId: eventId,
+        eventFingerprint: fingerprint,
+        kind: 'verify_run',
+        createdAt: new Date(recentPromotedAt).toISOString(),
+        sources: [{ type: 'command', reference: 'verify' }],
+        subjectModules: ['workouts'],
+        ruleIds: ['PB001'],
+        riskSummary: { level: 'medium', signals: ['module-risk'] },
+        outcome: {
+          status: 'failure',
+          summary
+        },
+        salienceInputs: {
+          command: 'verify'
+        }
+      },
+      null,
+      2
+    )
+  );
+};
+
 describe('analyze-pr', () => {
   it('returns deterministic PR analysis JSON', async () => {
     const repo = createRepo('playbook-cli-analyze-pr');
@@ -307,6 +378,211 @@ describe('analyze-pr', () => {
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.command).toBe('analyze-pr');
     expect(payload.error).toContain('no changed files were detected');
+
+    logSpy.mockRestore();
+  });
+
+  it('keeps default analyze-pr behavior when no promoted knowledge matches', async () => {
+    const repo = createRepo('playbook-cli-analyze-pr-no-knowledge-match');
+    initGitRepo(repo);
+    writeRepoIndex(repo);
+
+    fs.mkdirSync(path.join(repo, 'src', 'auth'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'src', 'auth', 'index.ts'), 'export const auth = 1;\n');
+    runGit(repo, ['add', '.']);
+    runGit(repo, ['commit', '-m', 'initial']);
+
+    fs.mkdirSync(path.join(repo, 'src', 'workouts'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'src', 'workouts', 'index.ts'), 'export const workouts = 2;\n');
+
+    writePromotedKnowledge(repo, 'pattern', [
+      {
+        knowledgeId: 'pattern-auth-only',
+        candidateId: 'cand-auth-only',
+        sourceCandidateIds: ['cand-auth-only'],
+        sourceEventFingerprints: ['fp-auth-only'],
+        title: 'Auth rule lesson',
+        summary: 'Applies to auth only',
+        fingerprint: 'fp-auth-only',
+        module: 'auth',
+        ruleId: 'PB999',
+        failureShape: 'auth-gap',
+        promotedAt: recentPromotedAt,
+        provenance: [{ eventId: 'evt-auth-only', sourcePath: 'events/evt-auth-only.json', fingerprint: 'fp-auth-only', runId: null }],
+        status: 'active',
+        supersedes: [],
+        supersededBy: []
+      }
+    ]);
+
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const exitCode = await runAnalyzePr(repo, ['--json'], { format: 'json', quiet: false });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.reviewGuidance.length).toBeGreaterThan(0);
+    expect(payload.preventionGuidance).toEqual([]);
+    expect(payload.context.sources).toContainEqual({ type: 'promoted-knowledge', knowledgeIds: [] });
+
+    logSpy.mockRestore();
+  });
+
+  it('adds prevention targeting with provenance from matching promoted knowledge', async () => {
+    const repo = createRepo('playbook-cli-analyze-pr-knowledge-match');
+    initGitRepo(repo);
+    writeRepoIndex(repo);
+
+    fs.mkdirSync(path.join(repo, 'src', 'auth'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'src', 'auth', 'index.ts'), 'export const auth = 1;\n');
+    runGit(repo, ['add', '.']);
+    runGit(repo, ['commit', '-m', 'initial']);
+
+    fs.mkdirSync(path.join(repo, 'src', 'workouts'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'src', 'workouts', 'index.ts'), 'export const workouts = 2;\n');
+
+    writeMemoryEvent(repo, 'evt-knowledge-match', 'fp-knowledge-match', 'historical failure from missing review gate');
+    writePromotedKnowledge(repo, 'pattern', [
+      {
+        knowledgeId: 'pattern-workouts-risk',
+        candidateId: 'cand-workouts-risk',
+        sourceCandidateIds: ['cand-workouts-risk'],
+        sourceEventFingerprints: ['fp-knowledge-match'],
+        title: 'Workouts risk regression',
+        summary: 'Historically, workouts changes failed when verify was skipped.',
+        fingerprint: 'fp-knowledge-match',
+        module: 'workouts',
+        ruleId: 'PB001',
+        failureShape: 'missing-verify-step',
+        promotedAt: recentPromotedAt,
+        provenance: [{ eventId: 'evt-knowledge-match', sourcePath: 'events/evt-knowledge-match.json', fingerprint: 'fp-knowledge-match', runId: null }],
+        status: 'active',
+        supersedes: [],
+        supersededBy: []
+      }
+    ]);
+
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const exitCode = await runAnalyzePr(repo, ['--json'], { format: 'json', quiet: false });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.preventionGuidance).toHaveLength(1);
+    expect(payload.preventionGuidance[0].target).toEqual({
+      module: 'workouts',
+      ruleId: 'PB001',
+      failureShape: 'missing-verify-step'
+    });
+    expect(payload.preventionGuidance[0].provenance.knowledgeId).toBe('pattern-workouts-risk');
+    expect(payload.preventionGuidance[0].provenance.evidenceChain).toEqual([
+      {
+        eventId: 'evt-knowledge-match',
+        sourcePath: 'events/evt-knowledge-match.json',
+        fingerprint: 'fp-knowledge-match',
+        runId: null,
+        outcomeStatus: 'failure',
+        outcomeSummary: 'historical failure from missing review gate'
+      }
+    ]);
+    expect(payload.context.sources).toContainEqual({ type: 'promoted-knowledge', knowledgeIds: ['pattern-workouts-risk'] });
+
+    logSpy.mockRestore();
+  });
+
+  it('excludes stale and superseded promoted knowledge and keeps prevention guidance ordering deterministic', async () => {
+    const repo = createRepo('playbook-cli-analyze-pr-knowledge-ordering');
+    initGitRepo(repo);
+    writeRepoIndex(repo);
+
+    fs.mkdirSync(path.join(repo, 'src', 'auth'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'src', 'auth', 'index.ts'), 'export const auth = 1;\n');
+    runGit(repo, ['add', '.']);
+    runGit(repo, ['commit', '-m', 'initial']);
+
+    fs.mkdirSync(path.join(repo, 'src', 'workouts'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'src', 'workouts', 'index.ts'), 'export const workouts = 2;\n');
+
+    writeMemoryEvent(repo, 'evt-recent-a', 'fp-recent-a', 'recent a');
+    writeMemoryEvent(repo, 'evt-recent-b', 'fp-recent-b', 'recent b');
+    writePromotedKnowledge(repo, 'pattern', [
+      {
+        knowledgeId: 'pattern-z-recent',
+        candidateId: 'cand-z-recent',
+        sourceCandidateIds: ['cand-z-recent'],
+        sourceEventFingerprints: ['fp-recent-a'],
+        title: 'Recent z',
+        summary: 'Recent promoted knowledge z',
+        fingerprint: 'fp-recent-a',
+        module: 'workouts',
+        ruleId: 'PB001',
+        failureShape: 'shape-z',
+        promotedAt: recentPromotedAt,
+        provenance: [{ eventId: 'evt-recent-a', sourcePath: 'events/evt-recent-a.json', fingerprint: 'fp-recent-a', runId: null }],
+        status: 'active',
+        supersedes: [],
+        supersededBy: []
+      },
+      {
+        knowledgeId: 'pattern-a-recent',
+        candidateId: 'cand-a-recent',
+        sourceCandidateIds: ['cand-a-recent'],
+        sourceEventFingerprints: ['fp-recent-b'],
+        title: 'Recent a',
+        summary: 'Recent promoted knowledge a',
+        fingerprint: 'fp-recent-b',
+        module: 'workouts',
+        ruleId: 'PB001',
+        failureShape: 'shape-a',
+        promotedAt: recentPromotedAt,
+        provenance: [{ eventId: 'evt-recent-b', sourcePath: 'events/evt-recent-b.json', fingerprint: 'fp-recent-b', runId: null }],
+        status: 'active',
+        supersedes: [],
+        supersededBy: []
+      },
+      {
+        knowledgeId: 'pattern-old-stale',
+        candidateId: 'cand-old-stale',
+        sourceCandidateIds: ['cand-old-stale'],
+        sourceEventFingerprints: ['fp-old-stale'],
+        title: 'Old stale',
+        summary: 'Should be filtered as stale',
+        fingerprint: 'fp-old-stale',
+        module: 'workouts',
+        ruleId: 'PB001',
+        failureShape: 'shape-old',
+        promotedAt: '2020-01-01T00:00:00.000Z',
+        provenance: [{ eventId: 'evt-old-stale', sourcePath: 'events/evt-old-stale.json', fingerprint: 'fp-old-stale', runId: null }],
+        status: 'active',
+        supersedes: [],
+        supersededBy: []
+      },
+      {
+        knowledgeId: 'pattern-superseded',
+        candidateId: 'cand-superseded',
+        sourceCandidateIds: ['cand-superseded'],
+        sourceEventFingerprints: ['fp-superseded'],
+        title: 'Superseded',
+        summary: 'Should be excluded as superseded',
+        fingerprint: 'fp-superseded',
+        module: 'workouts',
+        ruleId: 'PB001',
+        failureShape: 'shape-superseded',
+        promotedAt: recentPromotedAt,
+        provenance: [{ eventId: 'evt-superseded', sourcePath: 'events/evt-superseded.json', fingerprint: 'fp-superseded', runId: null }],
+        status: 'superseded',
+        supersedes: [],
+        supersededBy: ['pattern-z-recent']
+      }
+    ]);
+
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const exitCode = await runAnalyzePr(repo, ['--json'], { format: 'json', quiet: false });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.preventionGuidance.map((entry: { provenance: { knowledgeId: string } }) => entry.provenance.knowledgeId)).toEqual([
+      'pattern-a-recent',
+      'pattern-z-recent'
+    ]);
 
     logSpy.mockRestore();
   });
