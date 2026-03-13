@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { PatternCompactionArtifact } from './compactPatterns.js';
 import { scorePatternCandidate } from './scorePatternCandidate.js';
+import type { AttractorScoreBreakdown } from './scorePatternCandidate.js';
 
 type CandidatePattern = {
   id: string;
@@ -17,6 +18,7 @@ type CandidatePattern = {
   canonicalClarity: number;
   falsePositiveRisk: number;
   promotionScore: number;
+  attractorScoreBreakdown: AttractorScoreBreakdown;
   stage: 'candidate' | 'review';
 };
 
@@ -103,6 +105,7 @@ export const buildPatternReviewQueue = (patternsArtifact: PatternCompactionArtif
         canonicalClarity: Number(score.canonicalClarity.toFixed(4)),
         falsePositiveRisk: Number(score.falsePositiveRisk.toFixed(4)),
         promotionScore: Number(score.promotionScore.toFixed(4)),
+        attractorScoreBreakdown: score.attractorScoreBreakdown,
         stage: 'review'
       };
     })
