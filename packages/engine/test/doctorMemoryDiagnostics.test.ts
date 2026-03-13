@@ -23,6 +23,9 @@ const writeJson = (repo: string, relativePath: string, payload: unknown): void =
 describe('doctor memory diagnostics', () => {
   it('reports informational absence when memory artifacts are not initialized', () => {
     const repo = createRepo('playbook-doctor-memory-absent');
+    const memoryRoot = path.join(repo, '.playbook', 'memory');
+
+    expect(fs.existsSync(memoryRoot)).toBe(false);
 
     const report = generateRepositoryHealth(repo);
 
