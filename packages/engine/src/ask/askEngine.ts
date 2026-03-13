@@ -12,6 +12,7 @@ import {
   lookupPromotedMemoryKnowledge,
   type ExpandedMemoryProvenance
 } from '../memory/inspection.js';
+import { stripRelevance } from '../util/stripRelevance.js';
 
 type AskContext = {
   architecture: string;
@@ -155,11 +156,7 @@ const buildMemoryKnowledgeHits = (projectRoot: string, target: 'repo-context' | 
       return right.relevance - left.relevance || left.candidateId.localeCompare(right.candidateId);
     })
     .slice(0, 10)
-    .map((entry) => {
-      const withoutRelevance = { ...entry };
-      delete withoutRelevance.relevance;
-      return withoutRelevance;
-    });
+    .map(stripRelevance);
 };
 
 const gatherContext = (projectRoot: string): AskContext => {

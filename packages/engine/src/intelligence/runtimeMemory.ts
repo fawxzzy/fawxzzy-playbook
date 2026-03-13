@@ -4,6 +4,7 @@ import { readPromotedPatterns } from '../compaction/promotionQueue.js';
 import { expandMemoryProvenance, lookupPromotedMemoryKnowledge, lookupMemoryCandidateKnowledge } from '../memory/inspection.js';
 import type { MemoryReplayCandidateProvenance } from '../schema/memoryReplay.js';
 import { readSession, SESSION_ARTIFACT_RELATIVE_PATH } from '../session/sessionStore.js';
+import { stripRelevance } from '../util/stripRelevance.js';
 
 type KnowledgeHitSource = 'promoted-pattern' | 'knowledge-candidate';
 
@@ -449,11 +450,7 @@ export const readRuntimeMemoryEnvelope = (projectRoot: string, options?: Runtime
     .filter((entry) => relevanceTokens.length === 0 || entry.relevance > 0)
     .sort((left, right) => right.relevance - left.relevance || (right.confidence ?? 0) - (left.confidence ?? 0) || left.id.localeCompare(right.id))
     .slice(0, maxEntries)
-    .map((hit) => {
-      const withoutRelevance = { ...hit };
-      delete withoutRelevance.relevance;
-      return withoutRelevance;
-    });
+    .map(stripRelevance);
 
   const candidates = readKnowledgeCandidates(projectRoot);
   const candidateHits = (candidates?.candidates ?? [])
@@ -471,11 +468,7 @@ export const readRuntimeMemoryEnvelope = (projectRoot: string, options?: Runtime
     .filter((entry) => relevanceTokens.length === 0 || entry.relevance > 0)
     .sort((left, right) => right.relevance - left.relevance || left.id.localeCompare(right.id))
     .slice(0, maxEntries)
-    .map((hit) => {
-      const withoutRelevance = { ...hit };
-      delete withoutRelevance.relevance;
-      return withoutRelevance;
-    });
+    .map(stripRelevance);
 
   const session = readSession(projectRoot);
   const runs = readExecutionRuns(projectRoot);
