@@ -1,77 +1,43 @@
 # `pnpm playbook ask`
 
-Answer repository questions using machine-readable repository intelligence.
+Answer repository questions from machine-readable repository intelligence.
 
 ## Usage
 
-- `pnpm playbook ask "where should a new feature live?"`
-- `pnpm playbook ask "what architecture does this repo use?"`
-- `pnpm playbook ask "what modules exist?"`
-- `pnpm playbook ask "where should a new feature live?" --json`
-- `pnpm playbook ask "what modules are affected by this change?" --diff-context`
-- `pnpm playbook ask "what should I verify before merge?" --diff-context --mode concise`
-- `pnpm playbook ask "summarize the architectural risk of this diff" --diff-context --json`
+```bash
+pnpm playbook ask "where should a new feature live?"
+pnpm playbook ask "where should a new feature live?" --repo-context
+pnpm playbook ask "what modules are affected by this change?" --diff-context --json
+pnpm playbook ask "what should I verify before merge?" --diff-context --mode concise
+pnpm playbook ask "where should this live?" --repo-context --with-repo-context-memory
+pnpm playbook ask "summarize risk for this diff" --diff-context --with-diff-context-memory
+```
+
+## Options
+
+- `--mode <normal|concise|ultra>`: controls answer verbosity.
+- `--repo-context`: injects trusted Playbook repository context (`.playbook/repo-index.json`, plus AI contract source metadata).
+- `--module <name>`: narrows reasoning to one indexed module.
+- `--diff-context`: narrows reasoning to changed files mapped through index intelligence.
+- `--base <ref>`: optional base ref when `--diff-context` is enabled.
+- `--with-repo-context-memory`: opt in to memory-aware hydration for `--repo-context` prompts.
+- `--with-diff-context-memory`: opt in to memory-aware hydration for `--diff-context` prompts.
+
+`--module` and `--diff-context` are mutually exclusive.
 
 ## Behavior
 
-`pnpm playbook ask` is intentionally thin at the CLI layer. It delegates reasoning to engine rules that:
+- Uses Playbook-managed intelligence instead of broad repository scanning.
+- Returns deterministic answerability state in JSON (`answered-from-trusted-artifact`, `artifact-missing`, `artifact-stale`, or `unsupported-question`).
+- Includes provenance descriptors in `context.sources` (for example `repo-index`, `repo-graph`, `module`, `diff`, `docs`, `ai-contract`).
+- Memory descriptors (`memorySummary`, `memorySources`, `knowledgeHits`, `recentRelevantEvents`, `memoryKnowledge`) are additive context fields when memory-aware hydration is enabled.
 
-1. Normalize your question.
-2. Query repository intelligence via `pnpm playbook query` internals.
-3. Produce deterministic answers from architecture/module/framework/rule-registry signals.
+## JSON output highlights
 
-`pnpm playbook ask` reads intelligence from `.playbook/repo-index.json` through the query engine and does **not** scan your repository directly.
+`pnpm playbook ask ... --json` returns:
 
-`--repo-context` is optimized for indexed repository-shape, module, and rule-intelligence questions. Broad workflow/meta prompts may return `unsupported-question`; when you need deterministic structural evidence, prefer `pnpm playbook query` and `pnpm playbook explain`.
-
-When `--repo-context` or `--diff-context` is enabled, ask now also returns additive memory-aware context descriptors: `memorySummary`, `memorySources`, `knowledgeHits`, and `recentRelevantEvents`.
-
-`--diff-context` narrows reasoning to the active change set by combining git diff file discovery with indexed Playbook module intelligence. It fails deterministically when index/diff inputs are missing and does not silently broaden to full-repo inference.
-
-## Example text output
-
-```text
-Recommended location: src/features/<feature>
-
-Reason
-Playbook detected modular-monolith architecture with feature boundaries under src/features.
-```
-
-## JSON output contract
-
-`pnpm playbook ask --json` returns the existing answer payload and includes deterministic context provenance metadata under `context.sources`.
-
-```json
-{
-  "command": "ask",
-  "question": "where should a new feature live?",
-  "answer": "Recommended location: src/features/<feature>",
-  "reason": "Playbook detected modular-monolith architecture with feature boundaries under src/features.",
-  "context": {
-    "architecture": "modular-monolith",
-    "framework": "nextjs",
-    "modules": ["users", "workouts"],
-    "sources": [
-      { "type": "repo-index", "path": ".playbook/repo-index.json" },
-      { "type": "architecture-metadata", "path": ".playbook/repo-index.json" },
-      { "type": "rule-registry", "path": ".playbook/repo-index.json" },
-      { "type": "module", "name": "workouts" },
-      { "type": "diff", "files": ["src/workouts/service.ts", "src/workouts/api.ts"] },
-      { "type": "docs", "path": "docs/ARCHITECTURE.md" }
-    ]
-  }
-}
-```
-
-Pattern: Ask Context Provenance — Playbook ask should expose deterministic metadata describing which repository intelligence sources informed an answer.
-
-Rule: Provenance metadata includes only source descriptors, not raw repository content.
-
-Pattern: Auditable AI Reasoning — governance tools should expose evidence sources so automation can validate reasoning.
-
-Failure Mode: Opaque AI reasoning prevents CI and agent integrations from trusting governance outputs.
-
-## Notes
-
-- Deterministic answers are returned when AI is disabled.
-- Future AI integrations can enrich responses while preserving this baseline contract.
+- `answerability`
+- `command`, `question`, `mode`, `modeInstruction`
+- `answer`, `reason`
+- `repoContext` and `scope`
+- `context` including repository summary fields plus `context.sources` provenance metadata

@@ -1,46 +1,29 @@
 # `pnpm playbook doctor`
 
-## What it does
-Checks local Playbook prerequisites and documentation/config health. Can also preview/apply safe deterministic fixes.
+Diagnose repository health by aggregating verify, risk, docs, architecture-audit, artifact-hygiene, and memory diagnostics.
 
-## Common usage
-- `pnpm playbook doctor`
-- `pnpm playbook doctor --help`
-- `pnpm playbook doctor --ai`
-- `pnpm playbook doctor --ai --json`
-- `pnpm playbook doctor --fix --dry-run`
-- `pnpm playbook doctor --fix --yes`
-- `pnpm playbook doctor --json`
+## Usage
 
-## Notable flags
-- `--help`: print doctor-specific help and options.
-- `--fix`: enable doctor fix planning/apply mode.
-- `--dry-run`: preview fixes without writing changes.
-- `--yes`: apply eligible safe fixes.
+```bash
+pnpm playbook doctor
+pnpm playbook doctor --json
+pnpm playbook doctor --ai
+pnpm playbook doctor --fix --dry-run
+pnpm playbook doctor --fix --yes
+```
+
+## Options
+
+- `--ai`: include AI-readiness diagnostics in doctor output.
+- `--fix`: enable deterministic doctor fix planning/apply mode.
+- `--dry-run`: preview doctor fixes without writing changes.
+- `--yes`: apply eligible doctor fixes without confirmation.
 - `--json` / `--format json`: machine-readable output.
+- `--quiet`: suppress success output in text mode.
 
+## Behavior
 
-## AI mode contract readiness
-`pnpm playbook doctor --ai` now validates AI contract readiness as a deterministic gate before future Playbook agent execution.
-
-Checks include:
-- AI contract availability (`.playbook/ai-contract.json` file-backed vs generated fallback).
-- AI contract validity using shared engine validation.
-- Referenced intelligence sources present/missing with required vs optional semantics.
-- Required command/query surface availability.
-- Remediation workflow readiness (`verify -> plan -> apply -> verify`).
-
-A repository can be AI-capable while still not AI-contract ready when required contract surfaces are missing.
-
-## JSON contract stability
-
-`pnpm playbook doctor --json` is a stable machine-readable automation contract.
-
-The output includes:
-
-- top-level diagnosis status, summary, and findings
-- `artifactHygiene.classification`
-- `artifactHygiene.findings`
-- `artifactHygiene.suggestions` (with deterministic IDs `PB012`, `PB013`, `PB014` when applicable)
-
-Rule: `doctor --json` must remain a stable machine-readable contract for automation and repository health diagnostics.
+- Surfaces findings grouped across architecture, docs, testing, risk, and memory categories.
+- Integrates architecture-audit checks into health reporting.
+- Reports structured `artifactHygiene` and `memoryDiagnostics` payloads in JSON mode.
+- Returns stable machine-readable contracts for automation via `--json`.

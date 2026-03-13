@@ -1,10 +1,11 @@
 # `pnpm playbook contracts`
 
-Emit a deterministic contract registry payload for schema targets, runtime artifacts, and roadmap status.
+Emit a deterministic contracts registry for artifact/document/schema surfaces.
 
 ## Usage
 
 ```bash
+pnpm playbook contracts
 pnpm playbook contracts --json
 pnpm playbook contracts --out .playbook/contracts-registry.json
 pnpm playbook contracts --json --out .playbook/contracts-registry.json
@@ -12,19 +13,22 @@ pnpm playbook contracts --json --out .playbook/contracts-registry.json
 
 ## Flags
 
-- `--json`: print the machine-readable registry contract to stdout.
-- `--out <path>`: write the same JSON payload to a file. Defaults to `.playbook/contracts-registry.json` when writing is enabled.
+- `--json`: print machine-readable registry JSON to stdout.
+- `--out <path>`: write registry JSON to a file.
 
-Behavior matrix:
+## Write behavior
 
-- `--json` only: print JSON only (no artifact write).
-- `--out <path>` only: write artifact only.
-- `--json --out <path>`: print and write.
+- Default output path is `.playbook/contracts-registry.json` when writing.
+- `--json` only: prints JSON and does not write by default.
+- `--out <path>` only: writes artifact and prints text confirmation.
+- `--json --out <path>`: prints JSON and writes artifact.
 
-## Relationship to other commands
+## Output shape
 
-- `pnpm playbook schema`: use `pnpm playbook schema contracts --json` to validate the `contracts --json` response shape.
-- `pnpm playbook doctor`: the registry gives downstream automation a deterministic map of expected artifacts.
-- Roadmap contract validation: `contracts` includes roadmap availability plus a stable tracked feature-status subset when `docs/roadmap/ROADMAP.json` is present.
+Registry output includes:
 
-In consumer repositories where Playbook docs are missing, the command still succeeds and reports structured unavailable states rather than failing.
+- base contracts registry payload from engine
+- `schemas.memoryArtifacts` registrations
+- `schemas.commandOutputs` registrations for additive command-output contracts
+
+Use `pnpm playbook schema contracts --json` to validate output shape.
