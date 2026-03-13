@@ -59,6 +59,7 @@ const fixture: AnalyzePullRequestResult = {
     }
   ],
   reviewGuidance: ['Run `playbook verify --json` before merge.'],
+  preventionGuidance: [],
   context: {
     sources: [
       { type: 'git-diff', baseRef: 'origin/main...HEAD' },

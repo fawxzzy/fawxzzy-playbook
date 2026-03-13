@@ -31,6 +31,7 @@ const baseAnalysis: AnalyzePullRequestResult = {
     }
   ],
   reviewGuidance: [],
+  preventionGuidance: [],
   context: { sources: [{ type: 'git-diff', baseRef: 'main' }] }
 };
 
