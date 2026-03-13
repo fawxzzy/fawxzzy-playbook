@@ -20,7 +20,7 @@ describe('pattern promotion queue', () => {
       command: 'pattern-compaction',
       patterns: [
         { id: 'MODULE_TEST_ABSENCE', bucket: 'testing', occurrences: 3, examples: ['module lacks tests'] },
-        { id: 'SINGLE_OBSERVATION', bucket: 'quality', occurrences: 1, examples: ['single signal'] }
+        { id: 'SINGLE_OBSERVATION', bucket: 'documentation', occurrences: 1, examples: ['single signal'] }
       ]
     };
 
@@ -50,6 +50,15 @@ describe('pattern promotion queue', () => {
           canonicalClarity: 0.9,
           falsePositiveRisk: 0.1,
           promotionScore: 0.83,
+          attractorScoreBreakdown: {
+            recurrence_score: 0.6,
+            cross_domain_score: 1,
+            evidence_score: 0.5,
+            reuse_score: 0.7,
+            governance_score: 0.9,
+            attractor_score: 0.7,
+            explanation: 'Attractor score ranks representational persistence and utility. It does not claim ontology or truth.'
+          },
           stage: 'review' as const
         }
       ]

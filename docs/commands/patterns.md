@@ -45,3 +45,20 @@ pnpm playbook patterns related <id> --json
 pnpm playbook patterns layers --json
 pnpm playbook patterns promote --id <pattern-id> --decision approve --json
 ```
+
+
+## Attractor scoring methodology
+
+Pattern review candidates expose an `attractorScoreBreakdown` with deterministic, static-artifact-only components:
+
+- `recurrence_score`
+- `cross_domain_score`
+- `evidence_score`
+- `reuse_score`
+- `governance_score`
+- `attractor_score` (weighted aggregate)
+
+The aggregate score is designed to rank **representational persistence and practical utility** for governance review. It is not a claim that a pattern is metaphysically true, complete, or ontologically privileged.
+
+- Rule: Attractor scoring must rank persistence and usefulness, not claim ontology.
+- Failure Mode: Treating attractor score as truth collapses governance and invites numerology-style misuse.

@@ -84,5 +84,5 @@ export {
   PROMOTED_PATTERNS_ARTIFACT_RELATIVE_PATH
 } from './promotionQueue.js';
 export { scorePatternCandidate } from './scorePatternCandidate.js';
-export type { PatternCandidateScore } from './scorePatternCandidate.js';
+export type { PatternCandidateScore, AttractorScoreBreakdown } from './scorePatternCandidate.js';
 export type { PatternReviewQueueArtifact, PromotedPatternsArtifact } from './promotionQueue.js';

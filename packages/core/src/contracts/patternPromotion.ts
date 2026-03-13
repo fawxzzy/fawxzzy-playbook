@@ -1,3 +1,13 @@
+export type AttractorScoreBreakdown = {
+  recurrence_score: number;
+  cross_domain_score: number;
+  evidence_score: number;
+  reuse_score: number;
+  governance_score: number;
+  attractor_score: number;
+  explanation: string;
+};
+
 export type CandidatePattern = {
   id: string;
   sourcePatternId: string;
@@ -12,6 +22,7 @@ export type CandidatePattern = {
   canonicalClarity: number;
   falsePositiveRisk: number;
   promotionScore: number;
+  attractorScoreBreakdown: AttractorScoreBreakdown;
   stage: 'candidate' | 'review';
 };
 

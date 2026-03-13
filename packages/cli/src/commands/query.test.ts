@@ -105,6 +105,15 @@ const writePatternReviewQueue = (repo: string): void => {
             canonicalClarity: 0.9,
             falsePositiveRisk: 0.1,
             promotionScore: 0.83,
+            attractorScoreBreakdown: {
+              recurrence_score: 0.6,
+              cross_domain_score: 1,
+              evidence_score: 0.5,
+              reuse_score: 0.7,
+              governance_score: 0.9,
+              attractor_score: 0.7,
+              explanation: 'Attractor score ranks representational persistence and utility. It does not claim ontology or truth.'
+            },
             stage: 'review'
           }
         ]
