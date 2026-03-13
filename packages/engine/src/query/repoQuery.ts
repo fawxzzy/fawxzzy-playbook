@@ -17,6 +17,7 @@ import {
   lookupPromotedMemoryKnowledge,
   type ExpandedMemoryProvenance
 } from '../memory/inspection.js';
+import { stripRelevance } from '../util/stripRelevance.js';
 
 export const SUPPORTED_QUERY_FIELDS = [
   'architecture',
@@ -179,11 +180,7 @@ const buildMemoryKnowledge = (projectRoot: string, resolvedField: RepositoryQuer
       return right.relevance - left.relevance || left.candidateId.localeCompare(right.candidateId);
     })
     .slice(0, 10)
-    .map((entry) => {
-      const withoutRelevance = { ...entry };
-      delete withoutRelevance.relevance;
-      return withoutRelevance;
-    });
+    .map(stripRelevance);
 };
 
 export const queryRepositoryIndex = (projectRoot: string, field: string, options?: QueryRepositoryIndexOptions): RepositoryQueryResult => {
