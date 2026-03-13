@@ -420,11 +420,26 @@ Canonical sequencing reference:
 Near-term dependency chain:
 
 1. `PB-V07-ARCH-INTELLIGENCE-GRAPH-001`
-2. `PB-V09-SESSION-EVIDENCE-001`
-3. `PB-V09-CONTROL-PLANE-001`
-4. `PB-V09-PR-REVIEW-LOOP-001`
-5. `PB-V09-LONGITUDINAL-STATE-001`
-6. `PB-V09-KNOWLEDGE-QUERY-INSPECTION-001`
+2. `PB-V09-ARCHITECTURE-ROLE-INFERENCE-001`
+3. `PB-V09-SESSION-EVIDENCE-001`
+4. `PB-V09-CONTROL-PLANE-001`
+5. `PB-V09-PR-REVIEW-LOOP-001`
+6. `PB-V09-LONGITUDINAL-STATE-001`
+7. `PB-V09-KNOWLEDGE-QUERY-INSPECTION-001`
+
+
+Tiny roadmap entry (visibility-first, low-distraction):
+
+- **ID:** `PB-V09-ARCHITECTURE-ROLE-INFERENCE-001`
+- **Description:** Extend architecture graph to classify package roles (`interface`, `orchestration`, `foundation`, `adapter`) and validate dependency direction against a deterministic matrix.
+- **Status:** `planned`
+- **Effort:** `low-medium`
+- **Dependencies:** graph extraction, dependency indexing, architecture diagram generation.
+
+Rule worth preserving:
+
+- Observation systems should mature before governance systems.
+- Playbook should see clearly before it starts judging architecture.
 
 ### 4) Later platform layers (dependency-blocked until prior trust slices are proven)
 
