@@ -1,6 +1,7 @@
 import { promotePatternCandidate } from '@zachariahredfield/playbook-engine';
 import { emitJsonOutput } from '../lib/jsonArtifact.js';
 import { ExitCode } from '../lib/cliContract.js';
+import { findPatternNode, findRelatedPatterns, readPatternKnowledgeGraph, summarizePatternLayers } from './patterns/graph.js';
 
 type PatternsOptions = {
   format: 'text' | 'json';
@@ -13,50 +14,148 @@ const readOptionValue = (args: string[], flag: string): string | undefined => {
   return index >= 0 ? args[index + 1] : undefined;
 };
 
-export const runPatterns = async (cwd: string, commandArgs: string[], options: PatternsOptions): Promise<number> => {
-  const subcommand = commandArgs[0];
-  if (subcommand !== 'promote') {
-    const message = 'playbook patterns: unsupported subcommand. Use "playbook patterns promote --id <pattern-id> --decision approve|reject".';
-    if (options.format === 'json') {
-      emitJsonOutput({ cwd, command: 'patterns', payload: { schemaVersion: '1.0', command: 'patterns', error: message }, outFile: options.outFile });
-    } else {
-      console.error(message);
-    }
-    return ExitCode.Failure;
+const emitError = (cwd: string, options: PatternsOptions, message: string): number => {
+  if (options.format === 'json') {
+    emitJsonOutput({ cwd, command: 'patterns', payload: { schemaVersion: '1.0', command: 'patterns', error: message }, outFile: options.outFile });
+  } else {
+    console.error(message);
   }
+  return ExitCode.Failure;
+};
 
+const printHelp = (): void => {
+  console.log('playbook patterns subcommands: list | show <id> | related <id> | layers | promote --id <pattern-id> --decision approve|reject');
+};
+
+const runPromote = (cwd: string, commandArgs: string[], options: PatternsOptions): number => {
   const id = readOptionValue(commandArgs, '--id');
   const decisionRaw = readOptionValue(commandArgs, '--decision');
   if (!id || !decisionRaw || !['approve', 'reject'].includes(decisionRaw)) {
-    const message = 'playbook patterns promote: requires --id <pattern-id> and --decision approve|reject.';
-    if (options.format === 'json') {
-      emitJsonOutput({ cwd, command: 'patterns', payload: { schemaVersion: '1.0', command: 'patterns', error: message }, outFile: options.outFile });
-    } else {
-      console.error(message);
-    }
-    return ExitCode.Failure;
+    return emitError(cwd, options, 'playbook patterns promote: requires --id <pattern-id> and --decision approve|reject.');
   }
 
-  try {
-    const reviewRecord = promotePatternCandidate(cwd, { id, decision: decisionRaw as 'approve' | 'reject' });
-    const payload = { schemaVersion: '1.0', command: 'patterns', action: 'promote', reviewRecord };
+  const reviewRecord = promotePatternCandidate(cwd, { id, decision: decisionRaw as 'approve' | 'reject' });
+  const payload = { schemaVersion: '1.0', command: 'patterns', action: 'promote', reviewRecord };
 
-    if (options.format === 'json') {
-      emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+  if (options.format === 'json') {
+    emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+    return ExitCode.Success;
+  }
+
+  if (!options.quiet) {
+    console.log(`Pattern ${id} ${decisionRaw}d.`);
+  }
+  return ExitCode.Success;
+};
+
+export const runPatterns = async (cwd: string, commandArgs: string[], options: PatternsOptions): Promise<number> => {
+  try {
+    const subcommand = commandArgs[0];
+
+    if (!subcommand || subcommand === '--help' || subcommand === '-h') {
+      if (options.format === 'json') {
+        emitJsonOutput({
+          cwd,
+          command: 'patterns',
+          payload: {
+            schemaVersion: '1.0',
+            command: 'patterns',
+            subcommands: ['list', 'show', 'related', 'layers', 'promote']
+          },
+          outFile: options.outFile
+        });
+      } else {
+        printHelp();
+      }
       return ExitCode.Success;
     }
 
-    if (!options.quiet) {
-      console.log(`Pattern ${id} ${decisionRaw}d.`);
+    if (subcommand === 'promote') {
+      return runPromote(cwd, commandArgs, options);
     }
-    return ExitCode.Success;
+
+    const graph = readPatternKnowledgeGraph(cwd);
+
+    if (subcommand === 'list') {
+      const payload = { schemaVersion: '1.0', command: 'patterns', action: 'list', patterns: graph.nodes };
+      if (options.format === 'json') {
+        emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+      } else {
+        console.log('Pattern Knowledge Graph Nodes');
+        console.log('─────────────────────────────');
+        for (const pattern of graph.nodes) {
+          console.log(`${pattern.knowledgeId} (${pattern.status})`);
+        }
+      }
+      return ExitCode.Success;
+    }
+
+    if (subcommand === 'show') {
+      const id = commandArgs[1];
+      if (!id) {
+        return emitError(cwd, options, 'playbook patterns show: requires <id>.');
+      }
+      const pattern = findPatternNode(graph, id);
+      const payload = { schemaVersion: '1.0', command: 'patterns', action: 'show', pattern };
+      if (options.format === 'json') {
+        emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+      } else {
+        console.log(`Pattern ${pattern.knowledgeId}`);
+        console.log('────────────────');
+        console.log(`Title: ${pattern.title}`);
+        console.log(`Status: ${pattern.status}`);
+        console.log(`Module: ${pattern.module}`);
+        console.log(`Rule: ${pattern.ruleId}`);
+        console.log(`Failure shape: ${pattern.failureShape}`);
+      }
+      return ExitCode.Success;
+    }
+
+    if (subcommand === 'related') {
+      const id = commandArgs[1];
+      if (!id) {
+        return emitError(cwd, options, 'playbook patterns related: requires <id>.');
+      }
+      findPatternNode(graph, id);
+      const related = findRelatedPatterns(graph, id);
+      const payload = { schemaVersion: '1.0', command: 'patterns', action: 'related', id, related };
+      if (options.format === 'json') {
+        emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+      } else {
+        console.log(`Patterns related to ${id}`);
+        console.log('────────────────────────');
+        for (const entry of related) {
+          console.log(`${entry.relation}: ${entry.pattern.knowledgeId}`);
+        }
+      }
+      return ExitCode.Success;
+    }
+
+    if (subcommand === 'layers') {
+      const layers = summarizePatternLayers(graph);
+      const payload = { schemaVersion: '1.0', command: 'patterns', action: 'layers', layers };
+      if (options.format === 'json') {
+        emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+      } else {
+        console.log('Pattern Graph Layers');
+        console.log('────────────────────');
+        for (const [layer, values] of Object.entries(layers)) {
+          console.log(layer);
+          for (const value of values) {
+            console.log(`  ${value.value}: ${value.count}`);
+          }
+        }
+      }
+      return ExitCode.Success;
+    }
+
+    return emitError(
+      cwd,
+      options,
+      'playbook patterns: unsupported subcommand. Use list, show <id>, related <id>, layers, or promote --id <pattern-id> --decision approve|reject.'
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (options.format === 'json') {
-      emitJsonOutput({ cwd, command: 'patterns', payload: { schemaVersion: '1.0', command: 'patterns', error: message }, outFile: options.outFile });
-    } else {
-      console.error(message);
-    }
-    return ExitCode.Failure;
+    return emitError(cwd, options, message);
   }
 };
