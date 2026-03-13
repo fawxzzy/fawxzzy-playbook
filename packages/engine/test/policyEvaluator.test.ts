@@ -6,6 +6,7 @@ const repoRoot = path.resolve('/workspace/playbook');
 const baseConfig = {
   repoRoot,
   allowedCommandFamilies: ['query', 'verify', 'apply'],
+  allowedRemediationScopes: ['workspace', 'module:engine'],
   allowedPathScopes: ['packages/engine', '.playbook']
 } as const;
 
@@ -43,7 +44,7 @@ describe('policy evaluator', () => {
       baseConfig
     );
 
-    expect(result.classification).toBe('requires approval');
+    expect(result.classification).toBe('requires_approval');
     expect(result.code).toBe('MUTATION_REQUIRES_APPROVAL');
     expect(result.record.policyState).toBe('review-required');
     expect(result.record.approvalState).toBe('pending');
@@ -85,6 +86,47 @@ describe('policy evaluator', () => {
     expect(result.classification).toBe('denied');
     expect(result.code).toBe('REPO_BOUNDARY_VIOLATION');
     expect(result.record.reason).toContain('REPO_BOUNDARY_VIOLATION');
+  });
+
+  it('denies disallowed remediation scope deterministically', () => {
+    const result = evaluatePolicyGate(
+      {
+        runId: 'run_1',
+        taskId: 'task_scope_denied',
+        actionClass: 'read-only',
+        commandFamily: 'verify',
+        remediationScope: 'module:cli',
+        targetPath: 'packages/engine/src/policy/evaluator.ts',
+        decidedAt: 123
+      },
+      baseConfig
+    );
+
+    expect(result.classification).toBe('denied');
+    expect(result.code).toBe('REMEDIATION_SCOPE_DENIED');
+    expect(result.record.policyState).toBe('deny');
+    expect(result.record.reason).toBe('REMEDIATION_SCOPE_DENIED: remediation scope module:cli is not allowed');
+  });
+
+  it('denies mutation tasks when approval is explicitly rejected', () => {
+    const result = evaluatePolicyGate(
+      {
+        runId: 'run_1',
+        taskId: 'task_rejected_mutation',
+        actionClass: 'mutation',
+        commandFamily: 'apply',
+        targetPath: 'packages/engine/src/policy/evaluator.ts',
+        approval: { state: 'rejected' },
+        decidedAt: 123
+      },
+      baseConfig
+    );
+
+    expect(result.classification).toBe('denied');
+    expect(result.code).toBe('MUTATION_APPROVAL_REJECTED');
+    expect(result.record.policyState).toBe('deny');
+    expect(result.record.approvalState).toBe('rejected');
+    expect(result.record.reason).toBe('MUTATION_APPROVAL_REJECTED: mutation-bearing action approval was explicitly rejected');
   });
 
   it('allows approved mutation tasks and emits deterministic reason code', () => {
