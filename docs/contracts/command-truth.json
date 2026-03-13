@@ -313,7 +313,7 @@
       "canonicalSequence": null,
       "productFacing": true,
       "machineReadable": true,
-      "example": "pnpm playbook patterns promote --id <pattern-id> --decision approve"
+      "example": "pnpm playbook patterns list --json"
     },
     {
       "name": "pilot",

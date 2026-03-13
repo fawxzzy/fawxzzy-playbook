@@ -137,7 +137,7 @@ export const commandMetadata: CommandMetadata[] = [
   },
   {
     name: 'patterns',
-    description: 'Apply explicit local promotion decisions for compacted pattern candidates',
+    description: 'Inspect pattern knowledge graph data and review promotion candidates',
     category: 'Repository tools',
     role: 'governance',
     lifecycle: 'canonical',
@@ -145,7 +145,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: null,
     canonicalSequence: null,
     productFacing: true,
-    exampleArgs: 'patterns promote --id <pattern-id> --decision approve',
+    exampleArgs: 'patterns list --json',
     machineReadable: true
   },
   {

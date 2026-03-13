@@ -26,7 +26,7 @@ Do not hand-edit entries inside the managed markers.
 | `analyze-pr` | Analyze local branch/worktree changes with deterministic PR intelligence | canonical | repo-intelligence | secondary | — | Current (implemented) | `pnpm playbook analyze-pr --json` |
 | `doctor` | Diagnose repository health by aggregating verify, risk, docs, and index analyzers | canonical | governance | secondary | — | Current (implemented) | `pnpm playbook doctor --fix --dry-run` |
 | `diagram` | Generate deterministic architecture Mermaid diagrams | utility | utility | secondary | — | Current (implemented) | `pnpm playbook diagram --repo . --out docs/ARCHITECTURE_DIAGRAMS.md` |
-| `patterns` | Apply explicit local promotion decisions for compacted pattern candidates | canonical | governance | secondary | — | Current (implemented) | `pnpm playbook patterns promote --id <pattern-id> --decision approve` |
+| `patterns` | Inspect pattern knowledge graph data and review promotion candidates | canonical | governance | secondary | — | Current (implemented) | `pnpm playbook patterns list --json` |
 | `docs` | Audit documentation governance surfaces and contracts | canonical | governance | secondary | — | Current (implemented) | `pnpm playbook docs audit --json` |
 | `audit` | Audit deterministic architecture guardrails and platform hardening controls | canonical | governance | secondary | — | Current (implemented) | `pnpm playbook audit architecture --json` |
 | `rules` | List loaded verify and analyze rules | canonical | governance | secondary | — | Current (implemented) | `pnpm playbook rules --json` |
@@ -57,7 +57,7 @@ Do not hand-edit entries inside the managed markers.
 - Core flow: [`verify`](verify.md), [`plan`](plan.md), [`apply`](apply.md), [`pilot`](pilot.md)
 - Repository intelligence: [`index`](index.md), [`query`](query.md), [`knowledge`](knowledge.md), [`deps`](deps.md), [`ask`](ask.md), [`explain`](explain.md), [`analyze-pr`](analyze-pr.md)
 - AI bootstrap/context: [`ai-context`](ai-context.md), [`ai-contract`](ai-contract.md), [`context`](overview.md)
-- Governance and support: [`docs`](docs.md), [`audit`](audit.md), [`rules`](rules.md), [`doctor`](doctor.md), [`schema`](schema.md), [`contracts`](contracts.md), [`ignore`](ignore.md), [`diagram`](diagram.md), [`route`](route.md), [`memory`](memory.md), [`fix`](fix.md), [`upgrade`](upgrade.md), [`analyze`](analyze.md)
+- Governance and support: [`docs`](docs.md), [`audit`](audit.md), [`rules`](rules.md), [`doctor`](doctor.md), [`schema`](schema.md), [`contracts`](contracts.md), [`ignore`](ignore.md), [`diagram`](diagram.md), [`route`](route.md), [`memory`](memory.md), [`patterns`](patterns.md), [`fix`](fix.md), [`upgrade`](upgrade.md), [`analyze`](analyze.md)
 
 ### Implemented control-plane command docs
 

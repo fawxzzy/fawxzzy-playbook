@@ -187,8 +187,8 @@ Do not hand-edit entries inside the managed markers.
   - Example: `pnpm playbook doctor --fix --dry-run`
 - `diagram`: Generate deterministic architecture Mermaid diagrams
   - Example: `pnpm playbook diagram --repo . --out docs/ARCHITECTURE_DIAGRAMS.md`
-- `patterns`: Apply explicit local promotion decisions for compacted pattern candidates
-  - Example: `pnpm playbook patterns promote --id <pattern-id> --decision approve`
+- `patterns`: Inspect pattern knowledge graph data and review promotion candidates
+  - Example: `pnpm playbook patterns list --json`
 - `docs`: Audit documentation governance surfaces and contracts
   - Example: `pnpm playbook docs audit --json`
 - `audit`: Audit deterministic architecture guardrails and platform hardening controls
@@ -264,7 +264,7 @@ Do not hand-edit entries inside the managed markers.
 | `analyze-pr` | `pnpm playbook analyze-pr --json` |
 | `doctor` | `pnpm playbook doctor --fix --dry-run` |
 | `diagram` | `pnpm playbook diagram --repo . --out docs/ARCHITECTURE_DIAGRAMS.md` |
-| `patterns` | `pnpm playbook patterns promote --id <pattern-id> --decision approve` |
+| `patterns` | `pnpm playbook patterns list --json` |
 | `docs` | `pnpm playbook docs audit --json` |
 | `audit` | `pnpm playbook audit architecture --json` |
 | `rules` | `pnpm playbook rules --json` |
