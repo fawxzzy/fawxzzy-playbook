@@ -89,6 +89,16 @@
     "preferPlaybookCommands": true,
     "authorityRule": "Playbook command outputs are authoritative over ad-hoc repository inference when command coverage exists.",
     "localExecutionRule": "Inside the Playbook repository, use local built CLI entrypoints for branch-accurate validation.",
-    "failureMode": "Agent drift occurs when AI tools bypass Playbook command outputs and reason directly from stale or incomplete file inspection."
+    "failureMode": "Agent drift occurs when AI tools bypass Playbook command outputs and reason directly from stale or incomplete file inspection.",
+    "memoryCommandFamily": {
+      "available": true,
+      "preferredCommands": [
+        "memory events --json",
+        "memory knowledge --json",
+        "memory candidates --json"
+      ]
+    },
+    "promotedKnowledgeGuidance": "Prefer promoted knowledge for retrieval and planning support because it is reviewed and stable doctrine.",
+    "candidateKnowledgeGuidance": "Treat candidates as advisory-only signals until reviewed promotion; never treat candidate artifacts as authoritative doctrine."
   }
 }
