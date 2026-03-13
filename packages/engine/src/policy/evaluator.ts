@@ -10,13 +10,15 @@ export const policyDecisionCodes = [
   'READ_ONLY_ALLOWED',
   'MUTATION_APPROVED',
   'MUTATION_REQUIRES_APPROVAL',
+  'MUTATION_APPROVAL_REJECTED',
   'COMMAND_FAMILY_DENIED',
+  'REMEDIATION_SCOPE_DENIED',
   'PATH_OUT_OF_SCOPE',
   'REPO_BOUNDARY_VIOLATION'
 ] as const;
 
 export type PolicyDecisionCode = (typeof policyDecisionCodes)[number];
-export type PolicyClassification = 'allowed' | 'denied' | 'requires approval';
+export type PolicyClassification = 'allowed' | 'denied' | 'requires_approval';
 
 export type PolicyActionClass = 'read-only' | 'mutation';
 
@@ -29,6 +31,7 @@ export type EvaluatePolicyInput = {
   taskId?: string;
   actionClass: PolicyActionClass;
   commandFamily: string;
+  remediationScope?: string;
   targetPath?: string;
   decidedAt?: number;
   approval?: PolicyApproval;
@@ -37,6 +40,7 @@ export type EvaluatePolicyInput = {
 export type PolicyEvaluatorConfig = {
   repoRoot: string;
   allowedCommandFamilies: readonly string[];
+  allowedRemediationScopes?: readonly string[];
   allowedPathScopes: readonly string[];
   enforceRepoBoundary?: boolean;
   requireApprovalForMutation?: boolean;
@@ -79,7 +83,7 @@ const inPathScope = (relativePath: string, allowedScopes: readonly string[]): bo
 const toClassification = (policyState: PolicyState): PolicyClassification => {
   if (policyState === 'allow') return 'allowed';
   if (policyState === 'deny') return 'denied';
-  return 'requires approval';
+  return 'requires_approval';
 };
 
 const buildDecisionRecord = (input: {
@@ -106,6 +110,24 @@ export const evaluatePolicyGate = (input: EvaluatePolicyInput, config: PolicyEva
   if (!config.allowedCommandFamilies.includes(input.commandFamily)) {
     const code: PolicyDecisionCode = 'COMMAND_FAMILY_DENIED';
     reasons.push(`command family ${input.commandFamily} is not allowed`);
+    const record = buildDecisionRecord({
+      runId: input.runId,
+      taskId: input.taskId,
+      policyState: 'deny',
+      approvalState: 'not-required',
+      reason: `${code}: ${reasons.join('; ')}`,
+      decidedAt
+    });
+    return { classification: 'denied', code, reasons, record };
+  }
+
+  if (
+    input.remediationScope &&
+    config.allowedRemediationScopes &&
+    !config.allowedRemediationScopes.includes(input.remediationScope)
+  ) {
+    const code: PolicyDecisionCode = 'REMEDIATION_SCOPE_DENIED';
+    reasons.push(`remediation scope ${input.remediationScope} is not allowed`);
     const record = buildDecisionRecord({
       runId: input.runId,
       taskId: input.taskId,
@@ -156,6 +178,20 @@ export const evaluatePolicyGate = (input: EvaluatePolicyInput, config: PolicyEva
       taskId: input.taskId,
       policyState: 'allow',
       approvalState: 'not-required',
+      reason: `${code}: ${reasons.join('; ')}`,
+      decidedAt
+    });
+    return { classification: toClassification(record.policyState), code, reasons, record };
+  }
+
+  if (input.approval?.state === 'rejected') {
+    const code: PolicyDecisionCode = 'MUTATION_APPROVAL_REJECTED';
+    reasons.push('mutation-bearing action approval was explicitly rejected');
+    const record = buildDecisionRecord({
+      runId: input.runId,
+      taskId: input.taskId,
+      policyState: 'deny',
+      approvalState: 'rejected',
       reason: `${code}: ${reasons.join('; ')}`,
       decidedAt
     });
