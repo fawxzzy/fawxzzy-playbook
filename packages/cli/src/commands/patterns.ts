@@ -5,6 +5,7 @@ import { findPatternNode, findRelatedPatterns, readContractPatternGraph, readPat
 import { runPatternsOutcomes } from './patterns/outcomes.js';
 import { runPatternsDoctrineCandidates } from './patterns/doctrineCandidates.js';
 import { runPatternsAntiPatterns } from './patterns/antiPatterns.js';
+import { runPatternsCrossRepo, runPatternsGeneralized, runPatternsPortability, runPatternsRepoDelta } from './patterns/crossRepo.js';
 
 type PatternsOptions = {
   format: 'text' | 'json';
@@ -27,7 +28,7 @@ const emitError = (cwd: string, options: PatternsOptions, message: string): numb
 };
 
 const printHelp = (): void => {
-  console.log('playbook patterns subcommands: list | show <id> | related <id> | layers | score | top [--limit <n>] | outcomes <patternId> | doctrine-candidates | anti-patterns | promote --id <pattern-id> --decision approve|reject');
+  console.log('playbook patterns subcommands: list | show <id> | related <id> | layers | score | top [--limit <n>] | outcomes <patternId> | doctrine-candidates | anti-patterns | cross-repo [--repo <path-or-slug>] | portability | generalized | repo-delta <leftRepo> <rightRepo> | promote --id <pattern-id> --decision approve|reject');
 };
 
 
@@ -111,7 +112,7 @@ export const runPatterns = async (cwd: string, commandArgs: string[], options: P
           payload: {
             schemaVersion: '1.0',
             command: 'patterns',
-            subcommands: ['list', 'show', 'related', 'layers', 'score', 'top', 'outcomes', 'doctrine-candidates', 'anti-patterns', 'promote']
+            subcommands: ['list', 'show', 'related', 'layers', 'score', 'top', 'outcomes', 'doctrine-candidates', 'anti-patterns', 'cross-repo', 'portability', 'generalized', 'repo-delta', 'promote']
           },
           outFile: options.outFile
         });
@@ -144,6 +145,22 @@ export const runPatterns = async (cwd: string, commandArgs: string[], options: P
 
     if (subcommand === 'anti-patterns') {
       return runPatternsAntiPatterns(cwd, options);
+    }
+
+    if (subcommand === 'cross-repo') {
+      return runPatternsCrossRepo(cwd, commandArgs, options);
+    }
+
+    if (subcommand === 'portability') {
+      return runPatternsPortability(cwd, options);
+    }
+
+    if (subcommand === 'generalized') {
+      return runPatternsGeneralized(cwd, options);
+    }
+
+    if (subcommand === 'repo-delta') {
+      return runPatternsRepoDelta(cwd, commandArgs, options);
     }
 
     const graph = readPatternKnowledgeGraph(cwd);
@@ -224,7 +241,7 @@ export const runPatterns = async (cwd: string, commandArgs: string[], options: P
     return emitError(
       cwd,
       options,
-      'playbook patterns: unsupported subcommand. Use list, show <id>, related <id>, layers, score, top [--limit <n>], outcomes <patternId>, doctrine-candidates, anti-patterns, or promote --id <pattern-id> --decision approve|reject.'
+      'playbook patterns: unsupported subcommand. Use list, show <id>, related <id>, layers, score, top [--limit <n>], outcomes <patternId>, doctrine-candidates, anti-patterns, cross-repo [--repo <path-or-slug>], portability, generalized, repo-delta <leftRepo> <rightRepo>, or promote --id <pattern-id> --decision approve|reject.'
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

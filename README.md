@@ -525,6 +525,7 @@ Other documentation such as `docs/PROJECT_GOVERNANCE.md` may be present dependin
 - Pattern: CLI Smoke Testing â€” All CLI commands should be exercised by an automated smoke test to prevent runtime regressions.
 - Rule: CLI Business Logic Location â€” CLI commands must remain thin wrappers around engine functionality.
 - Pattern: Demo Alignment â€” The Playbook core repository must guarantee that commands used by the demo repository remain stable and testable.
+- Pattern: Cross-Repo Pattern Learning â€” `pnpm playbook patterns cross-repo|portability|generalized|repo-delta` provides deterministic portability scoring from `.playbook/cross-repo-patterns.json` without introducing autonomous doctrine mutation.
 
 ## Architecture
 

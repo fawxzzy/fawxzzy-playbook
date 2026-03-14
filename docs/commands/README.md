@@ -436,6 +436,16 @@ Suggested remediation IDs:
 - Buckets are deterministic: architecture, testing, dependency, documentation, governance.
 - Output is stable machine-readable pattern summaries (`id`, `bucket`, `occurrences`, `examples`).
 
+
+### Cross-repo pattern learning (`patterns`)
+
+`pnpm playbook patterns cross-repo` aggregates `.playbook/pattern-graph.json` and `.playbook/pattern-outcomes.json` across repositories into `.playbook/cross-repo-patterns.json`.
+
+- Default pilot repositories are `ZachariahRedfield/playbook` and `ZachariahRedfield/fawxzzy-fitness`.
+- `pnpm playbook patterns portability` prints pattern portability rankings.
+- `pnpm playbook patterns generalized` filters portability scores above `0.85` (portable doctrine candidates).
+- `pnpm playbook patterns repo-delta <leftRepo> <rightRepo>` reports per-pattern deltas between two repositories.
+
 ### Deterministic test hotspot discovery
 
 `pnpm playbook query test-hotspots` reports likely test inefficiency candidates from test files using deterministic heuristics only.

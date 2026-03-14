@@ -1019,6 +1019,7 @@ Current implementation status (features: `PB-V08-KNOWLEDGE-COMPACTION-SPEC-001`,
 - Promotion now includes an explicit deterministic local review boundary with staged candidate queue and reviewed approvals/rejections; no silent or automatic promotion is allowed.
 - Live deterministic promotion surfaces in this slice: `pnpm playbook query pattern-review`, `pnpm playbook query promoted-patterns`, and `pnpm playbook patterns promote --id <pattern-id> --decision approve|reject`.
 - Storage remains local and explicit (`.playbook/pattern-review-queue.json`, `.playbook/patterns-promoted.json`); cross-repo sync remains future work.
+- Cross-repo baseline aggregation is now available via `.playbook/cross-repo-patterns.json` plus `pnpm playbook patterns cross-repo|portability|generalized|repo-delta`; governed transfer/sync policies still remain future scope.
 
 Live-command boundary note:
 - Deterministic compaction readback remains available via `pnpm playbook query patterns`, now alongside explicit review/promotion query and decision commands.
