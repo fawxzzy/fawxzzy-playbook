@@ -1,8 +1,45 @@
+import {
+  appendFitnessStrengthScore,
+  computePatternFitness,
+  computePatternStrength,
+  type PatternFitnessSignals,
+  type PatternGraphArtifact,
+  type PatternOutcomeLinks
+} from '@zachariahredfield/playbook-engine';
+import fs from 'node:fs';
+import path from 'node:path';
 import { emitJsonOutput } from '../../lib/jsonArtifact.js';
 import { ExitCode } from '../../lib/cliContract.js';
 import { readContractPatternGraph } from './graph.js';
 
-type PatternGraphPattern = ReturnType<typeof readContractPatternGraph>['patterns'][number];
+type PatternGraphPattern = PatternGraphArtifact['patterns'][number];
+
+type PatternOutcomeSignal =
+  | 'low-blast-radius'
+  | 'stable-contract-surface'
+  | 'low-plan-churn'
+  | 'low-governance-violations'
+  | 'deterministic-artifacts'
+  | 'high-test-pass-stability';
+
+type PatternOutcomeDirection = 'positive' | 'negative' | 'mixed';
+
+type PatternOutcomeLink = {
+  id: string;
+  pattern_id: string;
+  outcome_signal: PatternOutcomeSignal;
+  direction: PatternOutcomeDirection;
+  confidence: number;
+  evidence_refs: string[];
+  notes?: string;
+};
+
+type PatternOutcomesArtifact = {
+  schemaVersion: '1.0';
+  kind: 'pattern-outcomes';
+  generatedAt: string;
+  links: PatternOutcomeLink[];
+};
 
 type PatternsOptions = {
   format: 'text' | 'json';
@@ -10,33 +47,66 @@ type PatternsOptions = {
   outFile?: string;
 };
 
+const CONTRACT_PATTERN_OUTCOMES_PATH = ['.playbook', 'pattern-outcomes.json'] as const;
+
+export const readPatternOutcomesArtifact = (cwd: string): PatternOutcomesArtifact => {
+  const artifactPath = path.join(cwd, ...CONTRACT_PATTERN_OUTCOMES_PATH);
+  if (!fs.existsSync(artifactPath)) {
+    throw new Error('playbook patterns: missing artifact at .playbook/pattern-outcomes.json.');
+  }
+
+  return JSON.parse(fs.readFileSync(artifactPath, 'utf8')) as PatternOutcomesArtifact;
+};
+
+const clamp = (value: number): number => Math.max(0, Math.min(1, Number(value.toFixed(4))));
+
 const round2 = (value: number): number => Math.round((value + Number.EPSILON) * 100) / 100;
 
-const clamp = (value: number): number => Math.max(0, Math.min(1, round2(value)));
+const translateDirection = (confidence: number, direction: PatternOutcomeDirection): number => {
+  if (direction === 'negative') {
+    return clamp(1 - confidence);
+  }
+  if (direction === 'mixed') {
+    return clamp(0.5 + (confidence - 0.5) * 0.5);
+  }
+  return clamp(confidence);
+};
 
-const computeAttractor = (pattern: PatternGraphPattern): number =>
-  round2(pattern.scores[pattern.scores.length - 1]?.value ?? 0);
+const signalMap: Record<PatternOutcomeSignal, keyof PatternFitnessSignals> = {
+  'low-blast-radius': 'outcome_stability',
+  'stable-contract-surface': 'architectural_clarity',
+  'low-plan-churn': 'outcome_stability',
+  'low-governance-violations': 'governance_alignment',
+  'deterministic-artifacts': 'cross_repo_success',
+  'high-test-pass-stability': 'defect_reduction'
+};
 
-const computeFitness = (attractor: number): number => clamp(attractor * 0.9);
+const deriveOutcomeLinks = (links: PatternOutcomeLink[]): PatternOutcomeLinks => {
+  const buckets = new Map<keyof PatternFitnessSignals, number[]>();
 
-const computeStrength = (attractor: number, fitness: number): number => clamp((attractor + fitness) / 2);
-
-const inferOutcomes = (pattern: PatternGraphPattern): string[] => {
-  const descriptor = `${pattern.id} ${pattern.title} ${pattern.description}`.toLowerCase();
-
-  if (descriptor.includes('modular')) {
-    return ['low blast radius', 'stable contracts', 'reduced dependency churn'];
+  for (const link of links) {
+    const target = signalMap[link.outcome_signal];
+    const confidence = translateDirection(link.confidence, link.direction);
+    const existing = buckets.get(target) ?? [];
+    existing.push(confidence);
+    buckets.set(target, existing);
   }
 
-  if (pattern.layer.toLowerCase().includes('architecture')) {
-    return ['clear module boundaries', 'predictable integration points', 'safer incremental delivery'];
+  const outcomeLinks: PatternOutcomeLinks = {};
+  for (const [signal, values] of buckets.entries()) {
+    const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+    outcomeLinks[signal] = clamp(average);
   }
 
-  if (pattern.layer.toLowerCase().includes('execution')) {
-    return ['repeatable workflows', 'bounded failure recovery', 'lower operational variance'];
-  }
+  return outcomeLinks;
+};
 
-  return ['higher decision clarity', 'improved maintainability', 'more reusable implementation patterns'];
+const inferOutcomes = (patternId: string, links: PatternOutcomeLink[]): string[] => {
+  const labels = links
+    .filter((link) => link.pattern_id === patternId)
+    .map((link) => link.outcome_signal.replace(/-/g, ' '));
+
+  return labels.length > 0 ? labels : ['no linked outcomes'];
 };
 
 const findPattern = (cwd: string, patternId: string): PatternGraphPattern => {
@@ -55,15 +125,23 @@ export type PatternOutcomeSignals = {
 };
 
 export const summarizePatternOutcomeSignals = (
-  pattern: PatternGraphPattern
+  pattern: PatternGraphPattern,
+  outcomesArtifact: PatternOutcomesArtifact
 ): { patternId: string; signals: PatternOutcomeSignals; outcomes: string[] } => {
-  const attractor = computeAttractor(pattern);
-  const fitness = computeFitness(attractor);
-  const strength = computeStrength(attractor, fitness);
+  const outcomeLinks = deriveOutcomeLinks(outcomesArtifact.links.filter((link) => link.pattern_id === pattern.id));
+  const fitness = computePatternFitness(pattern, outcomeLinks);
+  const withFitness = appendFitnessStrengthScore(pattern, fitness, outcomesArtifact.generatedAt);
+  const attractor = pattern.scores[pattern.scores.length - 1]?.value ?? 0;
+  const strength = computePatternStrength(withFitness);
+
   return {
     patternId: pattern.id,
-    signals: { attractor, fitness, strength },
-    outcomes: inferOutcomes(pattern)
+    signals: {
+      attractor: round2(attractor),
+      fitness: round2(fitness.fitness_score),
+      strength: round2(strength)
+    },
+    outcomes: inferOutcomes(pattern.id, outcomesArtifact.links)
   };
 };
 
@@ -74,7 +152,8 @@ export const runPatternsOutcomes = (cwd: string, commandArgs: string[], options:
   }
 
   const pattern = findPattern(cwd, patternId);
-  const summary = summarizePatternOutcomeSignals(pattern);
+  const outcomesArtifact = readPatternOutcomesArtifact(cwd);
+  const summary = summarizePatternOutcomeSignals(pattern, outcomesArtifact);
 
   const payload = {
     schemaVersion: '1.0',

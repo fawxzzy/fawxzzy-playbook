@@ -157,6 +157,11 @@ declare module "@zachariahredfield/playbook-engine" {
   export const promotePatternCandidate: (...args: any[]) => any;
   export const scorePatternGraph: (...args: any[]) => any;
   export const listTopPatterns: (...args: any[]) => any[];
+  export const computePatternFitness: (...args: any[]) => any;
+  export const appendFitnessStrengthScore: (...args: any[]) => any;
+  export const computePatternStrength: (...args: any[]) => number;
+  export type PatternFitnessSignals = any;
+  export type PatternOutcomeLinks = any;
   export type PatternGraphArtifact = any;
   export const explainTarget: (...args: any[]) => any;
   export type ExplainTargetResult = any;

@@ -1,6 +1,6 @@
 import type { PatternGraphArtifact } from '@zachariahredfield/playbook-engine';
 import { readContractPatternGraph } from './graph.js';
-import { summarizePatternOutcomeSignals } from './outcomes.js';
+import { readPatternOutcomesArtifact, summarizePatternOutcomeSignals } from './outcomes.js';
 import { emitJsonOutput } from '../../lib/jsonArtifact.js';
 import { ExitCode } from '../../lib/cliContract.js';
 
@@ -23,10 +23,11 @@ const inferRisks = (patternId: string): string[] => {
 
 export const runPatternsAntiPatterns = (cwd: string, options: PatternsOptions): number => {
   const graph = readContractPatternGraph(cwd);
+  const outcomesArtifact = readPatternOutcomesArtifact(cwd);
 
   const antiPatterns = graph.patterns
     .map((pattern: PatternGraphArtifact['patterns'][number]) => {
-      const summary = summarizePatternOutcomeSignals(pattern);
+      const summary = summarizePatternOutcomeSignals(pattern, outcomesArtifact);
       return {
         patternId: summary.patternId,
         attractor: summary.signals.attractor,

@@ -59,6 +59,14 @@ const writeContractPatternGraph = (repo: string): void => {
   fs.copyFileSync(source, target);
 };
 
+
+const writePatternOutcomes = (repo: string): void => {
+  const source = path.join(process.cwd(), '..', '..', 'tests', 'contracts', 'pattern-outcomes.fixture.json');
+  const target = path.join(repo, '.playbook', 'pattern-outcomes.json');
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.copyFileSync(source, target);
+};
+
 const writePatternKnowledge = (repo: string): void => {
   const filePath = path.join(repo, '.playbook', 'memory', 'knowledge', 'patterns.json');
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -264,6 +272,7 @@ describe('runPatterns', () => {
   it('returns outcome and fitness signals for a pattern', async () => {
     const repo = createRepo('playbook-cli-patterns-outcomes');
     writeContractPatternGraph(repo);
+    writePatternOutcomes(repo);
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     const exitCode = await runPatterns(repo, ['outcomes', 'pattern.modularity'], {
@@ -275,8 +284,8 @@ describe('runPatterns', () => {
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.action).toBe('outcomes');
     expect(payload.patternId).toBe('pattern.modularity');
-    expect(payload.signals).toMatchObject({ attractor: 0.91, fitness: 0.82, strength: 0.87 });
-    expect(payload.outcomes).toEqual(['low blast radius', 'stable contracts', 'reduced dependency churn']);
+    expect(payload.signals).toMatchObject({ attractor: 0.91, fitness: 0.65, strength: 0.81 });
+    expect(payload.outcomes).toEqual(['low blast radius', 'deterministic artifacts']);
 
     logSpy.mockRestore();
   });
@@ -284,6 +293,7 @@ describe('runPatterns', () => {
   it('lists doctrine candidates ranked by strength', async () => {
     const repo = createRepo('playbook-cli-patterns-doctrine-candidates');
     writeContractPatternGraph(repo);
+    writePatternOutcomes(repo);
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     const exitCode = await runPatterns(repo, ['doctrine-candidates'], {
@@ -303,6 +313,7 @@ describe('runPatterns', () => {
   it('lists anti-pattern risk signals', async () => {
     const repo = createRepo('playbook-cli-patterns-anti-patterns');
     writeContractPatternGraph(repo);
+    writePatternOutcomes(repo);
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     const exitCode = await runPatterns(repo, ['anti-patterns'], {
