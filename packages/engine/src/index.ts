@@ -292,6 +292,18 @@ export type {
   PatternAttractorScoreResult
 } from './scoring/patternAttractorScore.js';
 export type { PatternFitnessSignals, PatternFitnessScoreResult, PatternOutcomeLinks, RankedPatternStrength } from './scoring/patternFitnessScore.js';
+
+export {
+  computeCrossRepoPatternLearning,
+  writeCrossRepoPatternsArtifact,
+  readCrossRepoPatternsArtifact
+} from './scoring/crossRepoPatternLearning.js';
+export type {
+  CrossRepoInput,
+  CrossRepoPatternRepositorySummary,
+  CrossRepoPatternAggregate,
+  CrossRepoPatternsArtifact
+} from './scoring/crossRepoPatternLearning.js';
 export type { PatternTopologySignature, PatternEquivalenceClass, PatternVariant, PatternTopologyTelemetry, PatternEquivalenceArtifact } from './schema/patternTopology.js';
 
 export { buildStateSpaceSnapshot } from './stateSpace/buildStateSpaceSnapshot.js';

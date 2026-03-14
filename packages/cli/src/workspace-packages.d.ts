@@ -163,6 +163,12 @@ declare module "@zachariahredfield/playbook-engine" {
   export type PatternFitnessSignals = any;
   export type PatternOutcomeLinks = any;
   export type PatternGraphArtifact = any;
+
+  export const computeCrossRepoPatternLearning: (...args: any[]) => any;
+  export const writeCrossRepoPatternsArtifact: (...args: any[]) => string;
+  export const readCrossRepoPatternsArtifact: (...args: any[]) => any;
+  export type CrossRepoInput = any;
+  export type CrossRepoPatternsArtifact = any;
   export const explainTarget: (...args: any[]) => any;
   export type ExplainTargetResult = any;
   export const SUPPORTED_QUERY_FIELDS: readonly string[];

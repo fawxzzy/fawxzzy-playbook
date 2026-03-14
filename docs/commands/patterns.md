@@ -57,6 +57,26 @@ List promoted/high-strength patterns as doctrine candidates ranked by strength.
 Show anti-pattern risk signals inferred from low-strength patterns.
 
 
+### `patterns cross-repo`
+
+Compute cross-repository aggregates and write `.playbook/cross-repo-patterns.json`.
+
+- default pilot repos: `ZachariahRedfield/playbook`, `ZachariahRedfield/fawxzzy-fitness`
+- optional repeated `--repo <path-or-slug>` overrides defaults
+
+### `patterns portability`
+
+List `pattern_id` to `portability_score` rows from `.playbook/cross-repo-patterns.json`.
+
+### `patterns generalized`
+
+List patterns with portability score `> 0.85` (portable doctrine candidates).
+
+### `patterns repo-delta <leftRepo> <rightRepo>`
+
+Compare shared patterns between two repository ids in the cross-repo artifact and report strength/attractor/fitness deltas.
+
+
 ## Guarantees
 
 - Rule: New CLI knowledge surfaces begin as inspection tools.
@@ -75,6 +95,11 @@ pnpm playbook patterns top --limit 10 --json
 pnpm playbook patterns outcomes pattern.modularity
 pnpm playbook patterns doctrine-candidates --json
 pnpm playbook patterns anti-patterns --json
+
+pnpm playbook patterns cross-repo --json
+pnpm playbook patterns portability
+pnpm playbook patterns generalized --json
+pnpm playbook patterns repo-delta repo-a repo-b --json
 pnpm playbook patterns promote --id <pattern-id> --decision approve --json
 ```
 
