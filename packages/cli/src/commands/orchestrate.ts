@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { compileOrchestratorArtifacts } from '@zachariahredfield/playbook-engine';
 import { emitResult, ExitCode } from '../lib/cliContract.js';
@@ -8,12 +9,115 @@ type OrchestrateOptions = {
   format: 'text' | 'json';
   quiet: boolean;
   goal?: string;
+  tasksFile?: string;
   lanes: number;
   outDir: string;
   artifactFormat: OrchestrateArtifactFormat;
 };
 
+const WORKSET_PLAN_PATH = '.playbook/workset-plan.json';
+
+type WorksetTaskInput = { task_id: string; task: string };
+
+const parseTasksInput = (raw: unknown): WorksetTaskInput[] | undefined => {
+  if (!Array.isArray(raw)) return undefined;
+
+  const tasks = raw
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') return undefined;
+      const candidate = entry as Record<string, unknown>;
+      const task_id = typeof candidate.task_id === 'string' ? candidate.task_id.trim() : '';
+      const task = typeof candidate.task === 'string' ? candidate.task.trim() : '';
+      if (!task_id || !task) return undefined;
+      return { task_id, task };
+    })
+    .filter((entry): entry is WorksetTaskInput => Boolean(entry));
+
+  return tasks.length > 0 ? tasks : undefined;
+};
+
 export const runOrchestrate = async (cwd: string, options: OrchestrateOptions): Promise<number> => {
+  const tasksFile = options.tasksFile?.trim();
+  if (tasksFile) {
+    const tasksPath = path.resolve(cwd, tasksFile);
+    if (!fs.existsSync(tasksPath)) {
+      emitResult({
+        format: options.format,
+        quiet: options.quiet,
+        command: 'orchestrate',
+        ok: false,
+        exitCode: ExitCode.Failure,
+        summary: `Orchestration failed: tasks file not found at ${tasksFile}.`,
+        findings: [{ id: 'orchestrate.tasks-file.missing', level: 'error', message: `Missing tasks file: ${tasksFile}` }],
+        nextActions: ['Run `playbook orchestrate --tasks-file <path>` with a valid JSON file.']
+      });
+      return ExitCode.Failure;
+    }
+
+    const parsed = JSON.parse(fs.readFileSync(tasksPath, 'utf8')) as { tasks?: unknown } | unknown;
+    const tasks = parseTasksInput((parsed as { tasks?: unknown })?.tasks ?? parsed);
+
+    if (!tasks) {
+      emitResult({
+        format: options.format,
+        quiet: options.quiet,
+        command: 'orchestrate',
+        ok: false,
+        exitCode: ExitCode.Failure,
+        summary: 'Orchestration failed: tasks file must contain a non-empty task list.',
+        findings: [{ id: 'orchestrate.tasks-file.invalid', level: 'error', message: 'Expected [{ task_id, task }] or { tasks: [...] }.' }],
+        nextActions: ['Ensure each task includes deterministic task_id and task fields.']
+      });
+      return ExitCode.Failure;
+    }
+
+    const engineModule = (await import('@zachariahredfield/playbook-engine')) as Record<string, unknown>;
+    const buildWorksetPlan = engineModule.buildWorksetPlan as ((cwd: string, tasks: WorksetTaskInput[], tasksFilePath: string) => Record<string, unknown>) | undefined;
+
+    if (!buildWorksetPlan) {
+      emitResult({
+        format: options.format,
+        quiet: options.quiet,
+        command: 'orchestrate',
+        ok: false,
+        exitCode: ExitCode.Failure,
+        summary: 'Orchestration failed: workset planner is unavailable on this build.',
+        findings: [{ id: 'orchestrate.workset.unavailable', level: 'error', message: 'Missing engine export: buildWorksetPlan' }],
+        nextActions: ['Rebuild workspace packages and retry.']
+      });
+      return ExitCode.Failure;
+    }
+
+    const worksetPlan = buildWorksetPlan(cwd, tasks, tasksFile) as {
+      input_tasks: unknown[];
+      routed_tasks: unknown[];
+      lanes: unknown[];
+      blocked_tasks: unknown[];
+      warnings: string[];
+    };
+    fs.mkdirSync(path.join(cwd, '.playbook'), { recursive: true });
+    fs.writeFileSync(path.join(cwd, WORKSET_PLAN_PATH), `${JSON.stringify(worksetPlan, null, 2)}\n`, 'utf8');
+
+    emitResult({
+      format: options.format,
+      quiet: options.quiet,
+      command: 'orchestrate',
+      ok: true,
+      exitCode: ExitCode.Success,
+      summary: `Workset lane plan generated at ${WORKSET_PLAN_PATH}`,
+      findings: [
+        { id: 'orchestrate.workset.tasks', level: 'info', message: `Input tasks: ${worksetPlan.input_tasks.length}` },
+        { id: 'orchestrate.workset.routed', level: 'info', message: `Routed tasks: ${worksetPlan.routed_tasks.length}` },
+        { id: 'orchestrate.workset.lanes', level: 'info', message: `Parallel lanes: ${worksetPlan.lanes.length}` },
+        { id: 'orchestrate.workset.blocked', level: 'warning', message: `Blocked tasks: ${worksetPlan.blocked_tasks.length}` },
+        ...worksetPlan.warnings.map((warning, index) => ({ id: `orchestrate.workset.warning.${index + 1}`, level: 'warning' as const, message: warning }))
+      ],
+      nextActions: ['Review lane codex_prompt fields and blocked task prerequisites before running any workers.']
+    });
+
+    return worksetPlan.blocked_tasks.length > 0 ? ExitCode.Failure : ExitCode.Success;
+  }
+
   const goal = options.goal?.trim();
   if (!goal) {
     emitResult({
@@ -22,15 +126,15 @@ export const runOrchestrate = async (cwd: string, options: OrchestrateOptions): 
       command: 'orchestrate',
       ok: false,
       exitCode: ExitCode.Failure,
-      summary: 'Orchestration failed: --goal is required.',
+      summary: 'Orchestration failed: --goal is required when --tasks-file is not provided.',
       findings: [
         {
           id: 'orchestrate.goal.required',
           level: 'error',
-          message: 'Missing required option: --goal <string>.'
+          message: 'Missing required option: --goal <string> or --tasks-file <path>.'
         }
       ],
-      nextActions: ['Run `playbook orchestrate --goal "<goal>"`.']
+      nextActions: ['Run `playbook orchestrate --goal "<goal>"` or `playbook orchestrate --tasks-file <path>`.']
     });
 
     return ExitCode.Failure;

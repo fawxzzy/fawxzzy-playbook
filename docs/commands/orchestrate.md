@@ -24,7 +24,8 @@ pnpm playbook orchestrate \
 
 ## Flags
 
-- `--goal <string>` (required)
+- `--goal <string>` (required when `--tasks-file` is not set)
+- `--tasks-file <path>` (optional, compiles a multi-task workset into lane plans)
 - `--lanes <number>` (optional, default `3`)
 - `--out <dir>` (optional, default `.playbook/orchestrator`)
 - `--format <md|json|both>` (optional, default `both`)
@@ -98,3 +99,24 @@ This keeps worker execution bounded and lane ownership explicit.
 Future-oriented orchestration subcommand concepts such as `orchestrate plan`, `orchestrate explain`, or `orchestrate verify` are not implemented on the current branch.
 
 For live behavior and options, use `pnpm playbook orchestrate --help` and treat this page as the authoritative v0 contract.
+
+
+## Workset lane compilation (Phase 8 slice)
+
+Use `--tasks-file` to compile multiple routed tasks into deterministic, proposal-only worker lanes:
+
+```bash
+pnpm playbook orchestrate --tasks-file ./fixtures/tasks.json --json
+```
+
+This writes `.playbook/workset-plan.json` with:
+
+- `input_tasks`, `routed_tasks`, `lanes`, `blocked_tasks`
+- deterministic `dependency_edges` and `merge_risk_notes`
+- one worker-ready `codex_prompt` per lane
+
+Why this exists:
+
+- lane planning is the safety layer between single-task routing and autonomous orchestration
+- unsupported/ambiguous tasks stay explicit in `blocked_tasks` instead of being silently forced into lanes
+- proposal-only posture is preserved end-to-end

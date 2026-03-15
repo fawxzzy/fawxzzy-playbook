@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/workset-plan.schema.json",
+  "title": "Workset Plan Artifact",
+  "description": "Deterministic proposal-only lane plan compiled from multiple routed tasks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "generatedAt",
+    "proposalOnly",
+    "input_tasks",
+    "routed_tasks",
+    "lanes",
+    "blocked_tasks",
+    "dependency_edges",
+    "merge_risk_notes",
+    "sourceArtifacts",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "kind": { "type": "string", "const": "workset-plan" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "proposalOnly": { "type": "boolean", "const": true },
+    "input_tasks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/taskInput" }
+    },
+    "routed_tasks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/routedTask" }
+    },
+    "lanes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/lane" }
+    },
+    "blocked_tasks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/blockedTask" }
+    },
+    "dependency_edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from_lane_id", "to_lane_id", "reason"],
+        "properties": {
+          "from_lane_id": { "type": "string", "minLength": 1 },
+          "to_lane_id": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "merge_risk_notes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "sourceArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tasksFile", "taskExecutionProfile", "learningState"],
+      "properties": {
+        "tasksFile": { "$ref": "#/$defs/sourceArtifact" },
+        "taskExecutionProfile": { "$ref": "#/$defs/sourceArtifact" },
+        "learningState": { "$ref": "#/$defs/sourceArtifact" }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "taskInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "task"],
+      "properties": {
+        "task_id": { "type": "string", "minLength": 1 },
+        "task": { "type": "string", "minLength": 1 }
+      }
+    },
+    "routedTask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "task",
+        "selected_route",
+        "task_family",
+        "expected_surfaces",
+        "likely_conflict_surfaces",
+        "dependency_level",
+        "recommended_pr_size",
+        "worker_ready",
+        "warnings",
+        "missing_prerequisites"
+      ],
+      "properties": {
+        "task_id": { "type": "string", "minLength": 1 },
+        "task": { "type": "string", "minLength": 1 },
+        "selected_route": { "type": "string", "minLength": 1 },
+        "task_family": { "type": "string", "minLength": 1 },
+        "expected_surfaces": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "likely_conflict_surfaces": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "dependency_level": { "type": "string", "enum": ["low", "medium", "high"] },
+        "recommended_pr_size": { "type": "string", "enum": ["small", "medium", "large"] },
+        "worker_ready": { "type": "boolean" },
+        "warnings": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "missing_prerequisites": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    },
+    "lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lane_id",
+        "task_ids",
+        "task_families",
+        "expected_surfaces",
+        "likely_conflict_surfaces",
+        "dependency_level",
+        "recommended_pr_size",
+        "worker_ready",
+        "codex_prompt"
+      ],
+      "properties": {
+        "lane_id": { "type": "string", "minLength": 1 },
+        "task_ids": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "task_families": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "expected_surfaces": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "likely_conflict_surfaces": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "dependency_level": { "type": "string", "enum": ["low", "medium", "high"] },
+        "recommended_pr_size": { "type": "string", "enum": ["small", "medium", "large"] },
+        "worker_ready": { "type": "boolean" },
+        "codex_prompt": { "type": "string", "minLength": 1 }
+      }
+    },
+    "blockedTask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "reason", "warnings", "missing_prerequisites"],
+      "properties": {
+        "task_id": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "warnings": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "missing_prerequisites": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    },
+    "sourceArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available", "artifactPath"],
+      "properties": {
+        "available": { "type": "boolean" },
+        "artifactPath": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

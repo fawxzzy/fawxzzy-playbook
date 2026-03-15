@@ -86,6 +86,7 @@ export const additiveCommandFieldSchemaRegistry: RegisteredSchemaContract[] = [
   { id: 'cross-repo-candidates', version: '1.0', path: 'packages/contracts/src/cross-repo-candidates.schema.json', kind: 'command-output' },
   { id: 'task-execution-profile', version: '1.0', path: 'packages/contracts/src/task-execution-profile.schema.json', kind: 'command-output' },
   { id: 'execution-plan', version: '1.0', path: 'packages/contracts/src/execution-plan.schema.json', kind: 'command-output' },
+  { id: 'workset-plan', version: '1.0', path: 'packages/contracts/src/workset-plan.schema.json', kind: 'command-output' },
   { id: 'learning-state', version: '1.0', path: 'packages/contracts/src/learning-state.schema.json', kind: 'command-output' },
   { id: 'explain.memoryKnowledge', version: '1.0', path: 'schema://cli/explain', kind: 'command-output' },
   { id: 'plan.tasks[].advisory.outcomeLearning', version: '1.0', path: 'schema://cli/plan', kind: 'command-output' },

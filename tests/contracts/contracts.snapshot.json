@@ -132,6 +132,11 @@
         "path": "packages/contracts/src/execution-plan.schema.json"
       },
       {
+        "id": "workset-plan",
+        "version": "1.0",
+        "path": "packages/contracts/src/workset-plan.schema.json"
+      },
+      {
         "id": "outcome-telemetry",
         "version": "1.0",
         "path": "packages/contracts/src/outcome-telemetry.schema.json"

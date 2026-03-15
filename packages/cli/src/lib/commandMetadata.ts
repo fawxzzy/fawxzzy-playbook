@@ -72,7 +72,7 @@ export const commandMetadata: CommandMetadata[] = [
   },
   {
     name: 'orchestrate',
-    description: 'Generate deterministic orchestration lane artifacts for a goal',
+    description: 'Generate deterministic orchestration lane artifacts for a goal or tasks-file workset',
     category: 'Core',
     role: 'remediation',
     lifecycle: 'canonical',

@@ -2102,3 +2102,10 @@ Playbook now treats remediation/agent execution as first-class state, persisted 
 - Failure mode: Without explicit run-state, the system cannot reliably resume, audit, compare, or learn from execution behavior.
 
 Execution state is persisted under `.playbook/runs/<run-id>.json` and is queryable through `playbook query runs` and `playbook query run --id <run-id>`.
+
+
+## Phase 8 progress update (lane compilation safety slice)
+
+- Added deterministic `workset-plan` compilation from `orchestrate --tasks-file`.
+- Execution-plan to lane-plan compilation now happens before any autonomous orchestration concerns.
+- Worker-ready prompts are emitted per lane while unsupported/ambiguous tasks remain explicitly blocked.

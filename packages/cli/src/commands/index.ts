@@ -160,6 +160,7 @@ const commandRunners: Record<string, (context: CommandContext) => Promise<Comman
       format,
       quiet,
       goal: parseOptionValue(commandArgs, '--goal'),
+      tasksFile: parseOptionValue(commandArgs, '--tasks-file'),
       lanes,
       outDir: parseOptionValue(commandArgs, '--out') ?? '.playbook/orchestrator',
       artifactFormat: parseOrchestrateArtifactFormat(commandArgs, format)

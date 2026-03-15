@@ -1,0 +1,9 @@
+{
+  "tasks": [
+    { "task_id": "task-docs", "task": "update command docs" },
+    { "task_id": "task-cli", "task": "add a new cli command flag" },
+    { "task_id": "task-engine", "task": "adjust scoring fitness thresholds" },
+    { "task_id": "task-ambiguous", "task": "update docs for cli command" },
+    { "task_id": "task-unsupported", "task": "deploy kubernetes cluster" }
+  ]
+}
