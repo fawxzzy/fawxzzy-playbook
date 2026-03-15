@@ -24,6 +24,7 @@ describe('lane state artifact contract', () => {
         'ready_lanes',
         'running_lanes',
         'completed_lanes',
+        'merge_ready_lanes',
         'dependency_status',
         'merge_readiness',
         'verification_status',

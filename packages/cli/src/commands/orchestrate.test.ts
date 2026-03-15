@@ -178,7 +178,7 @@ describe('runOrchestrate', () => {
         {
           tasks: [
             { task_id: 'task-docs', task: 'update documentation changelog' },
-            { task_id: 'task-cli', task: 'add a new cli command flag' }
+            { task_id: 'task-docs-2', task: 'update release notes and markdown references' }
           ]
         },
         null,
@@ -195,7 +195,7 @@ describe('runOrchestrate', () => {
       artifactFormat: 'json'
     });
 
-    expect(exitCode).toBe(ExitCode.Success);
+    expect(exitCode).toBe(ExitCode.Failure);
     expect(fs.existsSync(path.join(repoDir, '.playbook', 'workset-plan.json'))).toBe(true);
     expect(fs.existsSync(path.join(repoDir, '.playbook', 'lane-state.json'))).toBe(true);
 

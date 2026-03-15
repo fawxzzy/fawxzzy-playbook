@@ -1,6 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { deriveLaneState, type WorksetPlanArtifact } from '@zachariahredfield/playbook-engine';
+import {
+  applyLaneLifecycleTransition,
+  deriveLaneState,
+  type LaneLifecycleTransition,
+  type LaneStateArtifact,
+  type WorksetPlanArtifact
+} from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../../lib/cliContract.js';
 
 const WORKSET_PLAN_PATH = '.playbook/workset-plan.json';
@@ -9,14 +15,18 @@ const LANE_STATE_PATH = '.playbook/lane-state.json';
 type LanesOptions = {
   format: 'text' | 'json';
   quiet: boolean;
+  action?: LaneLifecycleTransition['action'];
+  laneId?: string;
 };
 
-const printText = (result: ReturnType<typeof deriveLaneState>): void => {
+const printText = (result: LaneStateArtifact): void => {
   console.log('Lane State');
   console.log('──────────');
   console.log(`Workset plan: ${result.workset_plan_path}`);
   console.log(`Blocked lanes: ${result.blocked_lanes.length}`);
   console.log(`Ready lanes: ${result.ready_lanes.length}`);
+  console.log(`Running lanes: ${result.running_lanes.length}`);
+  console.log(`Completed lanes: ${result.completed_lanes.length}`);
   console.log(`Merge-ready lanes: ${result.merge_readiness.merge_ready_lanes.length}`);
 
   if (result.blocked_lanes.length > 0) {
@@ -28,23 +38,90 @@ const printText = (result: ReturnType<typeof deriveLaneState>): void => {
   }
 };
 
-export const runLanes = async (cwd: string, options: LanesOptions): Promise<number> => {
+const readWorksetPlan = (cwd: string): WorksetPlanArtifact | undefined => {
   const worksetPlanFile = path.join(cwd, WORKSET_PLAN_PATH);
   if (!fs.existsSync(worksetPlanFile)) {
-    const message = `playbook lanes: missing workset plan at ${WORKSET_PLAN_PATH}. Run \"playbook orchestrate --tasks-file <path>\" first.`;
-    if (options.format === 'json') {
-      console.log(JSON.stringify({ schemaVersion: '1.0', command: 'lanes', error: message }, null, 2));
-    } else {
-      console.error(message);
-    }
+    return undefined;
+  }
+
+  return JSON.parse(fs.readFileSync(worksetPlanFile, 'utf8')) as WorksetPlanArtifact;
+};
+
+const readLaneState = (cwd: string): LaneStateArtifact | undefined => {
+  const laneStateFile = path.join(cwd, LANE_STATE_PATH);
+  if (!fs.existsSync(laneStateFile)) {
+    return undefined;
+  }
+
+  return JSON.parse(fs.readFileSync(laneStateFile, 'utf8')) as LaneStateArtifact;
+};
+
+const writeLaneState = (cwd: string, laneState: LaneStateArtifact): void => {
+  fs.mkdirSync(path.join(cwd, '.playbook'), { recursive: true });
+  fs.writeFileSync(path.join(cwd, LANE_STATE_PATH), `${JSON.stringify(laneState, null, 2)}\n`, 'utf8');
+};
+
+const printError = (options: LanesOptions, message: string): void => {
+  if (options.format === 'json') {
+    console.log(JSON.stringify({ schemaVersion: '1.0', command: 'lanes', error: message }, null, 2));
+    return;
+  }
+
+  console.error(message);
+};
+
+export const runLanes = async (cwd: string, options: LanesOptions): Promise<number> => {
+  const worksetPlan = readWorksetPlan(cwd);
+  if (!worksetPlan) {
+    printError(options, `playbook lanes: missing workset plan at ${WORKSET_PLAN_PATH}. Run "playbook orchestrate --tasks-file <path>" first.`);
     return ExitCode.Failure;
   }
 
-  const worksetPlan = JSON.parse(fs.readFileSync(worksetPlanFile, 'utf8')) as WorksetPlanArtifact;
-  const laneState = deriveLaneState(worksetPlan, WORKSET_PLAN_PATH);
+  if (options.action) {
+    if (!options.laneId) {
+      printError(options, 'playbook lanes: lane id is required for lifecycle transitions.');
+      return ExitCode.Failure;
+    }
 
-  fs.mkdirSync(path.join(cwd, '.playbook'), { recursive: true });
-  fs.writeFileSync(path.join(cwd, LANE_STATE_PATH), `${JSON.stringify(laneState, null, 2)}\n`, 'utf8');
+    const currentLaneState = readLaneState(cwd) ?? deriveLaneState(worksetPlan, WORKSET_PLAN_PATH);
+    const transition = applyLaneLifecycleTransition(worksetPlan, WORKSET_PLAN_PATH, currentLaneState, {
+      action: options.action,
+      lane_id: options.laneId
+    });
+
+    writeLaneState(cwd, transition.laneState);
+
+    if (options.format === 'json') {
+      console.log(
+        JSON.stringify(
+          {
+            schemaVersion: '1.0',
+            command: 'lanes',
+            lifecycle_action: options.action,
+            lane_id: options.laneId,
+            applied: transition.applied,
+            reason: transition.reason,
+            lane_state_path: LANE_STATE_PATH,
+            lane_state: transition.laneState
+          },
+          null,
+          2
+        )
+      );
+    } else if (!options.quiet) {
+      if (transition.applied) {
+        console.log(`Applied proposal-only lane transition: ${options.action} ${options.laneId}`);
+      } else {
+        console.log(`Lane transition not applied: ${transition.reason ?? 'unknown reason'}`);
+      }
+      printText(transition.laneState);
+    }
+
+    return transition.applied ? ExitCode.Success : ExitCode.Failure;
+  }
+
+  const laneState = deriveLaneState(worksetPlan, WORKSET_PLAN_PATH);
+  writeLaneState(cwd, laneState);
 
   if (options.format === 'json') {
     console.log(

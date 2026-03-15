@@ -6,28 +6,43 @@
 
 Workset plans are static planning artifacts. Lane-state turns those plans into explicit tracked orchestration state without launching workers or mutating branches.
 
-Rule — Planned lanes must become explicit tracked state before they become autonomous execution units.
+Rule — Lane lifecycle transitions must stay stricter than eventual automation behavior.
 
-Pattern — Workset planning becomes much more operationally useful when each lane has a deterministic readiness state.
+Pattern — Readiness snapshots become operationally useful when they support deterministic state progression.
 
-Failure Mode — Orchestration without lane-state turns planning artifacts into dead documents instead of an active control system.
+Failure Mode — Static lane-state without lifecycle transitions cannot become a real orchestration layer.
 
 ## Usage
 
 ```bash
 pnpm playbook lanes --json
+pnpm playbook lanes start <lane_id>
+pnpm playbook lanes complete <lane_id>
 ```
 
 ## Inputs
 
 - Requires `.playbook/workset-plan.json` from `pnpm playbook orchestrate --tasks-file <path>`.
+- `start` and `complete` consume `.playbook/lane-state.json` when present to preserve deterministic proposal-only lifecycle history.
+
+## Lifecycle model
+
+Lane status is deterministic and proposal-only:
+
+- `blocked`: prerequisites or dependencies unresolved
+- `ready`: lane can be started
+- `running`: lane was started via `lanes start <lane_id>`
+- `completed`: lane was completed via `lanes complete <lane_id>` but not yet merge-ready
+- `merge_ready`: conservative safe-completion state after recomputation
+
+Dependency gates are strict: if prerequisites become unresolved, the lane remains or returns `blocked` regardless of requested transition.
 
 ## Outputs
 
 Writes `.playbook/lane-state.json` with:
 
-- top-level lane counts and status groupings (`blocked_lanes`, `ready_lanes`, `running_lanes`, `completed_lanes`)
-- deterministic per-lane readiness (`status`, `dependencies_satisfied`, `blocked_reasons`)
+- lifecycle groups (`blocked_lanes`, `ready_lanes`, `running_lanes`, `completed_lanes`, `merge_ready_lanes`)
+- deterministic per-lane lifecycle status (`status`, `dependencies_satisfied`, `blocked_reasons`)
 - conservative merge and verification posture (`merge_readiness`, `verification_status`)
 
 `lanes` remains proposal-only and does not create branches, launch workers, open PRs, or merge code.
