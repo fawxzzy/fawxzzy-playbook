@@ -174,7 +174,7 @@ Do not hand-edit entries inside the managed markers.
   - Example: `pnpm playbook verify --ci --json`
 - `plan`: Generate a structured fix plan from rule findings
   - Example: `pnpm playbook plan --json`
-- `orchestrate`: Generate deterministic orchestration lane artifacts for a goal
+- `orchestrate`: Generate deterministic orchestration lane artifacts for a goal or tasks-file workset
   - Example: `pnpm playbook orchestrate --goal "ship capability" --lanes 3 --format both`
 - `apply`: Execute deterministic auto-fixable plan tasks
   - Example: `pnpm playbook apply --from-plan .playbook/plan.json`

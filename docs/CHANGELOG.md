@@ -216,3 +216,10 @@
 - Added JSON schema support for `pnpm playbook docs audit --json` via `pnpm playbook schema docs`.
 - Integrated docs audit into Playbook CI and agent-facing validation guidance.
 - Completed first docs-governance cleanup pass by removing idea leakage from runtime/workflow/index docs, archiving superseded migration reporting, and deleting obsolete roadmap-update migration guidance.
+
+
+## Unreleased
+
+- Added `workset-plan` artifact contract and `.playbook/workset-plan.json` output for `orchestrate --tasks-file`.
+- Added deterministic lane planner that groups compatible surfaces, separates conflict surfaces, respects dependency levels, and blocks ambiguous/unsupported tasks conservatively.
+- Added lane-level worker-ready Codex prompts and tests for parallel docs+cli routing, engine conflict isolation, ambiguous blocking, unsupported prerequisites, and mixed worksets.

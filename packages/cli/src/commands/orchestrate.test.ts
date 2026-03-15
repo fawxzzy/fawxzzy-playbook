@@ -166,4 +166,43 @@ describe('runOrchestrate', () => {
 
     logSpy.mockRestore();
   });
+
+  it('builds workset plan from --tasks-file input', async () => {
+    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-orchestrate-workset-'));
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    fs.mkdirSync(path.join(repoDir, 'fixtures'), { recursive: true });
+    fs.writeFileSync(
+      path.join(repoDir, 'fixtures', 'tasks.json'),
+      JSON.stringify(
+        {
+          tasks: [
+            { task_id: 'task-docs', task: 'update documentation changelog' },
+            { task_id: 'task-cli', task: 'add a new cli command flag' }
+          ]
+        },
+        null,
+        2
+      )
+    );
+
+    const exitCode = await runOrchestrate(repoDir, {
+      format: 'json',
+      quiet: false,
+      tasksFile: './fixtures/tasks.json',
+      lanes: 3,
+      outDir: '.playbook/orchestrator',
+      artifactFormat: 'json'
+    });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(fs.existsSync(path.join(repoDir, '.playbook', 'workset-plan.json'))).toBe(true);
+
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0])) as { command: string; ok: boolean };
+    expect(payload.command).toBe('orchestrate');
+    expect(payload.ok).toBe(true);
+
+    logSpy.mockRestore();
+  });
+
 });
