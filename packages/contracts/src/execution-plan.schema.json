@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/execution-plan.schema.json",
+  "title": "Execution Plan Artifact",
+  "description": "Deterministic proposal-only task execution plan selected from routing evidence and optional learning artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "generatedAt",
+    "proposalOnly",
+    "task_family",
+    "route_id",
+    "rule_packs",
+    "required_validations",
+    "optional_validations",
+    "parallel_lanes",
+    "mutation_allowed",
+    "missing_prerequisites",
+    "sourceArtifacts",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "kind": {
+      "type": "string",
+      "const": "execution-plan"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "proposalOnly": {
+      "type": "boolean",
+      "const": true
+    },
+    "task_family": {
+      "type": "string",
+      "minLength": 1
+    },
+    "route_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rule_packs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "required_validations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "optional_validations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "parallel_lanes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "mutation_allowed": {
+      "type": "boolean"
+    },
+    "missing_prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "sourceArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "taskExecutionProfile",
+        "learningState"
+      ],
+      "properties": {
+        "taskExecutionProfile": {
+          "$ref": "#/$defs/sourceArtifact"
+        },
+        "learningState": {
+          "$ref": "#/$defs/sourceArtifact"
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "sourceArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available",
+        "artifactPath"
+      ],
+      "properties": {
+        "available": {
+          "type": "boolean"
+        },
+        "artifactPath": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

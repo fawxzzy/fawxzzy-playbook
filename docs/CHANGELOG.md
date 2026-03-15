@@ -1,5 +1,6 @@
 # Changelog
 
+- WHAT: Implemented Phase 8 Router Lane 1 with additive deterministic `execution-plan` contract/schema and upgraded `pnpm playbook route` to emit/write proposal-only execution plans at `.playbook/execution-plan.json` with explicit task-family route metadata, validation bundles, source artifact availability, and warnings. WHY: Adds task-specific routing inspection that remains non-mutating while preserving deterministic governance boundaries.
 ## Unreleased
 
 ### Added

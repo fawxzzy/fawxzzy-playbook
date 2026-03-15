@@ -224,7 +224,7 @@ Do not hand-edit entries inside the managed markers.
   - Example: `pnpm playbook ask "where should a new feature live?" --repo-context --json`
 - `explain`: Explain rules, modules, or architecture from repository intelligence
   - Example: `pnpm playbook explain architecture --json`
-- `route`: Classify tasks into deterministic execution vs bounded model reasoning routes
+- `route`: Classify tasks and emit deterministic proposal-only execution plans for task-specific routing decisions
   - Example: `pnpm playbook route "summarize current repo state" --json`
 - `knowledge`: Inspect read-only knowledge artifacts and provenance surfaces
   - Example: `pnpm playbook knowledge list --json`

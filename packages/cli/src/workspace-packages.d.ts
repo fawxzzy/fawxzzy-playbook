@@ -220,7 +220,9 @@ declare module "@zachariahredfield/playbook-engine" {
     repoMutationAllowed: boolean;
   };
   export const routeTask: (...args: any[]) => RouteDecision;
+  export const buildExecutionPlan: (...args: any[]) => any;
   export type TaskExecutionProfileArtifact = any;
+  export type ExecutionPlanArtifact = any;
 
   export type OutcomeTelemetryArtifact = any;
   export type ProcessTelemetryArtifact = any;
