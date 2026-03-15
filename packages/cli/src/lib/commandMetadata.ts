@@ -463,6 +463,19 @@ export const commandMetadata: CommandMetadata[] = [
     machineReadable: true
   },
   {
+    name: 'architecture',
+    description: 'Verify subsystem registry ownership and architecture mapping integrity',
+    category: 'Repository tools',
+    role: 'governance',
+    lifecycle: 'canonical',
+    discoverability: 'secondary',
+    onboardingPriority: null,
+    canonicalSequence: null,
+    productFacing: true,
+    exampleArgs: 'architecture verify --json',
+    machineReadable: true
+  },
+  {
     name: 'session',
     description: 'Manage repo-scoped session memory and snapshot workflows',
     category: 'Utility',

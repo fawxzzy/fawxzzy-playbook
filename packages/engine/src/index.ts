@@ -500,3 +500,6 @@ export type {
 } from './orchestrator/index.js';
 
 export * from './telemetry/index.js';
+
+export { validateArtifacts } from "./architecture/validateArtifacts.js";
+export type { ArchitectureValidationResult, ValidateArtifactsOptions } from "./architecture/validateArtifacts.js";

@@ -50,6 +50,7 @@
       "deps",
       "query",
       "route",
+      "architecture",
       "session",
       "patterns",
       "learn",

@@ -382,6 +382,10 @@ const commandRunners: Record<string, (context: CommandContext) => Promise<Comman
     const { runQuery } = await import('./query.js');
     return runQuery(cwd, commandArgs, { format, quiet, outFile: parseOptionValue(commandArgs, '--out') });
   },
+  architecture: async ({ cwd, commandArgs, format, quiet }) => {
+    const { runArchitecture } = await import('./architecture.js');
+    return runArchitecture(cwd, commandArgs, { format, quiet });
+  },
   session: async ({ cwd, commandArgs, format, quiet }) => {
     const { runSession } = await import('./session.js');
     return runSession(cwd, commandArgs, { format, quiet });
@@ -425,6 +429,7 @@ const commandOrder = [
   'deps',
   'query',
   'route',
+  'architecture',
   'session',
   'patterns',
   'learn',
