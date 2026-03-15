@@ -27,6 +27,7 @@
       "verify",
       "plan",
       "orchestrate",
+      "lanes",
       "apply",
       "fix",
       "doctor",
