@@ -45,6 +45,9 @@ describe('runRoute', () => {
         taskExecutionProfile: { available: false, artifactPath: '.playbook/task-execution-profile.json' },
         learningState: { available: false, artifactPath: '.playbook/learning-state.json' }
       },
+      learning_state_available: false,
+      route_confidence: 0.6,
+      open_questions: [],
       warnings: []
     });
 
@@ -56,6 +59,13 @@ describe('runRoute', () => {
     expect(payload.selectedRoute).toBe('deterministic_local');
     expect(payload.task).toBe('update command docs');
     expect(payload.executionPlan.kind).toBe('execution-plan');
+
+    expect(buildExecutionPlan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        task: 'update command docs',
+        learningStateSnapshot: undefined
+      })
+    );
 
     const persisted = JSON.parse(fs.readFileSync(path.join(repo, '.playbook', 'execution-plan.json'), 'utf8'));
     expect(persisted.kind).toBe('execution-plan');

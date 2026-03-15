@@ -3,19 +3,19 @@
   "kind": "execution-plan",
   "generatedAt": "2026-01-01T00:00:00.000Z",
   "proposalOnly": true,
-  "task_family": "artifact_read",
-  "route_id": "deterministic_local:artifact_read",
+  "task_family": "docs_only",
+  "route_id": "deterministic_local:docs_only",
   "rule_packs": [
-    "route-deterministic-local"
+    "docs-governance"
   ],
   "required_validations": [
-    "pnpm -r build"
+    "pnpm playbook docs audit --json"
   ],
   "optional_validations": [
-    "pnpm playbook route \"<task>\" --json"
+    "pnpm -r build"
   ],
   "parallel_lanes": [
-    "deterministic-inspection"
+    "parallel-safe-validation"
   ],
   "mutation_allowed": false,
   "missing_prerequisites": [],
@@ -29,8 +29,13 @@
       "artifactPath": ".playbook/learning-state.json"
     }
   },
+  "learning_state_available": false,
+  "route_confidence": 0.6,
+  "open_questions": [
+    "No learning-state snapshot loaded; should optional validations stay baseline for this task family?"
+  ],
   "warnings": [
     "learning-state artifact unavailable; skipping learning-state refinement and using deterministic baseline route defaults.",
-    "task-execution-profile artifact unavailable; using route defaults for governance packs and validation bundles."
+    "task-execution-profile artifact unavailable; using deterministic built-in task profile catalog."
   ]
 }
