@@ -25,6 +25,7 @@ describe('runContracts', () => {
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('outcome-telemetry');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('learning-state');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('lane-state');
+    expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('worker-assignments');
   });
 
   it('keeps schema registration identifiers and paths stable', async () => {
@@ -55,6 +56,7 @@ describe('runContracts', () => {
         { id: 'outcome-telemetry', version: '1.0', path: 'packages/contracts/src/outcome-telemetry.schema.json' },
         { id: 'learning-state', version: '1.0', path: 'packages/contracts/src/learning-state.schema.json' },
         { id: 'lane-state', version: '1.0', path: 'packages/contracts/src/lane-state.schema.json' },
+        { id: 'worker-assignments', version: '1.0', path: 'packages/contracts/src/worker-assignments.schema.json' },
         { id: 'explain.memoryKnowledge', version: '1.0', path: 'schema://cli/explain' },
         { id: 'plan.tasks[].advisory.outcomeLearning', version: '1.0', path: 'schema://cli/plan' },
         { id: 'analyze-pr.preventionGuidance', version: '1.0', path: 'schema://cli/analyze-pr' },

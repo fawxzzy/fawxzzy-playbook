@@ -402,8 +402,21 @@ export { buildTaskExecutionProfile } from './routing/executionRouter.js';
 export { buildExecutionPlan } from './routing/executionPlan.js';
 export type { BuildExecutionPlanInput, ExecutionPlanArtifact, ExecutionPlanSourceArtifacts } from './routing/executionPlan.js';
 export { compileCodexPrompt } from './routing/codexPrompt.js';
-export { buildWorksetPlan, deriveLaneState, applyLaneLifecycleTransition } from './orchestration/index.js';
-export type { WorksetPlanArtifact, WorksetTaskInput, WorksetLane, LaneStateArtifact, LaneStateEntry, LaneExecutionStatus, LaneLifecycleTransition, LaneLifecycleTransitionResult } from './orchestration/index.js';
+export { buildWorksetPlan, deriveLaneState, applyLaneLifecycleTransition, assignWorkersToLanes, buildAssignedPrompt } from './orchestration/index.js';
+export type {
+  WorksetPlanArtifact,
+  WorksetTaskInput,
+  WorksetLane,
+  LaneStateArtifact,
+  LaneStateEntry,
+  LaneExecutionStatus,
+  LaneLifecycleTransition,
+  LaneLifecycleTransitionResult,
+  WorkerAssignmentsArtifact,
+  WorkerAssignmentEntry,
+  WorkerAssignmentWorker,
+  WorkerAssignmentLaneStatus
+} from './orchestration/index.js';
 export type {
   ExecutionSurface,
   ExecutionScope,

@@ -1202,6 +1202,7 @@ Use a layered phase model so each phase compounds directly on the previous one:
    - Router Lane 4 (implemented): execution-plan outputs are now Codex-worker-ready with additive route fields (`expected_surfaces`, `likely_conflict_surfaces`, `dependency_level`, `recommended_pr_size`, `worker_ready`) and deterministic `playbook route --codex-prompt` compilation into PR-sized proposal-only worker prompts (objective, implementation plan, surfaces, verification, docs updates, and governance block).
 9. **Phase 9 â€” Repository Memory System**  
    Establish the temporal memory substrate (session/episodic evidence) while keeping repository structural intelligence (`index`/`graph`) as a distinct deterministic layer.
+   - Worker assignment slice (implemented): deterministic proposal-only `worker-assignments` contract generation from lane-state readiness/dependency gates via `pnpm playbook workers` / `pnpm playbook workers assign`, including `.playbook/worker-assignments.json` and `.playbook/prompts/<lane_id>.md` outputs without worker launch or branch/PR automation.
 10. **Phase 10 â€” Replay / Consolidation / Promotion**  
    Add deterministic replay and consolidation pipelines with salience-gated, provenance-preserving promotion queues so fast episodic memory cannot become durable doctrine without review.
 11. **Phase 11 â€” Session + Evidence Layer**  

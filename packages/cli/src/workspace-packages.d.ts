@@ -229,6 +229,9 @@ declare module "@zachariahredfield/playbook-engine" {
   export type LaneStateArtifact = any;
   export const buildWorksetPlan: (...args: any[]) => WorksetPlanArtifact;
   export const deriveLaneState: (...args: any[]) => LaneStateArtifact;
+  export type WorkerAssignmentsArtifact = any;
+  export const assignWorkersToLanes: (...args: any[]) => WorkerAssignmentsArtifact;
+  export const buildAssignedPrompt: (...args: any[]) => string;
   export type LaneLifecycleTransition = { action: 'start' | 'complete'; lane_id: string };
   export type LaneLifecycleTransitionResult = { laneState: LaneStateArtifact; applied: boolean; reason?: string };
   export const applyLaneLifecycleTransition: (...args: any[]) => LaneLifecycleTransitionResult;

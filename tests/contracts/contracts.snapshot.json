@@ -152,6 +152,11 @@
         "path": "packages/contracts/src/lane-state.schema.json"
       },
       {
+        "id": "worker-assignments",
+        "version": "1.0",
+        "path": "packages/contracts/src/worker-assignments.schema.json"
+      },
+      {
         "id": "explain.memoryKnowledge",
         "version": "1.0",
         "path": "schema://cli/explain"

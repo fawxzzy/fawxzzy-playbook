@@ -150,6 +150,15 @@ const commandRunners: Record<string, (context: CommandContext) => Promise<Comman
 
     return runLanes(cwd, { format, quiet });
   },
+  workers: async ({ cwd, commandArgs, format, quiet }) => {
+    const { runWorkers } = await import('./workers.js');
+    const action = commandArgs[0];
+    if (action === 'assign') {
+      return runWorkers(cwd, { format, quiet, action: 'assign' });
+    }
+
+    return runWorkers(cwd, { format, quiet });
+  },
   orchestrate: async ({ cwd, commandArgs, format, quiet }) => {
     const { runOrchestrate } = await import('./orchestrate.js');
     const lanesValue = parseOptionValue(commandArgs, '--lanes');
@@ -379,6 +388,7 @@ const commandOrder = [
   'plan',
   'orchestrate',
   'lanes',
+  'workers',
   'apply',
   'fix',
   'doctor',

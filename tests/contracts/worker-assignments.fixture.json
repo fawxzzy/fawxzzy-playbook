@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "worker-assignments",
+  "proposalOnly": true,
+  "generatedAt": "1970-01-01T00:00:00.000Z",
+  "lanes": [
+    {
+      "lane_id": "lane-1",
+      "worker_type": "codex-docs",
+      "status": "assigned",
+      "task_ids": ["task-docs"],
+      "assigned_prompt": ".playbook/prompts/lane-1.md",
+      "dependencies_satisfied": true
+    }
+  ],
+  "workers": [
+    {
+      "worker_id": "worker-1",
+      "worker_type": "codex-docs",
+      "lane_ids": ["lane-1"],
+      "status": "assigned"
+    }
+  ],
+  "warnings": []
+}

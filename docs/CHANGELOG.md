@@ -5,6 +5,8 @@
 
 ### Added
 
+- WHAT: Implemented the Phase 9 worker assignment slice with additive `worker-assignments` contract/schema (`packages/contracts/src/worker-assignments.schema.json`), deterministic `assignWorkersToLanes(laneState)` engine logic, and new `pnpm playbook workers` / `pnpm playbook workers assign` CLI surfaces that write `.playbook/worker-assignments.json` plus `.playbook/prompts/<lane_id>.md` for ready lanes only. WHY: Adds dependency-aware, proposal-only worker handoff infrastructure while preserving blocked lanes, deterministic ordering, and no worker/branch/PR automation.
+
 - WHAT: Implemented the Phase 8 lane lifecycle state-model slice by extending lane-state semantics to `blocked`, `ready`, `running`, `completed`, and `merge_ready`, adding deterministic proposal-only transition logic (`ready -> running`, `running -> completed`, conservative `merge_ready` recomputation), and exposing `pnpm playbook lanes start <lane_id>` / `pnpm playbook lanes complete <lane_id>` alongside `pnpm playbook lanes --json`. WHY: Upgrades lane-state from static readiness snapshots into an active deterministic lifecycle model without launching workers, creating branches, or automating PR/merge actions.
 
 - WHAT: Implemented the next Phase 8 orchestration slice by adding additive `lane-state` contract/schema (`packages/contracts/src/lane-state.schema.json`), deterministic lane-state derivation from `.playbook/workset-plan.json`, and new `pnpm playbook lanes` inspection output that writes `.playbook/lane-state.json` with blocked/ready/dependency/merge/verification summaries. WHY: Converts workset planning artifacts into active tracked orchestration state while preserving proposal-only, conservative readiness semantics and explicit unsupported/ambiguous blocking boundaries.
@@ -185,6 +187,8 @@
 ## Unreleased
 
 ### Added
+
+- WHAT: Implemented the Phase 9 worker assignment slice with additive `worker-assignments` contract/schema (`packages/contracts/src/worker-assignments.schema.json`), deterministic `assignWorkersToLanes(laneState)` engine logic, and new `pnpm playbook workers` / `pnpm playbook workers assign` CLI surfaces that write `.playbook/worker-assignments.json` plus `.playbook/prompts/<lane_id>.md` for ready lanes only. WHY: Adds dependency-aware, proposal-only worker handoff infrastructure while preserving blocked lanes, deterministic ordering, and no worker/branch/PR automation.
 
 - WHAT: Implemented the next Phase 8 orchestration slice by adding additive `lane-state` contract/schema (`packages/contracts/src/lane-state.schema.json`), deterministic lane-state derivation from `.playbook/workset-plan.json`, and new `pnpm playbook lanes` inspection output that writes `.playbook/lane-state.json` with blocked/ready/dependency/merge/verification summaries. WHY: Converts workset planning artifacts into active tracked orchestration state while preserving proposal-only, conservative readiness semantics and explicit unsupported/ambiguous blocking boundaries.
 - WHAT: Implemented Phase 8 Router Lane 3 evidence-aware execution-plan refinement: route planning now consumes learning-state metrics when available to conservatively tune optional validation pressure, parallel-lane posture, and strictness warnings while preserving baseline required validations, deterministic ordering, and proposal-only behavior; execution-plan output now includes `learning_state_available`, `route_confidence`, and `open_questions`. WHY: Enables bounded efficiency gains from telemetry without allowing speed-optimized governance erosion.
