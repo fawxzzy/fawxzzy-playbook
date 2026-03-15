@@ -28,6 +28,7 @@
       "plan",
       "orchestrate",
       "lanes",
+      "workers",
       "apply",
       "fix",
       "doctor",

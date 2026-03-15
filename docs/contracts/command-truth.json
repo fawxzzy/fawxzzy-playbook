@@ -482,6 +482,18 @@
       "productFacing": true,
       "machineReadable": true,
       "example": "pnpm playbook verify --ci --json"
+    },
+    {
+      "name": "workers",
+      "category": "Core",
+      "role": "remediation",
+      "lifecycle": "canonical",
+      "discoverability": "primary",
+      "onboardingPriority": null,
+      "canonicalSequence": null,
+      "productFacing": true,
+      "machineReadable": true,
+      "example": "pnpm playbook workers assign --json"
     }
   ],
   "canonicalCommands": [
@@ -510,7 +522,8 @@
     "route",
     "rules",
     "security",
-    "verify"
+    "verify",
+    "workers"
   ],
   "compatibilityCommands": [
     "analyze",

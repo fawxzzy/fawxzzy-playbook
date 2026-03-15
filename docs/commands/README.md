@@ -22,6 +22,7 @@ Do not hand-edit entries inside the managed markers.
 | `verify` | Verify governance rules | canonical | governance | primary | 8 | Current (implemented) | `pnpm playbook verify --ci --json` |
 | `plan` | Generate a structured fix plan from rule findings | canonical | remediation | primary | 9 | Current (implemented) | `pnpm playbook plan --json` |
 | `lanes` | Derive deterministic lane-state from .playbook/workset-plan.json | canonical | remediation | primary | — | Current (implemented) | `pnpm playbook lanes --json` |
+| `workers` | Assign deterministic proposal-only workers to ready lanes from .playbook/lane-state.json | canonical | remediation | primary | — | Current (implemented) | `pnpm playbook workers assign --json` |
 | `orchestrate` | Generate deterministic orchestration lane artifacts for a goal or tasks-file workset | canonical | remediation | primary | — | Current (implemented) | `pnpm playbook orchestrate --goal "ship capability" --lanes 3 --format both` |
 | `apply` | Execute deterministic auto-fixable plan tasks | canonical | remediation | primary | 10 | Current (implemented) | `pnpm playbook apply --from-plan .playbook/plan.json` |
 | `analyze-pr` | Analyze local branch/worktree changes with deterministic PR intelligence | canonical | repo-intelligence | secondary | — | Current (implemented) | `pnpm playbook analyze-pr --json` |
@@ -66,6 +67,7 @@ Do not hand-edit entries inside the managed markers.
 
 - [`orchestrate`](orchestrate.md) (implemented v0 lane-contract artifact generation)
 - [`lanes`](lanes.md) (implemented deterministic lane-state tracking from workset plans)
+- [`workers`](workers.md) (implemented deterministic proposal-only worker assignment from lane-state readiness)
 
 ## External repository targeting (`pnpm playbook --repo <path> <command>`)
 

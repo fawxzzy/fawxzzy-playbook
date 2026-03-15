@@ -84,7 +84,7 @@ export const runAgentPlanDryRun = (input: AgentRunPlanDryRunInput): AgentRunPlan
     compiledTasksPath: path.join(tempRoot, controlPlaneRuntimePaths.compiledTasks),
     policyConfig: {
       repoRoot: input.repoRoot,
-      allowedCommandFamilies: ['apply', 'ask', 'audit', 'context', 'deps', 'diagram', 'docs', 'doctor', 'explain', 'fix', 'index', 'memory', 'orchestrate', 'plan', 'query', 'route', 'rules', 'schema', 'session', 'status', 'verify'],
+      allowedCommandFamilies: ['apply', 'ask', 'audit', 'context', 'deps', 'diagram', 'docs', 'doctor', 'explain', 'fix', 'index', 'memory', 'orchestrate', 'plan', 'workers', 'query', 'route', 'rules', 'schema', 'session', 'status', 'verify'],
       allowedPathScopes: ['.'],
       requireApprovalForMutation: true
     }

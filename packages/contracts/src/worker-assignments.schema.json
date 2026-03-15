@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/worker-assignments.schema.json",
+  "title": "Worker Assignments Artifact",
+  "description": "Deterministic proposal-only worker assignment artifact derived from lane-state readiness and dependency status.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "proposalOnly", "generatedAt", "lanes", "workers", "warnings"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "kind": { "type": "string", "const": "worker-assignments" },
+    "proposalOnly": { "type": "boolean", "const": true },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "lanes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/laneAssignment" }
+    },
+    "workers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/workerAssignment" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "laneAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lane_id", "worker_type", "status", "task_ids", "assigned_prompt", "dependencies_satisfied"],
+      "properties": {
+        "lane_id": { "type": "string", "minLength": 1 },
+        "worker_type": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["assigned", "blocked", "skipped"] },
+        "task_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "assigned_prompt": { "type": "string", "minLength": 1 },
+        "dependencies_satisfied": { "type": "boolean" }
+      }
+    },
+    "workerAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worker_id", "worker_type", "lane_ids", "status"],
+      "properties": {
+        "worker_id": { "type": "string", "minLength": 1 },
+        "worker_type": { "type": "string", "minLength": 1 },
+        "lane_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "status": { "type": "string", "enum": ["assigned", "idle"] }
+      }
+    }
+  }
+}

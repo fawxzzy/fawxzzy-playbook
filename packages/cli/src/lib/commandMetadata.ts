@@ -84,6 +84,19 @@ export const commandMetadata: CommandMetadata[] = [
     machineReadable: true
   },
   {
+    name: 'workers',
+    description: 'Assign deterministic proposal-only workers to ready lanes from .playbook/lane-state.json',
+    category: 'Core',
+    role: 'remediation',
+    lifecycle: 'canonical',
+    discoverability: 'primary',
+    onboardingPriority: null,
+    canonicalSequence: null,
+    productFacing: true,
+    exampleArgs: 'workers assign --json',
+    machineReadable: true
+  },
+  {
     name: 'orchestrate',
     description: 'Generate deterministic orchestration lane artifacts for a goal or tasks-file workset',
     category: 'Core',
