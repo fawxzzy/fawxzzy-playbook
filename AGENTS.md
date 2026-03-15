@@ -213,6 +213,8 @@ Do not hand-edit entries inside the managed markers.
   - Example: `pnpm playbook ignore suggest --repo ../target-repo --json`
 - `contracts`: Emit deterministic contract registry for schemas, artifacts, and roadmap status
   - Example: `pnpm playbook contracts --json`
+- `architecture`: Verify subsystem registry ownership and architecture mapping integrity
+  - Example: `pnpm playbook architecture verify --json`
 
 ### Repository intelligence
 
@@ -294,6 +296,7 @@ Do not hand-edit entries inside the managed markers.
 | `ask` | `pnpm playbook ask "where should a new feature live?" --repo-context --json` |
 | `explain` | `pnpm playbook explain architecture --json` |
 | `route` | `pnpm playbook route "summarize current repo state" --json` |
+| `architecture` | `pnpm playbook architecture verify --json` |
 | `learn` | `pnpm playbook learn draft --json --out .playbook/knowledge/candidates.json` |
 | `memory` | `pnpm playbook memory events --json` |
 | `improve` | `pnpm playbook improve --json` |

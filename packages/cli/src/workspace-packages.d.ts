@@ -7,6 +7,7 @@ declare module "@zachariahredfield/playbook-core" {
   export const formatHuman: (...args: any[]) => Promise<any>;
   export const formatJson: (...args: any[]) => Promise<any>;
   export const runArchitectureAudit: (...args: any[]) => any;
+  export const loadArchitecture: (...args: any[]) => any;
 }
 
 declare module "@zachariahredfield/playbook-node" {
@@ -248,6 +249,7 @@ declare module "@zachariahredfield/playbook-engine" {
   export const summarizeStructuralTelemetry: (...args: any[]) => any;
   export type LearningStateSnapshotArtifact = any;
   export const deriveLearningStateSnapshot: (...args: any[]) => LearningStateSnapshotArtifact;
+  export const validateArtifacts: (...args: any[]) => any;
 
   export type ImprovementCandidatesArtifact = any;
   export type ImprovementActionArtifact = any;
