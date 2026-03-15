@@ -16,50 +16,132 @@
     "ready_lanes",
     "running_lanes",
     "completed_lanes",
+    "merge_ready_lanes",
     "dependency_status",
     "merge_readiness",
     "verification_status",
     "warnings"
   ],
   "properties": {
-    "schemaVersion": { "type": "string", "const": "1.0" },
-    "kind": { "type": "string", "const": "lane-state" },
-    "generatedAt": { "type": "string", "format": "date-time" },
-    "proposalOnly": { "type": "boolean", "const": true },
-    "workset_plan_path": { "type": "string", "minLength": 1 },
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "kind": {
+      "type": "string",
+      "const": "lane-state"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "proposalOnly": {
+      "type": "boolean",
+      "const": true
+    },
+    "workset_plan_path": {
+      "type": "string",
+      "minLength": 1
+    },
     "lanes": {
       "type": "array",
-      "items": { "$ref": "#/$defs/laneStateEntry" }
+      "items": {
+        "$ref": "#/$defs/laneStateEntry"
+      }
     },
-    "blocked_lanes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-    "ready_lanes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-    "running_lanes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-    "completed_lanes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "blocked_lanes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "ready_lanes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "running_lanes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "completed_lanes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
     "dependency_status": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["total_edges", "satisfied_edges", "unsatisfied_edges"],
+      "required": [
+        "total_edges",
+        "satisfied_edges",
+        "unsatisfied_edges"
+      ],
       "properties": {
-        "total_edges": { "type": "integer", "minimum": 0 },
-        "satisfied_edges": { "type": "integer", "minimum": 0 },
-        "unsatisfied_edges": { "type": "integer", "minimum": 0 }
+        "total_edges": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "satisfied_edges": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unsatisfied_edges": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "merge_readiness": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["merge_ready_lanes", "not_merge_ready_lanes"],
+      "required": [
+        "merge_ready_lanes",
+        "not_merge_ready_lanes"
+      ],
       "properties": {
-        "merge_ready_lanes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "merge_ready_lanes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
         "not_merge_ready_lanes": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["lane_id", "reasons"],
+            "required": [
+              "lane_id",
+              "reasons"
+            ],
             "properties": {
-              "lane_id": { "type": "string", "minLength": 1 },
-              "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+              "lane_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              }
             }
           }
         }
@@ -68,16 +150,51 @@
     "verification_status": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "lanes_pending_verification", "lanes_blocked_from_verification"],
+      "required": [
+        "status",
+        "lanes_pending_verification",
+        "lanes_blocked_from_verification"
+      ],
       "properties": {
-        "status": { "type": "string", "enum": ["pending", "blocked"] },
-        "lanes_pending_verification": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-        "lanes_blocked_from_verification": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "blocked"
+          ]
+        },
+        "lanes_pending_verification": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "lanes_blocked_from_verification": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
       }
     },
     "warnings": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "merge_ready_lanes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "uniqueItems": true
     }
   },
@@ -97,25 +214,96 @@
         "worker_ready"
       ],
       "properties": {
-        "lane_id": { "type": "string", "minLength": 1 },
-        "task_ids": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-        "status": { "type": "string", "enum": ["blocked", "ready", "running", "completed"] },
-        "dependency_level": { "type": "string", "enum": ["low", "medium", "high"] },
-        "dependencies_satisfied": { "type": "boolean" },
-        "blocked_reasons": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "lane_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "blocked",
+            "ready",
+            "running",
+            "completed",
+            "merge_ready"
+          ]
+        },
+        "dependency_level": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "dependencies_satisfied": {
+          "type": "boolean"
+        },
+        "blocked_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
         "verification_summary": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["status", "required_checks", "optional_checks", "notes"],
+          "required": [
+            "status",
+            "required_checks",
+            "optional_checks",
+            "notes"
+          ],
           "properties": {
-            "status": { "type": "string", "enum": ["pending", "blocked"] },
-            "required_checks": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-            "optional_checks": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-            "notes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "blocked"
+              ]
+            },
+            "required_checks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "optional_checks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "notes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
           }
         },
-        "merge_ready": { "type": "boolean" },
-        "worker_ready": { "type": "boolean" }
+        "merge_ready": {
+          "type": "boolean"
+        },
+        "worker_ready": {
+          "type": "boolean"
+        }
       }
     }
   }

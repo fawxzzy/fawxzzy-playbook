@@ -1,70 +1,118 @@
 import { describe, expect, it } from 'vitest';
-import { buildWorksetPlan } from '../src/orchestration/worksetPlan.js';
-import { deriveLaneState } from '../src/orchestration/laneState.js';
+import type { WorksetPlanArtifact } from '../src/orchestration/worksetPlan.js';
+import { applyLaneLifecycleTransition, deriveLaneState } from '../src/orchestration/laneState.js';
 
-describe('deriveLaneState', () => {
-  it('marks independent docs/cli lanes as ready', () => {
-    const worksetPlan = buildWorksetPlan(
-      process.cwd(),
-      [
-        { task_id: 'task-docs', task: 'update documentation and changelog' },
-        { task_id: 'task-cli', task: 'add a new cli command flag' }
-      ],
-      './fixtures/tasks.json'
-    );
+const lane = (lane_id: string, dependency_level: 'low' | 'medium' | 'high') => ({
+  lane_id,
+  task_ids: [`task-${lane_id}`],
+  task_families: ['docs_only'],
+  expected_surfaces: [`docs/${lane_id}.md`],
+  likely_conflict_surfaces: [],
+  dependency_level,
+  recommended_pr_size: 'small' as const,
+  worker_ready: true,
+  codex_prompt: `Prompt for ${lane_id}`
+});
 
-    const laneState = deriveLaneState(worksetPlan, '.playbook/workset-plan.json');
-    expect(laneState.ready_lanes.length).toBeGreaterThan(0);
-    expect(laneState.blocked_lanes).toHaveLength(0);
+const baseWorkset = (overrides?: Partial<WorksetPlanArtifact>): WorksetPlanArtifact => ({
+  schemaVersion: '1.0',
+  kind: 'workset-plan',
+  generatedAt: '1970-01-01T00:00:00.000Z',
+  proposalOnly: true,
+  input_tasks: [],
+  routed_tasks: [],
+  lanes: [lane('lane-1', 'low')],
+  blocked_tasks: [],
+  dependency_edges: [],
+  merge_risk_notes: [],
+  sourceArtifacts: {
+    tasksFile: { available: true, artifactPath: './fixtures/tasks.json' },
+    taskExecutionProfile: { available: false, artifactPath: '.playbook/task-execution-profile.json' },
+    learningState: { available: false, artifactPath: '.playbook/learning-state.json' }
+  },
+  warnings: [],
+  ...overrides
+});
+
+describe('deriveLaneState lifecycle transitions', () => {
+  it('transitions a ready lane to running', () => {
+    const worksetPlan = baseWorkset();
+    const initial = deriveLaneState(worksetPlan, '.playbook/workset-plan.json');
+
+    const result = applyLaneLifecycleTransition(worksetPlan, '.playbook/workset-plan.json', initial, {
+      action: 'start',
+      lane_id: 'lane-1'
+    });
+
+    expect(result.applied).toBe(true);
+    expect(result.laneState.running_lanes).toContain('lane-1');
   });
 
-  it('keeps ambiguous blocked lane explicit', () => {
-    const worksetPlan = buildWorksetPlan(
-      process.cwd(),
-      [{ task_id: 'task-ambiguous', task: 'update docs for cli command' }],
-      './fixtures/tasks.json'
-    );
+  it('keeps dependency-blocked lane blocked when prerequisites remain unresolved', () => {
+    const worksetPlan = baseWorkset({
+      lanes: [
+        { ...lane('lane-1', 'low'), worker_ready: false },
+        lane('lane-2', 'medium')
+      ],
+      dependency_edges: [{ from_lane_id: 'lane-1', to_lane_id: 'lane-2', reason: 'low before medium' }]
+    });
 
     const laneState = deriveLaneState(worksetPlan, '.playbook/workset-plan.json');
-    expect(laneState.blocked_lanes).toContain('blocked-task-ambiguous');
-    expect(laneState.ready_lanes).toHaveLength(0);
+    const gatedLane = laneState.lanes.find((entry) => entry.lane_id === 'lane-2');
+
+    expect(gatedLane?.status).toBe('blocked');
+    expect(gatedLane?.blocked_reasons.join(' ')).toContain('waiting on dependency lane lane-1');
   });
 
-  it('dependency-ordered engine lane stays blocked until lower dependency lanes are satisfied', () => {
-    const worksetPlan = buildWorksetPlan(
-      process.cwd(),
-      [
-        { task_id: 'task-docs', task: 'update documentation changelog markdown' },
-        { task_id: 'task-engine', task: 'adjust scoring fitness thresholds and engine behavior' }
-      ],
-      './fixtures/tasks.json'
-    );
+  it('marks completed lane as merge_ready only when safe', () => {
+    const worksetPlan = baseWorkset();
+    const initial = deriveLaneState(worksetPlan, '.playbook/workset-plan.json');
 
-    const originalLowLane = worksetPlan.lanes.find((lane) => lane.dependency_level === 'low');
-    if (originalLowLane) {
-      originalLowLane.worker_ready = false;
-    }
+    const started = applyLaneLifecycleTransition(worksetPlan, '.playbook/workset-plan.json', initial, {
+      action: 'start',
+      lane_id: 'lane-1'
+    });
+    const completed = applyLaneLifecycleTransition(worksetPlan, '.playbook/workset-plan.json', started.laneState, {
+      action: 'complete',
+      lane_id: 'lane-1'
+    });
 
-    const laneState = deriveLaneState(worksetPlan, '.playbook/workset-plan.json');
-    const highOrMediumLane = laneState.lanes.find((lane) => lane.dependency_level !== 'low');
-    expect(highOrMediumLane?.status).toBe('blocked');
-    expect(highOrMediumLane?.blocked_reasons.join(' ')).toContain('waiting on dependency lane');
+    expect(completed.applied).toBe(true);
+    expect(completed.laneState.merge_ready_lanes).toContain('lane-1');
+    expect(completed.laneState.lanes.find((entry) => entry.lane_id === 'lane-1')?.status).toBe('merge_ready');
   });
 
-  it('summarizes mixed blocked + ready lanes with conservative merge readiness', () => {
-    const worksetPlan = buildWorksetPlan(
-      process.cwd(),
-      [
-        { task_id: 'task-docs', task: 'update docs and changelog' },
-        { task_id: 'task-engine', task: 'adjust scoring engine thresholds' },
-        { task_id: 'task-ambiguous', task: 'update docs for cli command' }
-      ],
-      './fixtures/tasks.json'
-    );
+  it('supports mixed blocked + running + completed lifecycle states', () => {
+    const worksetPlan = baseWorkset({
+      lanes: [lane('lane-1', 'low'), lane('lane-2', 'low')],
+      blocked_tasks: [
+        {
+          task_id: 'task-ambiguous',
+          reason: 'ambiguous task family requires explicit refinement before lane assignment',
+          warnings: [],
+          missing_prerequisites: ['clarify scope']
+        }
+      ]
+    });
 
-    const laneState = deriveLaneState(worksetPlan, '.playbook/workset-plan.json');
-    expect(laneState.blocked_lanes.length).toBeGreaterThan(0);
-    expect(laneState.ready_lanes.length).toBeGreaterThan(0);
-    expect(laneState.merge_readiness.not_merge_ready_lanes.length).toBeGreaterThan(0);
+    const base = deriveLaneState(worksetPlan, '.playbook/workset-plan.json');
+    const running = applyLaneLifecycleTransition(worksetPlan, '.playbook/workset-plan.json', base, {
+      action: 'start',
+      lane_id: 'lane-1'
+    });
+
+    const startedSecond = applyLaneLifecycleTransition(worksetPlan, '.playbook/workset-plan.json', running.laneState, {
+      action: 'start',
+      lane_id: 'lane-2'
+    });
+
+    const completedSecond = applyLaneLifecycleTransition(worksetPlan, '.playbook/workset-plan.json', startedSecond.laneState, {
+      action: 'complete',
+      lane_id: 'lane-2'
+    });
+
+    expect(completedSecond.laneState.blocked_lanes.some((laneId) => laneId.startsWith('blocked-'))).toBe(true);
+    expect(completedSecond.laneState.running_lanes).toContain('lane-1');
+    expect(completedSecond.laneState.completed_lanes.length).toBeGreaterThan(0);
   });
 });

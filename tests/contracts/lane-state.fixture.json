@@ -16,9 +16,9 @@
         "status": "pending",
         "required_checks": ["pnpm -r build", "pnpm test"],
         "optional_checks": ["pnpm playbook contracts --json"],
-        "notes": ["lane is ready for deterministic validation execution"]
+        "notes": ["lane is ready for deterministic proposal-only start transition"]
       },
-      "merge_ready": true,
+      "merge_ready": false,
       "worker_ready": true
     }
   ],
@@ -26,19 +26,25 @@
   "ready_lanes": ["lane-1"],
   "running_lanes": [],
   "completed_lanes": [],
+  "merge_ready_lanes": [],
   "dependency_status": {
     "total_edges": 0,
     "satisfied_edges": 0,
     "unsatisfied_edges": 0
   },
   "merge_readiness": {
-    "merge_ready_lanes": ["lane-1"],
-    "not_merge_ready_lanes": []
+    "merge_ready_lanes": [],
+    "not_merge_ready_lanes": [
+      {
+        "lane_id": "lane-1",
+        "reasons": ["lane has not reached merge_ready lifecycle state"]
+      }
+    ]
   },
   "verification_status": {
     "status": "pending",
     "lanes_pending_verification": ["lane-1"],
     "lanes_blocked_from_verification": []
   },
-  "warnings": []
+  "warnings": ["merge readiness is conservative and only true for safely completed lanes"]
 }

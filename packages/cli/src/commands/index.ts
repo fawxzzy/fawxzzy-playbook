@@ -141,8 +141,13 @@ const commandRunners: Record<string, (context: CommandContext) => Promise<Comman
     const { runPlan } = await import('./plan.js');
     return runPlan(cwd, { ci, format, quiet, outFile: parseOptionValue(commandArgs, '--out'), runId: parseOptionValue(commandArgs, '--run-id') });
   },
-  lanes: async ({ cwd, format, quiet }) => {
+  lanes: async ({ cwd, commandArgs, format, quiet }) => {
     const { runLanes } = await import('./lanes.js');
+    const action = commandArgs[0];
+    if (action === 'start' || action === 'complete') {
+      return runLanes(cwd, { format, quiet, action, laneId: commandArgs[1] });
+    }
+
     return runLanes(cwd, { format, quiet });
   },
   orchestrate: async ({ cwd, commandArgs, format, quiet }) => {
