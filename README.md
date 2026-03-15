@@ -37,6 +37,7 @@ Pattern: **config/plugins/rule packs over forks** for project-specific customiza
 ## Runtime artifacts and storage
 
 Playbook uses `.playbook/` as the default home for local runtime artifacts (for example repository intelligence indexes, plans, and machine-readable reports).
+Playbook routing inspection emits deterministic proposal-only execution plans at `.playbook/execution-plan.json` via `pnpm playbook route "<task>" --json`.
 
 - Generated runtime artifacts should generally be gitignored unless intentionally committed as stable contracts/examples.
 - Committed demo artifacts under `.playbook/demo-artifacts/` are product-facing snapshot contracts and examples, not general-purpose runtime logs.

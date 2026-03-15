@@ -425,7 +425,7 @@ export const commandMetadata: CommandMetadata[] = [
   },
   {
     name: 'route',
-    description: 'Classify tasks into deterministic execution vs bounded model reasoning routes',
+    description: 'Classify tasks and emit deterministic proposal-only execution plans for task-specific routing decisions',
     category: 'Repository intelligence',
     role: 'repo-intelligence',
     lifecycle: 'canonical',

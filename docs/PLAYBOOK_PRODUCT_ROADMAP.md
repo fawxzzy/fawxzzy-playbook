@@ -1197,6 +1197,7 @@ Use a layered phase model so each phase compounds directly on the previous one:
    - Wave 2A (implemented): additive outcome-telemetry structural context (`task_profile_id`, `task_family`, `affected_surfaces`, estimated/actual change surface, post-apply verify/CI status, regression categories, pattern families implicated) with deterministic normalization and backward-compatible safe degradation for partial legacy records.
 8. **Phase 8 â€” AI Repository Contract**  
    Machine-readable AI-operability contract and enforcement rules.
+   - Router Lane 1 (implemented): additive deterministic `execution-plan` proposal contract (`.playbook/execution-plan.json`) and `playbook route` inspection surface that stays proposal-only, uses task-execution-profile baselines, optionally refines with learning-state evidence, and degrades safely when optional artifacts are missing.
 9. **Phase 9 â€” Repository Memory System**  
    Establish the temporal memory substrate (session/episodic evidence) while keeping repository structural intelligence (`index`/`graph`) as a distinct deterministic layer.
 10. **Phase 10 â€” Replay / Consolidation / Promotion**  

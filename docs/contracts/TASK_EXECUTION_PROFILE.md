@@ -8,7 +8,9 @@ Artifact path:
 
 - `.playbook/task-execution-profile.json`
 
-Execution profiles describe the **smallest sufficient rule system** for a task family. They are governance-aware routing proposals, not automatic mutations.
+Execution profiles describe the **smallest sufficient rule system** for a task family. They are governance-aware baseline proposals, not final per-task routes and not automatic mutations.
+
+Use `execution-plan` for task-specific route selection.
 
 ## Smallest sufficient rule system semantics
 

@@ -1,33 +1,43 @@
 # `playbook route`
 
-Classify a task into deterministic local execution, bounded model reasoning, hybrid execution, or unsupported.
+Classify a task into deterministic local execution, bounded model reasoning, hybrid execution, or unsupported, and emit a deterministic proposal-only execution plan artifact.
 
 ## Usage
 
 ```bash
 pnpm playbook route "summarize current repo state"
+pnpm playbook route "summarize current repo state" --json
 pnpm playbook route "propose fix for failing tests"
 pnpm playbook route "apply approved remediation plan"
 ```
 
 ## Output contract
 
-Routing always returns:
+Routing now returns command metadata plus an `executionPlan` payload and writes:
 
-- selected route
-- why selected
-- required inputs
-- missing prerequisites
-- whether repository mutation is allowed
+- `.playbook/execution-plan.json`
 
-Rule: the model must never decide its own authority boundary; Playbook classifies the task first.
+Execution plan fields include:
+
+- `schemaVersion`, `kind`, `generatedAt`, `proposalOnly`
+- `task_family`, `route_id`
+- `rule_packs`, `required_validations`, `optional_validations`
+- `parallel_lanes`, `mutation_allowed`, `missing_prerequisites`
+- `sourceArtifacts`, `warnings`
 
 ## Execution router overview
 
-The execution router now emits a deterministic task execution profile proposal as a first step toward process self-improvement.
+The execution router uses a layered proposal flow:
 
-- Inputs considered: changed files, task family, affected packages, and command/docs/contracts surfaces.
-- Output: smallest sufficient rule packs plus required/optional validation bundles, with `proposalOnly: true`.
-- Safety boundary: inspection/proposal only; no autonomous mutation is performed by routing.
+1. classify task intent
+2. consume baseline `task-execution-profile` governance signals when available
+3. refine with optional `learning-state` evidence when available
+4. emit deterministic proposal-only execution plan
 
-Routing rule: prefer the smallest sufficient rule system for governance, not merely the smallest possible one.
+Safe degradation is explicit: missing `task-execution-profile` or `learning-state` artifacts produce deterministic warnings and route defaults instead of autonomous mutation.
+
+Rule: Execution profiles define baseline governance; execution plans choose task-specific routes.
+
+Pattern: Classify -> profile -> refine with learning-state -> emit deterministic execution plan.
+
+Failure Mode: Treating execution profiles as final routes prevents the router from learning from evidence.

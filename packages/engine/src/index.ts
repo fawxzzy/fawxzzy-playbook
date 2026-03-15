@@ -399,6 +399,8 @@ export { writeJsonArtifact as writeArtifactJson, readJsonArtifact as readArtifac
 export { routeTask } from './routing/routeTask.js';
 export type { RouteDecision, RouteTaskInput, RouteTaskKind, RouteMutabilityLevel, RouteSafetyConstraints, TaskRoute } from './routing/types.js';
 export { buildTaskExecutionProfile } from './routing/executionRouter.js';
+export { buildExecutionPlan } from './routing/executionPlan.js';
+export type { BuildExecutionPlanInput, ExecutionPlanArtifact, ExecutionPlanSourceArtifacts } from './routing/executionPlan.js';
 export type {
   ExecutionSurface,
   ExecutionScope,

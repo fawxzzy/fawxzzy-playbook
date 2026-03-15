@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "execution-plan",
+  "generatedAt": "2026-01-01T00:00:00.000Z",
+  "proposalOnly": true,
+  "task_family": "artifact_read",
+  "route_id": "deterministic_local:artifact_read",
+  "rule_packs": [
+    "route-deterministic-local"
+  ],
+  "required_validations": [
+    "pnpm -r build"
+  ],
+  "optional_validations": [
+    "pnpm playbook route \"<task>\" --json"
+  ],
+  "parallel_lanes": [
+    "deterministic-inspection"
+  ],
+  "mutation_allowed": false,
+  "missing_prerequisites": [],
+  "sourceArtifacts": {
+    "taskExecutionProfile": {
+      "available": false,
+      "artifactPath": ".playbook/task-execution-profile.json"
+    },
+    "learningState": {
+      "available": false,
+      "artifactPath": ".playbook/learning-state.json"
+    }
+  },
+  "warnings": [
+    "learning-state artifact unavailable; skipping learning-state refinement and using deterministic baseline route defaults.",
+    "task-execution-profile artifact unavailable; using route defaults for governance packs and validation bundles."
+  ]
+}
