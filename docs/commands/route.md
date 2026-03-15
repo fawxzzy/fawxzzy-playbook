@@ -23,7 +23,7 @@ Execution plan fields include:
 - `task_family`, `route_id`
 - `rule_packs`, `required_validations`, `optional_validations`
 - `parallel_lanes`, `mutation_allowed`, `missing_prerequisites`
-- `sourceArtifacts`, `warnings`
+- `sourceArtifacts`, `learning_state_available`, `route_confidence`, `open_questions`, `warnings`
 
 ## Deterministic classification rules
 
@@ -48,3 +48,22 @@ Rule: Router classification must prefer conservative correctness over aggressive
 Pattern: Deterministic task-family classification reduces routing ambiguity and review burden.
 
 Failure Mode: Ambiguous tasks routed optimistically will under-scope validation and create fragile plans.
+
+
+### Learning-state refinement guardrails (Phase 8 Router Lane 3)
+
+When `.playbook/learning-state.json` is available, route may **refine** (not replace) baseline profile behavior:
+
+- High `retry_pressure` increases validation strictness (required validations are never removed).
+- High `route_efficiency_score` may reduce optional validation pressure when evidence confidence is strong.
+- Low `parallel_safety_realized` prefers sequenced lanes over parallel suggestions.
+- Low `router_fit_score` emits warnings/open questions and prefers stricter posture.
+- High `validation_cost_pressure` can only reconsider optional validations, never required validations.
+
+If learning-state is missing or low-confidence, route degrades safely to baseline profile-derived plans with explicit warnings/open questions.
+
+Rule: Learning-state may refine routes, but it must not erase baseline governance.
+
+Pattern: Evidence-aware routing improves efficiency when optimization is bounded by required validations.
+
+Failure Mode: Speed-optimized routing that removes baseline governance creates invisible fragility.

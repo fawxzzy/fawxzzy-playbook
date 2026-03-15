@@ -4,6 +4,7 @@ import {
   buildExecutionPlan,
   routeTask,
   type ExecutionPlanArtifact,
+  type LearningStateSnapshotArtifact,
   type RouteDecision
 } from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
@@ -65,6 +66,8 @@ const printText = (payload: RouteOutput): void => {
   console.log(`Route id: ${payload.executionPlan.route_id}`);
   console.log(`Proposal only: ${payload.executionPlan.proposalOnly ? 'yes' : 'no'}`);
   console.log(`Repository mutation allowed: ${payload.executionPlan.mutation_allowed ? 'yes' : 'no'}`);
+  console.log(`Learning state available: ${payload.executionPlan.learning_state_available ? 'yes' : 'no'}`);
+  console.log(`Route confidence: ${payload.executionPlan.route_confidence}`);
 
   console.log('');
   console.log('Rule packs:');
@@ -94,6 +97,14 @@ const printText = (payload: RouteOutput): void => {
     }
   }
 
+  if (payload.executionPlan.open_questions.length > 0) {
+    console.log('');
+    console.log('Open questions:');
+    for (const question of payload.executionPlan.open_questions) {
+      console.log(`- ${question}`);
+    }
+  }
+
   if (payload.executionPlan.warnings.length > 0) {
     console.log('');
     console.log('Warnings:');
@@ -112,10 +123,11 @@ export const runRoute = async (cwd: string, commandArgs: string[], options: Rout
 
   const decision = routeTask(cwd, task);
   const taskExecutionProfile = tryReadJsonArtifact(cwd, TASK_EXECUTION_PROFILE_PATH);
-  const learningState = tryReadJsonArtifact(cwd, LEARNING_STATE_PATH);
+  const learningState = tryReadJsonArtifact<LearningStateSnapshotArtifact>(cwd, LEARNING_STATE_PATH);
   const executionPlan = buildExecutionPlan({
     task,
     decision,
+    learningStateSnapshot: learningState,
     sourceArtifacts: {
       taskExecutionProfile: {
         available: taskExecutionProfile !== undefined,
