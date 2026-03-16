@@ -42,6 +42,20 @@ type CycleStateArtifact = {
   failed_step?: StepName;
 };
 
+type CycleHistoryRecord = {
+  cycle_id: string;
+  started_at: string;
+  result: 'success' | 'failed';
+  failed_step?: StepName;
+  duration_ms: number;
+};
+
+type CycleHistoryArtifact = {
+  history_version: 1;
+  repo: string;
+  cycles: CycleHistoryRecord[];
+};
+
 const isStepName = (value: unknown): value is StepName =>
   typeof value === 'string' && (STEP_ORDER as string[]).includes(value);
 
@@ -98,6 +112,7 @@ const validateCycleStateArtifact = (artifact: CycleStateArtifact): string[] => {
 };
 
 const CYCLE_STATE_PATH = '.playbook/cycle-state.json';
+const CYCLE_HISTORY_PATH = '.playbook/cycle-history.json';
 const CYCLE_TASKS_PATH = '.playbook/cycle-tasks.json';
 
 const STEP_ORDER: StepName[] = ['verify', 'route', 'orchestrate', 'execute', 'telemetry', 'improve'];
@@ -143,6 +158,118 @@ const writeCycleState = (cwd: string, artifact: CycleStateArtifact): void => {
   const targetPath = path.join(cwd, CYCLE_STATE_PATH);
   fs.mkdirSync(path.dirname(targetPath), { recursive: true });
   writeJsonArtifactAbsolute(targetPath, artifact, 'cycle', { envelope: false });
+};
+
+
+const validateCycleHistoryArtifact = (artifact: CycleHistoryArtifact): string[] => {
+  const errors: string[] = [];
+
+  if (typeof artifact.history_version !== 'number') {
+    errors.push('history_version must be a number');
+  }
+  if (typeof artifact.repo !== 'string') {
+    errors.push('repo must be a string');
+  }
+  if (!Array.isArray(artifact.cycles)) {
+    errors.push('cycles must be an array');
+    return errors;
+  }
+
+  for (const cycle of artifact.cycles) {
+    if (typeof cycle.cycle_id !== 'string') {
+      errors.push('cycles[].cycle_id must be a string');
+    }
+    if (typeof cycle.started_at !== 'string') {
+      errors.push('cycles[].started_at must be a string');
+    }
+    if (cycle.result !== 'success' && cycle.result !== 'failed') {
+      errors.push('cycles[].result must be either success or failed');
+    }
+    if (typeof cycle.duration_ms !== 'number' || Number.isNaN(cycle.duration_ms)) {
+      errors.push('cycles[].duration_ms must be a number');
+    }
+    if (cycle.result === 'success' && cycle.failed_step !== undefined) {
+      errors.push('cycles[].failed_step must be omitted when result is success');
+    }
+    if (cycle.result === 'failed' && (!cycle.failed_step || !isStepName(cycle.failed_step))) {
+      errors.push('cycles[].failed_step must be a valid cycle step when result is failed');
+    }
+  }
+
+  return errors;
+};
+
+const toCycleHistoryRecord = (artifact: CycleStateArtifact): CycleHistoryRecord => {
+  const durationMs = artifact.steps.reduce((total, step) => total + step.duration_ms, 0);
+  return {
+    cycle_id: artifact.cycle_id,
+    started_at: artifact.started_at,
+    result: artifact.result,
+    ...(artifact.failed_step ? { failed_step: artifact.failed_step } : {}),
+    duration_ms: durationMs
+  };
+};
+
+const toCycleHistoryArtifact = (repo: string, cycles: CycleHistoryRecord[]): CycleHistoryArtifact => ({
+  history_version: 1,
+  repo,
+  cycles
+});
+
+const readCycleHistoryArtifact = (cwd: string): CycleHistoryArtifact | null => {
+  const targetPath = path.join(cwd, CYCLE_HISTORY_PATH);
+  if (!fs.existsSync(targetPath)) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(targetPath, 'utf8')) as Partial<CycleHistoryArtifact>;
+    if (!Array.isArray(parsed.cycles)) {
+      return null;
+    }
+
+    return {
+      history_version: 1,
+      repo: typeof parsed.repo === 'string' ? parsed.repo : cwd,
+      cycles: parsed.cycles
+        .filter((entry): entry is CycleHistoryRecord => typeof entry === 'object' && entry !== null)
+        .map((entry) => ({
+          cycle_id: String(entry.cycle_id),
+          started_at: String(entry.started_at),
+          result: entry.result === 'failed' ? 'failed' : 'success',
+          ...(typeof entry.failed_step === 'string' ? { failed_step: entry.failed_step as StepName } : {}),
+          duration_ms: Number(entry.duration_ms)
+        }))
+    };
+  } catch {
+    return null;
+  }
+};
+
+const appendCycleHistory = (cwd: string, cycleState: CycleStateArtifact): void => {
+  const priorHistory = readCycleHistoryArtifact(cwd);
+  const nextRecord = toCycleHistoryRecord(cycleState);
+  const existingCycles = priorHistory?.cycles ?? [];
+
+  const dedupedCycles = existingCycles.filter((entry) => entry.cycle_id !== nextRecord.cycle_id);
+  dedupedCycles.push(nextRecord);
+  dedupedCycles.sort((left, right) => {
+    const delta = Date.parse(left.started_at) - Date.parse(right.started_at);
+    if (Number.isNaN(delta) || delta === 0) {
+      return left.cycle_id.localeCompare(right.cycle_id);
+    }
+    return delta;
+  });
+
+  const historyArtifact = toCycleHistoryArtifact(cycleState.repo, dedupedCycles);
+  const validationErrors = validateCycleHistoryArtifact(historyArtifact);
+  if (validationErrors.length > 0) {
+    warn(`playbook cycle: warning: cycle-history artifact failed schema validation: ${validationErrors.join('; ')}`);
+  }
+
+  const targetPath = path.join(cwd, CYCLE_HISTORY_PATH);
+  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+  writeJsonArtifactAbsolute(targetPath, historyArtifact, 'cycle', { envelope: false });
 };
 
 const stepMarker = (status: CycleStepStatus): string => (status === 'success' ? '✓' : '✗');
@@ -208,7 +335,7 @@ export const runCycle = async (cwd: string, options: CycleOptions): Promise<numb
       usage: 'playbook cycle [options]',
       description: 'Run the deterministic execution cycle by orchestrating primitive command handlers.',
       options: ['--no-stop-on-error         Continue running steps after a failure (default: stop on first failure)', '--json                     Alias for --format=json', '--format <text|json>       Output format', '--quiet                    Suppress success output in text mode', '--help                     Show help'],
-      artifacts: [CYCLE_STATE_PATH]
+      artifacts: [CYCLE_STATE_PATH, CYCLE_HISTORY_PATH]
     });
     return ExitCode.Success;
   }
@@ -254,10 +381,11 @@ export const runCycle = async (cwd: string, options: CycleOptions): Promise<numb
     failedStep = failedStep ?? activeStep;
     const artifact = toCycleArtifact(cwd, cycleId, startedAt, steps, [...new Set(artifactsWritten)], result, failedStep);
     writeCycleState(cwd, artifact);
+    appendCycleHistory(cwd, artifact);
     tracker.finish({
       inputsSummary: `stop-on-error=${options.stopOnError ? 'true' : 'false'}`,
-      artifactsWritten: [CYCLE_STATE_PATH],
-      downstreamArtifactsProduced: [CYCLE_STATE_PATH],
+      artifactsWritten: [CYCLE_STATE_PATH, CYCLE_HISTORY_PATH],
+      downstreamArtifactsProduced: [CYCLE_STATE_PATH, CYCLE_HISTORY_PATH],
       successStatus: 'failure',
       warningsCount: 1
     });
@@ -266,6 +394,7 @@ export const runCycle = async (cwd: string, options: CycleOptions): Promise<numb
 
   const artifact = toCycleArtifact(cwd, cycleId, startedAt, steps, [...new Set(artifactsWritten)], result, failedStep);
   writeCycleState(cwd, artifact);
+  appendCycleHistory(cwd, artifact);
 
   if (options.format === 'json') {
     console.log(JSON.stringify(artifact, null, 2));
@@ -276,8 +405,8 @@ export const runCycle = async (cwd: string, options: CycleOptions): Promise<numb
   const exitCode = failureExitCode ?? ExitCode.Success;
   tracker.finish({
     inputsSummary: `stop-on-error=${options.stopOnError ? 'true' : 'false'}`,
-    artifactsWritten: [CYCLE_STATE_PATH],
-    downstreamArtifactsProduced: [CYCLE_STATE_PATH],
+    artifactsWritten: [CYCLE_STATE_PATH, CYCLE_HISTORY_PATH],
+    downstreamArtifactsProduced: [CYCLE_STATE_PATH, CYCLE_HISTORY_PATH],
     successStatus: exitCode === ExitCode.Success ? 'success' : 'failure',
     warningsCount: artifact.steps.filter((step) => step.status === 'failure').length
   });

@@ -29,7 +29,7 @@ pnpm playbook cycle --json
 
 ## Artifact
 
-`cycle` writes `.playbook/cycle-state.json` with stable formatting and deterministic step ordering.
+`cycle` writes `.playbook/cycle-state.json` with stable formatting and deterministic step ordering, then appends `.playbook/cycle-history.json` as a chronological runtime evidence log derived from cycle-state summaries.
 
 Top-level fields:
 

@@ -1,3 +1,4 @@
+- WHAT: Added deterministic `.playbook/cycle-history.json` runtime evidence tracking derived from `.playbook/cycle-state.json` (schema contract, contracts registry wiring, explain support, and append-safe cycle runtime writes with chronological ordering) plus focused tests for creation, append behavior, duration aggregation, and success/failure guards. WHY: Preserves thin cycle orchestration behavior while providing governed historical evidence for runtime analysis and telemetry without recomputing orchestration logic.
 
 ## Unreleased
 

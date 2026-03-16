@@ -56,6 +56,10 @@ const toOutput = (target: string, explanation: ExplainTargetResult): ExplainOutp
     if (explanation.cycleState) {
       payload.cycle_state = explanation.cycleState;
     }
+
+    if (explanation.cycleHistory) {
+      payload.cycle_history = explanation.cycleHistory;
+    }
   }
 
   if (explanation.type === 'subsystem') {
@@ -255,6 +259,25 @@ const printText = (target: string, explanation: ExplainTargetResult): void => {
       } else {
         for (const artifact of cycleState.artifacts_written) {
           console.log(`- ${artifact}`);
+        }
+      }
+      return;
+    }
+
+    if (explanation.cycleHistory) {
+      const cycleHistory = explanation.cycleHistory;
+      console.log('Artifact type: cycle-history');
+      console.log('');
+      console.log(`History version: ${cycleHistory.history_version}`);
+      console.log(`Repository: ${cycleHistory.repo}`);
+      console.log('');
+      console.log('Cycles');
+      if (cycleHistory.cycles.length === 0) {
+        console.log('- none');
+      } else {
+        for (const cycle of cycleHistory.cycles) {
+          const failedSuffix = cycle.failed_step ? `, failed_step=${cycle.failed_step}` : '';
+          console.log(`- ${cycle.cycle_id}: ${cycle.result}, started_at=${cycle.started_at}, duration_ms=${cycle.duration_ms}${failedSuffix}`);
         }
       }
       return;

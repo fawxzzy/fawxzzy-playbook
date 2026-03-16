@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/cycle-history.schema.json",
+  "title": "PlaybookCycleHistory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "history_version",
+    "repo",
+    "cycles"
+  ],
+  "properties": {
+    "history_version": { "type": "number" },
+    "repo": { "type": "string" },
+    "cycles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cycle_id",
+          "started_at",
+          "result",
+          "duration_ms"
+        ],
+        "properties": {
+          "cycle_id": { "type": "string" },
+          "started_at": { "type": "string" },
+          "result": {
+            "type": "string",
+            "enum": ["success", "failed"]
+          },
+          "failed_step": { "type": "string" },
+          "duration_ms": { "type": "number" }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": { "result": { "const": "success" } },
+              "required": ["result"]
+            },
+            "then": {
+              "not": {
+                "required": ["failed_step"]
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": { "result": { "const": "failed" } },
+              "required": ["result"]
+            },
+            "then": {
+              "required": ["failed_step"]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
