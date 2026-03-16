@@ -83,6 +83,7 @@ const runtimeDefaults: RuntimeDefaultArtifact[] = [
   { path: '.playbook/ai-contract.json', producer: 'ai-contract' },
   { path: '.playbook/contracts-registry.json', producer: 'contracts' },
   { path: '.playbook/cycle-state.json', producer: 'cycle' },
+  { path: '.playbook/cycle-history.json', producer: 'cycle' },
   { path: '.playbook/repo-graph.json', producer: 'index' },
   { path: '.playbook/repo-index.json', producer: 'index' }
 ];

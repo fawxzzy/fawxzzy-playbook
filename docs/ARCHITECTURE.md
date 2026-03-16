@@ -93,6 +93,7 @@ These explain surfaces are registry-backed and lineage-backed:
 - artifact and command downstream relationships come from architecture dependencies and artifact lineage mappings
 - cycle runtime summaries at `.playbook/cycle-state.json` are explainable through `playbook explain artifact` with deterministic cycle metadata, ordered step execution details, and surfaced `artifacts_written` evidence
 - `.playbook/cycle-state.json` is now a schema-governed runtime artifact (`packages/contracts/src/cycle-state.schema.json`) and is registered in deterministic contracts surfaces to prevent orchestration-summary shape drift
+- `.playbook/cycle-history.json` is now a schema-governed runtime evidence artifact (`packages/contracts/src/cycle-history.schema.json`) derived strictly from `.playbook/cycle-state.json` so historical cycle outcomes accumulate without changing orchestration decision logic
 - command inspection emits deterministic text/JSON fields for subsystem ownership, artifacts read, artifacts written, rationale summary, downstream consumers, and common failure prerequisites
 
 All lookups fail deterministically for unknown targets and support `--json` machine-readable output for automation.

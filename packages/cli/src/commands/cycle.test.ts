@@ -16,6 +16,12 @@ const readCycleArtifact = (repo: string): {
 } => JSON.parse(fs.readFileSync(path.join(repo, '.playbook', 'cycle-state.json'), 'utf8'));
 
 
+const readCycleHistoryArtifact = (repo: string): {
+  history_version: number;
+  repo: string;
+  cycles: Array<{ cycle_id: string; started_at: string; result: string; failed_step?: string; duration_ms: number }>;
+} => JSON.parse(fs.readFileSync(path.join(repo, '.playbook', 'cycle-history.json'), 'utf8'));
+
 const validateCycleStateShape = (artifact: ReturnType<typeof readCycleArtifact>): string[] => {
   const errors: string[] = [];
 
@@ -245,6 +251,59 @@ describe('runCycle', { timeout: 30000 }, () => {
 
     expect(first.steps.map((step) => step.name)).toEqual(second.steps.map((step) => step.name));
     expect(first.steps.map((step) => step.status)).toEqual(second.steps.map((step) => step.status));
+  });
+
+
+  it('creates cycle-history artifact derived from cycle-state with duration aggregation', async () => {
+    const { runCycle } = await import('./cycle.js');
+    const repo = createRepo('playbook-cycle-history-create');
+
+    const code = await runCycle(repo, {
+      format: 'json',
+      quiet: false,
+      stopOnError: true,
+      stepRunners: {
+        verify: async () => ExitCode.Success,
+        route: async () => ExitCode.Success,
+        orchestrate: async () => ExitCode.Success,
+        execute: async () => ExitCode.Success,
+        telemetry: async () => ExitCode.Success,
+        improve: async () => ExitCode.Success
+      }
+    });
+
+    expect(code).toBe(ExitCode.Success);
+    const state = readCycleArtifact(repo);
+    const history = readCycleHistoryArtifact(repo);
+    expect(history.history_version).toBe(1);
+    expect(history.repo).toBe(repo);
+    expect(history.cycles).toHaveLength(1);
+    expect(history.cycles[0]).toMatchObject({
+      cycle_id: state.cycle_id,
+      started_at: state.started_at,
+      result: 'success'
+    });
+    expect(history.cycles[0]).not.toHaveProperty('failed_step');
+    expect(history.cycles[0].duration_ms).toBe(state.steps.reduce((total, step) => total + step.duration_ms, 0));
+  });
+
+  it('appends cycle-history records chronologically across runs', async () => {
+    const { runCycle } = await import('./cycle.js');
+    const repo = createRepo('playbook-cycle-history-append');
+
+    await runCycle(repo, { format: 'json', quiet: false, stopOnError: true, stepRunners: successStepRunners });
+    await runCycle(repo, {
+      format: 'json',
+      quiet: false,
+      stopOnError: true,
+      stepRunners: { ...successStepRunners, verify: async () => ExitCode.Failure }
+    });
+
+    const history = readCycleHistoryArtifact(repo);
+    expect(history.cycles).toHaveLength(2);
+    expect(history.cycles[0].started_at <= history.cycles[1].started_at).toBe(true);
+    expect(history.cycles.map((cycle) => cycle.result)).toEqual(['success', 'failed']);
+    expect(history.cycles[1].failed_step).toBe('verify');
   });
 
   it('stops after execute primitive failure (missing prerequisite behavior)', async () => {

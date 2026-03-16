@@ -127,6 +127,7 @@ export type ArtifactExplanation = ExplainMemoryFields & {
   upstreamSubsystem: string | null;
   downstreamConsumers: string[];
   cycleState?: CycleStateArtifactExplanation;
+  cycleHistory?: CycleHistoryArtifactExplanation;
 };
 
 type CycleStateStepExplanation = {
@@ -145,6 +146,21 @@ type CycleStateArtifactExplanation = {
   failed_step?: string;
   steps: CycleStateStepExplanation[];
   artifacts_written: string[];
+};
+
+type CycleHistoryEntryExplanation = {
+  cycle_id: string;
+  started_at: string;
+  result: 'success' | 'failed';
+  failed_step?: string;
+  duration_ms: number;
+};
+
+type CycleHistoryArtifactExplanation = {
+  artifactType: 'cycle-history';
+  history_version: number;
+  repo: string;
+  cycles: CycleHistoryEntryExplanation[];
 };
 
 export type UnknownExplanation = ExplainMemoryFields & {
@@ -394,8 +410,30 @@ const explainCommand = (projectRoot: string, target: string): CommandExplanation
 };
 
 const explainArtifact = (projectRoot: string, target: string): ArtifactExplanation => {
-  const details = explainArtifactFromArchitecture(projectRoot, target);
   const cycleState = explainCycleStateArtifact(projectRoot, target) ?? undefined;
+  const cycleHistory = explainCycleHistoryArtifact(projectRoot, target) ?? undefined;
+
+  if (cycleState || cycleHistory) {
+    return {
+      type: 'artifact',
+      resolvedTarget: {
+        input: `artifact ${target}`,
+        kind: 'unknown',
+        selector: target,
+        canonical: `artifact:${target}`,
+        matched: true
+      },
+      artifact: target,
+      ownerSubsystem: 'execution_supervisor',
+      purpose: 'Run workers and monitor execution',
+      upstreamSubsystem: 'orchestration_planner',
+      downstreamConsumers: ['telemetry_learning', 'lane_lifecycle', 'worker_coordination'],
+      ...(cycleState ? { cycleState } : {}),
+      ...(cycleHistory ? { cycleHistory } : {})
+    };
+  }
+
+  const details = explainArtifactFromArchitecture(projectRoot, target);
   return {
     type: 'artifact',
     resolvedTarget: {
@@ -409,8 +447,7 @@ const explainArtifact = (projectRoot: string, target: string): ArtifactExplanati
     ownerSubsystem: details.lineage.ownerSubsystem,
     purpose: details.subsystem.purpose,
     upstreamSubsystem: details.lineage.upstreamSubsystem,
-    downstreamConsumers: details.lineage.downstreamConsumers,
-    ...(cycleState ? { cycleState } : {})
+    downstreamConsumers: details.lineage.downstreamConsumers
   };
 };
 
@@ -446,6 +483,39 @@ const explainCycleStateArtifact = (projectRoot: string, target: string): CycleSt
     ...(typeof parsed.failed_step === 'string' ? { failed_step: parsed.failed_step } : {}),
     steps,
     artifacts_written: Array.isArray(parsed.artifacts_written) ? parsed.artifacts_written.map((entry) => String(entry)) : []
+  };
+};
+
+
+const explainCycleHistoryArtifact = (projectRoot: string, target: string): CycleHistoryArtifactExplanation | null => {
+  if (target !== '.playbook/cycle-history.json') {
+    return null;
+  }
+
+  const targetPath = path.join(projectRoot, target);
+  if (!fs.existsSync(targetPath)) {
+    throw new Error(`playbook explain artifact: missing artifact "${target}".`);
+  }
+
+  const parsed = JSON.parse(fs.readFileSync(targetPath, 'utf8')) as Record<string, unknown>;
+  const cycles = Array.isArray(parsed.cycles)
+    ? parsed.cycles.map((cycle) => {
+        const candidate = cycle as Record<string, unknown>;
+        return {
+          cycle_id: String(candidate.cycle_id),
+          started_at: String(candidate.started_at),
+          result: candidate.result === 'failed' ? 'failed' : 'success',
+          ...(typeof candidate.failed_step === 'string' ? { failed_step: candidate.failed_step } : {}),
+          duration_ms: Number(candidate.duration_ms)
+        } as CycleHistoryEntryExplanation;
+      })
+    : [];
+
+  return {
+    artifactType: 'cycle-history',
+    history_version: Number(parsed.history_version),
+    repo: String(parsed.repo),
+    cycles
   };
 };
 
