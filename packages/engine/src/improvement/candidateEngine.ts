@@ -21,17 +21,41 @@ export type ImprovementCandidateCategory =
 
 export type ImprovementTier = 'auto_safe' | 'conversation' | 'governance';
 
+export type ImprovementGatingTier = 'AUTO-SAFE' | 'CONVERSATIONAL' | 'GOVERNANCE';
+
+type ProposalEvidence = {
+  event_ids: string[];
+  evidence_count: number;
+  supporting_runs: number;
+};
+
 export type ImprovementCandidate = {
   candidate_id: string;
   category: ImprovementCandidateCategory;
   observation: string;
   recurrence_count: number;
-  confidence: number;
+  confidence_score: number;
   suggested_action: string;
+  gating_tier: ImprovementGatingTier;
   improvement_tier: ImprovementTier;
+  required_review: boolean;
+  blocking_reasons: string[];
   evidence: {
     event_ids: string[];
   };
+  evidence_count: number;
+  supporting_runs: number;
+};
+
+export type RejectedImprovementCandidate = {
+  candidate_id: string;
+  category: ImprovementCandidateCategory;
+  observation: string;
+  suggested_action: string;
+  confidence_score: number;
+  evidence_count: number;
+  supporting_runs: number;
+  blocking_reasons: string[];
 };
 
 export type ImprovementCandidatesArtifact = {
@@ -55,6 +79,7 @@ export type ImprovementCandidatesArtifact = {
     total: number;
   };
   candidates: ImprovementCandidate[];
+  rejected_candidates: RejectedImprovementCandidate[];
 };
 
 export type ImprovementActionArtifact = {
@@ -79,9 +104,16 @@ export type ImprovementGovernanceApprovalArtifact = {
 
 const MINIMUM_RECURRENCE = 3;
 const MINIMUM_CONFIDENCE = 0.6;
+const AUTO_SAFE_MINIMUM_EVIDENCE = 3;
+const AUTO_SAFE_MINIMUM_RUNS = 1;
+
+const CONVERSATIONAL_MINIMUM_EVIDENCE = 3;
+const GOVERNANCE_MINIMUM_EVIDENCE = 2;
 
 const round4 = (value: number): number => Number(value.toFixed(4));
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
+
+const getRunKey = (timestamp: string): string => timestamp.slice(0, 10);
 
 const deterministicStringify = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
 
@@ -141,8 +173,82 @@ const buildTier = (input: { category: ImprovementCandidateCategory; suggestedAct
   return 'auto_safe';
 };
 
+const toGatingTier = (tier: ImprovementTier): ImprovementGatingTier => {
+  if (tier === 'auto_safe') {
+    return 'AUTO-SAFE';
+  }
+
+  if (tier === 'conversation') {
+    return 'CONVERSATIONAL';
+  }
+
+  return 'GOVERNANCE';
+};
+
 const buildConfidence = (recurrenceCount: number, signalScore: number, learningConfidence: number): number =>
   round4(clamp01(Math.min(1, recurrenceCount / 10) * 0.45 + signalScore * 0.4 + learningConfidence * 0.15));
+
+const buildEvidence = (events: Array<{ event_id: string; timestamp: string }>): ProposalEvidence => {
+  const eventIds = events.map((event) => event.event_id).sort((left, right) => left.localeCompare(right));
+  const uniqueRuns = new Set(events.map((event) => getRunKey(event.timestamp)));
+  return {
+    event_ids: eventIds,
+    evidence_count: eventIds.length,
+    supporting_runs: uniqueRuns.size
+  };
+};
+
+const evaluateGating = (input: {
+  category: ImprovementCandidateCategory;
+  suggestedAction: string;
+  confidenceScore: number;
+  evidence: ProposalEvidence;
+}): {
+  gatingTier: ImprovementGatingTier;
+  improvementTier: ImprovementTier;
+  requiredReview: boolean;
+  blockingReasons: string[];
+} => {
+  const improvementTier = buildTier({ category: input.category, suggestedAction: input.suggestedAction });
+  const gatingTier = toGatingTier(improvementTier);
+  const blockingReasons: string[] = [];
+  const governanceSensitive = gatingTier === 'GOVERNANCE';
+
+  if (input.evidence.evidence_count < MINIMUM_RECURRENCE) {
+    blockingReasons.push(`insufficient_evidence_count:${input.evidence.evidence_count}<${MINIMUM_RECURRENCE}`);
+  }
+
+  if (input.confidenceScore < MINIMUM_CONFIDENCE) {
+    blockingReasons.push(`confidence_below_threshold:${input.confidenceScore}<${MINIMUM_CONFIDENCE}`);
+  }
+
+  if (gatingTier === 'AUTO-SAFE') {
+    if (input.evidence.evidence_count < AUTO_SAFE_MINIMUM_EVIDENCE) {
+      blockingReasons.push(`auto_safe_requires_repeated_evidence:${input.evidence.evidence_count}<${AUTO_SAFE_MINIMUM_EVIDENCE}`);
+    }
+    if (input.evidence.supporting_runs < AUTO_SAFE_MINIMUM_RUNS) {
+      blockingReasons.push(`auto_safe_requires_multi_run_support:${input.evidence.supporting_runs}<${AUTO_SAFE_MINIMUM_RUNS}`);
+    }
+    if (governanceSensitive) {
+      blockingReasons.push('auto_safe_forbidden_for_governance_sensitive_change');
+    }
+  }
+
+  if (gatingTier === 'CONVERSATIONAL' && input.evidence.evidence_count < CONVERSATIONAL_MINIMUM_EVIDENCE) {
+    blockingReasons.push(`conversational_requires_evidence:${input.evidence.evidence_count}<${CONVERSATIONAL_MINIMUM_EVIDENCE}`);
+  }
+
+  if (gatingTier === 'GOVERNANCE' && input.evidence.evidence_count < GOVERNANCE_MINIMUM_EVIDENCE) {
+    blockingReasons.push(`governance_requires_evidence:${input.evidence.evidence_count}<${GOVERNANCE_MINIMUM_EVIDENCE}`);
+  }
+
+  return {
+    gatingTier,
+    improvementTier,
+    requiredReview: gatingTier !== 'AUTO-SAFE',
+    blockingReasons
+  };
+};
 
 const emitCandidate = (input: {
   candidateId: string;
@@ -152,31 +258,59 @@ const emitCandidate = (input: {
   signalScore: number;
   learningConfidence: number;
   suggestedAction: string;
-  eventIds: string[];
-}): ImprovementCandidate | null => {
-  const confidence = buildConfidence(input.recurrenceCount, input.signalScore, input.learningConfidence);
-  if (input.recurrenceCount < MINIMUM_RECURRENCE || confidence < MINIMUM_CONFIDENCE) {
-    return null;
+  evidenceEvents: Array<{ event_id: string; timestamp: string }>;
+}): { candidate: ImprovementCandidate | null; rejected: RejectedImprovementCandidate | null } => {
+  const confidenceScore = buildConfidence(input.recurrenceCount, input.signalScore, input.learningConfidence);
+  const evidence = buildEvidence(input.evidenceEvents);
+  const gating = evaluateGating({
+    category: input.category,
+    suggestedAction: input.suggestedAction,
+    confidenceScore,
+    evidence
+  });
+
+  if (gating.blockingReasons.length > 0) {
+    return {
+      candidate: null,
+      rejected: {
+        candidate_id: input.candidateId,
+        category: input.category,
+        observation: input.observation,
+        suggested_action: input.suggestedAction,
+        confidence_score: confidenceScore,
+        evidence_count: evidence.evidence_count,
+        supporting_runs: evidence.supporting_runs,
+        blocking_reasons: gating.blockingReasons
+      }
+    };
   }
 
   return {
-    candidate_id: input.candidateId,
-    category: input.category,
-    observation: input.observation,
-    recurrence_count: input.recurrenceCount,
-    confidence,
-    suggested_action: input.suggestedAction,
-    improvement_tier: buildTier({ category: input.category, suggestedAction: input.suggestedAction }),
-    evidence: {
-      event_ids: [...input.eventIds].sort((left, right) => left.localeCompare(right))
-    }
+    candidate: {
+      candidate_id: input.candidateId,
+      category: input.category,
+      observation: input.observation,
+      recurrence_count: input.recurrenceCount,
+      confidence_score: confidenceScore,
+      suggested_action: input.suggestedAction,
+      gating_tier: gating.gatingTier,
+      improvement_tier: gating.improvementTier,
+      required_review: gating.requiredReview,
+      blocking_reasons: [],
+      evidence: {
+        event_ids: evidence.event_ids
+      },
+      evidence_count: evidence.evidence_count,
+      supporting_runs: evidence.supporting_runs
+    },
+    rejected: null
   };
 };
 
 const generateRoutingCandidates = (
   events: RouteDecisionEvent[],
   learning: LearningStateSnapshotArtifact | undefined
-): ImprovementCandidate[] => {
+): { candidates: ImprovementCandidate[]; rejected: RejectedImprovementCandidate[] } => {
   const grouped = new Map<string, RouteDecisionEvent[]>();
   for (const event of events) {
     const key = `${event.task_family}::${event.route_id}`;
@@ -187,6 +321,7 @@ const generateRoutingCandidates = (
   const validationPressure = learning?.metrics.validation_cost_pressure ?? 0;
 
   const candidates: ImprovementCandidate[] = [];
+  const rejected: RejectedImprovementCandidate[] = [];
   for (const [key, group] of [...grouped.entries()].sort((left, right) => left[0].localeCompare(right[0]))) {
     const [taskFamily, routeId] = key.split('::');
     const averageConfidence = group.reduce((sum, event) => sum + event.confidence, 0) / Math.max(1, group.length);
@@ -200,7 +335,7 @@ const generateRoutingCandidates = (
       ? 'reduce optional validation'
       : `codify ${routeId} as preferred baseline route for ${taskFamily} tasks`;
 
-    const candidate = emitCandidate({
+    const result = emitCandidate({
       candidateId: isDocsValidationCandidate
         ? 'routing_docs_overvalidation'
         : `routing_${taskFamily}_${routeId}`.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase(),
@@ -210,21 +345,25 @@ const generateRoutingCandidates = (
       signalScore,
       learningConfidence,
       suggestedAction,
-      eventIds: group.map((event) => event.event_id)
+      evidenceEvents: group.map((event) => ({ event_id: event.event_id, timestamp: event.timestamp }))
     });
 
-    if (candidate) {
-      candidates.push(candidate);
+    if (result.candidate) {
+      candidates.push(result.candidate);
+    }
+
+    if (result.rejected) {
+      rejected.push(result.rejected);
     }
   }
 
-  return candidates;
+  return { candidates, rejected };
 };
 
 const generateOrchestrationCandidates = (
   events: LaneTransitionEvent[],
   learning: LearningStateSnapshotArtifact | undefined
-): ImprovementCandidate[] => {
+): { candidates: ImprovementCandidate[]; rejected: RejectedImprovementCandidate[] } => {
   const blocked = events.filter((event) => event.to_state === 'blocked');
   const grouped = new Map<string, LaneTransitionEvent[]>();
   for (const event of blocked) {
@@ -233,7 +372,7 @@ const generateOrchestrationCandidates = (
   }
 
   const learningConfidence = learning?.confidenceSummary.overall_confidence ?? 0;
-  return [...grouped.entries()]
+  const results = [...grouped.entries()]
     .sort((left, right) => left[0].localeCompare(right[0]))
     .map(([reason, group]) =>
       emitCandidate({
@@ -244,16 +383,20 @@ const generateOrchestrationCandidates = (
         signalScore: clamp01(0.7 + (learning?.metrics.parallel_safety_realized ?? 0) * 0.15),
         learningConfidence,
         suggestedAction: `add deterministic unblock playbook for ${reason}`,
-        eventIds: group.map((event) => event.event_id)
+        evidenceEvents: group.map((event) => ({ event_id: event.event_id, timestamp: event.timestamp }))
       })
-    )
-    .filter((candidate): candidate is ImprovementCandidate => Boolean(candidate));
+    );
+
+  return {
+    candidates: results.flatMap((result) => (result.candidate ? [result.candidate] : [])),
+    rejected: results.flatMap((result) => (result.rejected ? [result.rejected] : []))
+  };
 };
 
 const generateWorkerPromptCandidates = (
   events: WorkerAssignmentEvent[],
   learning: LearningStateSnapshotArtifact | undefined
-): ImprovementCandidate[] => {
+): { candidates: ImprovementCandidate[]; rejected: RejectedImprovementCandidate[] } => {
   const degraded = events.filter((event) => event.assignment_status === 'blocked' || event.assignment_status === 'skipped');
   const grouped = new Map<string, WorkerAssignmentEvent[]>();
   for (const event of degraded) {
@@ -262,7 +405,7 @@ const generateWorkerPromptCandidates = (
 
   const learningConfidence = learning?.confidenceSummary.overall_confidence ?? 0;
 
-  return [...grouped.entries()]
+  const results = [...grouped.entries()]
     .sort((left, right) => left[0].localeCompare(right[0]))
     .map(([workerId, group]) =>
       emitCandidate({
@@ -273,23 +416,31 @@ const generateWorkerPromptCandidates = (
         signalScore: clamp01(0.68 + (1 - (learning?.metrics.reasoning_scope_efficiency ?? 0)) * 0.2),
         learningConfidence,
         suggestedAction: `tighten ${workerId} prompt contract with explicit acceptance checklist`,
-        eventIds: group.map((event) => event.event_id)
+        evidenceEvents: group.map((event) => ({ event_id: event.event_id, timestamp: event.timestamp }))
       })
-    )
-    .filter((candidate): candidate is ImprovementCandidate => Boolean(candidate));
+    );
+
+  return {
+    candidates: results.flatMap((result) => (result.candidate ? [result.candidate] : [])),
+    rejected: results.flatMap((result) => (result.rejected ? [result.rejected] : []))
+  };
 };
 
 const generateValidationEfficiencyCandidates = (
   events: RepositoryEvent[],
   learning: LearningStateSnapshotArtifact | undefined
-): ImprovementCandidate[] => {
+): { candidates: ImprovementCandidate[]; rejected: RejectedImprovementCandidate[] } => {
   const learningConfidence = learning?.confidenceSummary.overall_confidence ?? 0;
   const validationPressure = learning?.metrics.validation_cost_pressure ?? 0;
   const overValidationRoutes = events.filter(
     (event): event is RouteDecisionEvent => event.event_type === 'route_decision' && event.task_family === 'docs_only'
   );
 
-  const candidate = emitCandidate({
+  if (overValidationRoutes.length === 0) {
+    return { candidates: [], rejected: [] };
+  }
+
+  const result = emitCandidate({
     candidateId: 'validation_efficiency_docs_optional_checks',
     category: 'validation_efficiency',
     observation: 'Optional validations dominate docs-focused tasks and increase validation cost pressure.',
@@ -297,16 +448,19 @@ const generateValidationEfficiencyCandidates = (
     signalScore: clamp01(validationPressure),
     learningConfidence,
     suggestedAction: 'reduce optional validation for docs_only family unless risk signals are present',
-    eventIds: overValidationRoutes.map((event) => event.event_id)
+    evidenceEvents: overValidationRoutes.map((event) => ({ event_id: event.event_id, timestamp: event.timestamp }))
   });
 
-  return candidate ? [candidate] : [];
+  return {
+    candidates: result.candidate ? [result.candidate] : [],
+    rejected: result.rejected ? [result.rejected] : []
+  };
 };
 
 const generateOntologyCandidates = (
   events: ImprovementCandidateEvent[],
   learning: LearningStateSnapshotArtifact | undefined
-): ImprovementCandidate[] => {
+): { candidates: ImprovementCandidate[]; rejected: RejectedImprovementCandidate[] } => {
   const ontologyRelated = events.filter((event) => {
     const source = event.source.toLowerCase();
     const summary = event.summary.toLowerCase();
@@ -320,7 +474,7 @@ const generateOntologyCandidates = (
   }
 
   const learningConfidence = learning?.confidenceSummary.overall_confidence ?? 0;
-  return [...grouped.entries()]
+  const results = [...grouped.entries()]
     .sort((left, right) => left[0].localeCompare(right[0]))
     .map(([summary, group]) => {
       const averageEventConfidence = group.reduce((sum, event) => sum + (event.confidence ?? 0.7), 0) / Math.max(1, group.length);
@@ -332,10 +486,14 @@ const generateOntologyCandidates = (
         signalScore: clamp01(averageEventConfidence),
         learningConfidence,
         suggestedAction: 'promote normalized ontology terms into governance dictionary and route prompts',
-        eventIds: group.map((event) => event.event_id)
+        evidenceEvents: group.map((event) => ({ event_id: event.event_id, timestamp: event.timestamp }))
       });
-    })
-    .filter((candidate): candidate is ImprovementCandidate => Boolean(candidate));
+    });
+
+  return {
+    candidates: results.flatMap((result) => (result.candidate ? [result.candidate] : [])),
+    rejected: results.flatMap((result) => (result.rejected ? [result.rejected] : []))
+  };
 };
 
 export const generateImprovementCandidates = (repoRoot: string): ImprovementCandidatesArtifact => {
@@ -348,19 +506,25 @@ export const generateImprovementCandidates = (repoRoot: string): ImprovementCand
   const workerAssignmentEvents = events.filter((event): event is WorkerAssignmentEvent => event.event_type === 'worker_assignment');
   const improvementEvents = events.filter((event): event is ImprovementCandidateEvent => event.event_type === 'improvement_candidate');
 
-  const candidates = [
-    ...generateRoutingCandidates(routeEvents, learning),
-    ...generateOrchestrationCandidates(laneTransitionEvents, learning),
-    ...generateWorkerPromptCandidates(workerAssignmentEvents, learning),
-    ...generateValidationEfficiencyCandidates(events, learning),
-    ...generateOntologyCandidates(improvementEvents, learning)
-  ].sort((left, right) => {
-    if (right.confidence !== left.confidence) {
-      return right.confidence - left.confidence;
+  const generated = [
+    generateRoutingCandidates(routeEvents, learning),
+    generateOrchestrationCandidates(laneTransitionEvents, learning),
+    generateWorkerPromptCandidates(workerAssignmentEvents, learning),
+    generateValidationEfficiencyCandidates(events, learning),
+    generateOntologyCandidates(improvementEvents, learning)
+  ];
+
+  const candidates = generated.flatMap((entry) => entry.candidates).sort((left, right) => {
+    if (right.confidence_score !== left.confidence_score) {
+      return right.confidence_score - left.confidence_score;
     }
 
     return left.candidate_id.localeCompare(right.candidate_id);
   });
+
+  const rejectedCandidates = generated
+    .flatMap((entry) => entry.rejected)
+    .sort((left, right) => left.candidate_id.localeCompare(right.candidate_id));
 
   const summary = {
     AUTO_SAFE: candidates.filter((candidate) => candidate.improvement_tier === 'auto_safe').length,
@@ -384,7 +548,8 @@ export const generateImprovementCandidates = (repoRoot: string): ImprovementCand
       learningStateAvailable: Boolean(learning)
     },
     summary,
-    candidates
+    candidates,
+    rejected_candidates: rejectedCandidates
   };
 };
 

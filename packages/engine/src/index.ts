@@ -164,7 +164,9 @@ export {
 export type {
   ImprovementCandidateCategory,
   ImprovementTier,
+  ImprovementGatingTier,
   ImprovementCandidate,
+  RejectedImprovementCandidate,
   ImprovementCandidatesArtifact,
   ImprovementActionArtifact,
   ImprovementGovernanceApprovalArtifact

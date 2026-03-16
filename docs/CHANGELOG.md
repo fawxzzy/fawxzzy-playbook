@@ -6,6 +6,8 @@
 
 ### Added
 
+- WHAT: Implemented stricter deterministic improvement proposal gating across `improvement_engine`, `telemetry_learning`, and `repository_memory` by adding tier metadata (`gating_tier`, `required_review`), deterministic evidence fields (`evidence_count`, `supporting_runs`, `confidence_score`), and explicit `blocking_reasons` for rejected proposals; updated `playbook improve` text/JSON output to report proposal tier, evidence summaries, confidence, and gating rationale; and added targeted tests for AUTO-SAFE, CONVERSATIONAL, GOVERNANCE, and insufficient-evidence rejection scenarios. WHY: Prevents ungated self-modification and ensures only evidence-backed proposals can be promoted according to trust-boundary sensitivity.
+
 - WHAT: Strengthened worker coordination readiness contracts by extending `workset-plan`, `lane-state`, and `worker-assignments` with explicit readiness/conflict fields (`readiness_status`, `blocking_reasons`, `conflict_surface_paths`, `shared_artifact_risk`, `assignment_confidence`) plus deterministic validation findings for overlap/ownership/dependency blocking, and updated `playbook lanes`/`playbook workers` outputs to report ready-vs-blocked lanes with conflict surfaces. WHY: Prevents hidden overlap and makes pre-execution assignment risk machine-readable before parallel worker execution.
 
 - WHAT: Added architecture introspection to `playbook explain` with `subsystem <name>` and `artifact <path>` targets backed by `.playbook/architecture/subsystems.json`, including deterministic missing-lookup failures and stable `--json` output contracts. WHY: Makes subsystem/artifact ownership directly explainable from the canonical registry and prevents split-brain ownership docs.
