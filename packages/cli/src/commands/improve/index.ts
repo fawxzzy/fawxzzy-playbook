@@ -29,14 +29,31 @@ const renderText = (artifact: ImprovementCandidatesArtifact): void => {
 
   if (artifact.candidates.length === 0) {
     console.log('No candidates met recurrence/confidence thresholds.');
+    if (artifact.rejected_candidates.length > 0) {
+      console.log(`Rejected candidates: ${artifact.rejected_candidates.length}`);
+    }
     return;
   }
 
   for (const candidate of artifact.candidates) {
-    console.log(`- [${candidate.improvement_tier}] ${candidate.candidate_id} (${candidate.category})`);
+    console.log(`- [${candidate.gating_tier}] ${candidate.candidate_id} (${candidate.category})`);
     console.log(`  observation: ${candidate.observation}`);
-    console.log(`  recurrence: ${candidate.recurrence_count}, confidence: ${candidate.confidence}`);
+    console.log(
+      `  evidence: ${candidate.evidence_count} events across ${candidate.supporting_runs} runs, confidence: ${candidate.confidence_score}`
+    );
+    console.log(`  required review: ${candidate.required_review ? 'yes' : 'no'}`);
+    console.log(`  why gated: ${candidate.blocking_reasons.length === 0 ? 'meets deterministic thresholds' : candidate.blocking_reasons.join(', ')}`);
     console.log(`  action: ${candidate.suggested_action}`);
+  }
+
+  if (artifact.rejected_candidates.length > 0) {
+    console.log('');
+    console.log('Rejected (insufficient evidence / confidence)');
+    for (const rejected of artifact.rejected_candidates) {
+      console.log(`- ${rejected.candidate_id} (${rejected.category})`);
+      console.log(`  evidence: ${rejected.evidence_count} events across ${rejected.supporting_runs} runs, confidence: ${rejected.confidence_score}`);
+      console.log(`  why gated: ${rejected.blocking_reasons.join(', ')}`);
+    }
   }
 };
 
