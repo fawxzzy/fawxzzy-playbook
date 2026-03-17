@@ -10,6 +10,8 @@
 
 ### CLI
 
+- WHAT: Added `scripts/release-fallback-proof.mjs` plus `pnpm release:fallback:proof` to validate deterministic GitHub fallback tarball availability and (optionally) execute a consumer-repo fallback smoke ladder (`npm install` -> package miss -> fallback tarball install -> `verify/plan/apply` + artifact assertions), and updated release docs with the canonical `PLAYBOOK_OFFICIAL_FALLBACK_SPEC` pinning contract. WHY: Provides a single deterministic proof workflow that validates real release-asset consumption boundaries between Playbook producer releases and downstream consumer CI.
+
 
 - WHAT: Hardened release distribution so tag publishes now include `@fawxzzy/playbook-cli` and attach a deterministic GitHub release fallback tarball named `playbook-cli-<version>.tgz` (for example `playbook-cli-0.3.77.tgz`) generated from `packages/cli-wrapper`, with an explicit tag/package version parity gate before upload. WHY: Fixes pinned-but-missing fallback artifact failures in downstream CI by ensuring the official fallback URL resolves to a real immutable release asset.
 - WHAT: Upgraded Observer UI blueprint from static map to governed state/activity system view by deriving deterministic node states (`active|available|missing|stale|idle`) from readiness/artifact truth, highlighting runtime/review flow edges, adding selected-node inspection metadata with artifact linkage, and making Playbook self-observation a collapsible secondary panel so blueprint + repo detail remain primary; added focused observer UI tests for node-state rendering hooks, selected-node surfaces, collapsible self panel markup, and missing-artifact blueprint degradation. WHY: Improves operational usability without introducing UI-owned truth or any mutation behavior.
