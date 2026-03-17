@@ -81,7 +81,7 @@ if (args.length === 0 || (globalHelpRequested && !commandArg)) {
 }
 
 if (parseFlag(args, '--version') || parseFlag(args, '-V')) {
-  console.log('0.1.1');
+  console.log('0.1.2');
   process.exit(ExitCode.Success);
 }
 
@@ -100,7 +100,7 @@ const run = async () => {
     process.exit(ExitCode.Failure);
   }
 
-  const playbookVersion = '0.1.1';
+  const playbookVersion = '0.1.2';
   const childCommands =
     command === 'pilot' ? ['context', 'index', 'query modules', 'verify', 'plan'] : [];
   const runtimeRepoRoot = resolveRuntimeRepoRoot(targetCwd);

@@ -52,7 +52,7 @@ describe('runUpgrade', () => {
 
     fs.writeFileSync(
       path.join(repoRoot, 'package.json'),
-      JSON.stringify({ packageManager: 'pnpm@9.0.0', devDependencies: { '@fawxzzy/playbook': '^0.1.1' } })
+      JSON.stringify({ packageManager: 'pnpm@9.0.0', devDependencies: { '@fawxzzy/playbook': '^0.1.2' } })
     );
 
     const exitCode = await runUpgrade(repoRoot, {
@@ -64,14 +64,14 @@ describe('runUpgrade', () => {
       explain: false,
       format: 'json',
       quiet: false,
-      to: '0.1.1'
+      to: '0.1.2'
     });
 
     expect(exitCode).toBe(ExitCode.Success);
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.kind).toBe('playbook-upgrade');
     expect(payload.status).toBe('up_to_date');
-    expect(payload.currentVersion).toBe('^0.1.1');
+    expect(payload.currentVersion).toBe('^0.1.2');
   });
 
   it('reports upgrade_available for dependency repos behind target', async () => {
@@ -92,13 +92,13 @@ describe('runUpgrade', () => {
       explain: false,
       format: 'json',
       quiet: false,
-      to: '0.1.1'
+      to: '0.1.2'
     });
 
     expect(exitCode).toBe(ExitCode.Success);
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.status).toBe('upgrade_available');
-    expect(payload.targetVersion).toBe('0.1.1');
+    expect(payload.targetVersion).toBe('0.1.2');
     expect(payload.actions).toContain('pnpm install');
   });
 
@@ -121,7 +121,7 @@ describe('runUpgrade', () => {
       explain: false,
       format: 'json',
       quiet: false,
-      to: '0.1.1'
+      to: '0.1.2'
     });
 
     expect(exitCode).toBe(ExitCode.WarningsOnly);
@@ -149,14 +149,14 @@ describe('runUpgrade', () => {
       explain: false,
       format: 'json',
       quiet: false,
-      to: '0.1.1'
+      to: '0.1.2'
     });
 
     expect(exitCode).toBe(ExitCode.Success);
     const updated = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')) as {
       devDependencies: Record<string, string>;
     };
-    expect(updated.devDependencies['@fawxzzy/playbook']).toBe('^0.1.1');
+    expect(updated.devDependencies['@fawxzzy/playbook']).toBe('^0.1.2');
     expect(updated.devDependencies.vitest).toBe('^1.0.0');
 
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
