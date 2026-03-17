@@ -10,6 +10,11 @@
 
 ### CLI
 
+- WHAT: Added deterministic Codex execution-plan packaging on top of adoption queue output (`pnpm playbook status execute --json`) with a stable `fleet-adoption-codex-execution-plan` contract (`waves`, `worker_lanes`, `codex_prompts`, `execution_notes`, `blocked_followups`), observer API/UI integration (`GET /api/readiness/execute` + dashboard execution-plan card), and focused determinism/dependency/conflict/governance-note tests. WHY: Converts the adoption queue into copy-paste-ready parallel worker plans while preserving read-only deterministic planning boundaries.
+- Rule: Execution-plan output must remain deterministic and read-only for identical queue inputs.
+- Pattern: Package queue actions by wave and command-family lanes so operators can run Codex workers in parallel with low overlap risk.
+- Failure Mode: Merge-conflict churn and contradictory operator prompts when the same repo is assigned to conflicting same-wave command lanes.
+
 - WHAT: Added deterministic adoption work-queue planning on top of fleet readiness (`pnpm playbook status queue --json`) with a stable `fleet-adoption-work-queue` contract (`work_items`, `waves`, `grouped_actions`, `blocked_items`), observer API/UI integration (`GET /api/readiness/queue` + dashboard queue panel), and focused ordering/wave/grouping tests. WHY: Converts fleet readiness into an executable, parallel-safe queue without mutating repositories.
 - Rule: Queue output must remain read-only and deterministic for identical readiness input.
 - Pattern: Use lane-specific grouped actions to parallelize safely while preserving dependency order.
