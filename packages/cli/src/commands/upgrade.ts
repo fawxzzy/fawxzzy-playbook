@@ -90,7 +90,7 @@ const writeJson = (filePath: string, value: Record<string, unknown>): void => {
 const getCurrentCliVersion = (): string => {
   const cliPackagePath = new URL('../../package.json', import.meta.url);
   const packageJson = JSON.parse(fs.readFileSync(cliPackagePath, 'utf8')) as { version?: string };
-  return packageJson.version ?? '0.1.1';
+  return packageJson.version ?? '0.1.2';
 };
 
 const extractDependencyVersion = (pkg: Record<string, unknown>): { version: string; section: string } | undefined => {
