@@ -10,6 +10,10 @@
 
 ### CLI
 
+- WHAT: Reworked `@fawxzzy/playbook-cli` fallback packaging so the wrapper is self-contained at install time by bundling the built CLI runtime (`packages/cli/dist`) into the wrapper tarball, switching the wrapper bin to execute the bundled local runtime, and removing the unpublished workspace dependency on `@fawxzzy/playbook`. WHY: Makes fallback release tarballs installable in downstream consumer repositories without npm trying to resolve unpublished workspace package coordinates.
+- Failure Mode: Fallback tarballs that depend on unpublished workspace packages are valid archives but invalid consumer install artifacts.
+- Pattern: Fallback artifacts must be self-contained at install time, not workspace-relative.
+
 - WHAT: Aligned root and all publishable package manifests to release version `0.1.6` so producer publish/tag/fallback flows resolve one canonical version across workspace and release artifacts. WHY: Prevents split release state between root metadata and publishable packages during clean release proof.
 - Failure Mode: Tagging a new release version without aligning publishable package manifests creates split-brain release state and confusing publish behavior.
 - Pattern: Release tags should only be cut from a fully version-aligned workspace.
