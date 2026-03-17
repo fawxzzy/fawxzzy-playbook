@@ -348,10 +348,10 @@ describe('observer server', () => {
     fs.mkdirSync(path.join(partial, '.playbook'), { recursive: true });
     fs.mkdirSync(path.join(full, '.playbook'), { recursive: true });
 
-    writeArtifact(partial, '.playbook/repo-index.json', { schemaVersion: '1.0', kind: 'repo-index' });
+    writeArtifact(partial, '.playbook/repo-index.json', { framework: 'node' });
     writeArtifact(partial, '.playbook/session.json', { schemaVersion: '1.0', kind: 'session' });
 
-    writeArtifact(full, '.playbook/repo-index.json', { schemaVersion: '1.0', kind: 'repo-index' });
+    writeArtifact(full, '.playbook/repo-index.json', { framework: 'node' });
     writeArtifact(full, '.playbook/cycle-state.json', { schemaVersion: '1.0', kind: 'cycle-state' });
     writeArtifact(full, '.playbook/cycle-history.json', { schemaVersion: '1.0', kind: 'cycle-history' });
     writeArtifact(full, '.playbook/policy-evaluation.json', { schemaVersion: '1.0', kind: 'policy-evaluation' });
@@ -372,7 +372,7 @@ describe('observer server', () => {
     const repos = await fetch(`http://127.0.0.1:${port}/repos`);
     expect(repos.status).toBe(200);
     const reposJson = await repos.json() as {
-      repos: Array<{ id: string; readiness: { readiness_state: string; missing_artifacts: string[]; last_artifact_update_time: string | null } }>;
+      repos: Array<{ id: string; readiness: { readiness_state: string; lifecycle_stage: string; fallback_proof_ready: boolean; cross_repo_eligible: boolean; recommended_next_steps: string[]; missing_artifacts: string[]; last_artifact_update_time: string | null } }>;
     };
 
     const states = Object.fromEntries(reposJson.repos.map((repo) => [repo.id, repo.readiness.readiness_state]));
@@ -384,10 +384,15 @@ describe('observer server', () => {
 
     const connectedReadiness = reposJson.repos.find((repo) => repo.id === 'connected-only')?.readiness;
     expect(connectedReadiness?.missing_artifacts.length).toBeGreaterThan(0);
+    expect(connectedReadiness?.lifecycle_stage).toBe('playbook_not_detected');
+    expect(connectedReadiness?.recommended_next_steps[0]).toBe('pnpm playbook init');
     expect(connectedReadiness?.last_artifact_update_time).toBeNull();
 
     const fullReadiness = reposJson.repos.find((repo) => repo.id === 'full')?.readiness;
     expect(fullReadiness?.missing_artifacts).toEqual([]);
+    expect(fullReadiness?.lifecycle_stage).toBe('ready');
+    expect(fullReadiness?.fallback_proof_ready).toBe(true);
+    expect(fullReadiness?.cross_repo_eligible).toBe(true);
     expect(typeof fullReadiness?.last_artifact_update_time).toBe('string');
 
     const uiScript = await fetch(`http://127.0.0.1:${port}/ui/app.js`);
@@ -400,6 +405,8 @@ describe('observer server', () => {
     expect(uiScriptText).toContain('node-state-');
     expect(uiScriptText).toContain('Control-plane artifacts present:</strong>');
     expect(uiScriptText).toContain('Runtime loop available:</strong>');
+    expect(uiScriptText).toContain('Lifecycle stage:');
+    expect(uiScriptText).toContain('Next command:');
 
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   });
@@ -410,7 +417,7 @@ describe('observer server', () => {
     const playbookRepo = path.join(cwd, 'playbook');
     fs.mkdirSync(path.join(playbookRepo, '.playbook'), { recursive: true });
 
-    writeArtifact(playbookRepo, '.playbook/repo-index.json', { schemaVersion: '1.0', kind: 'repo-index' });
+    writeArtifact(playbookRepo, '.playbook/repo-index.json', { framework: 'node' });
     writeArtifact(playbookRepo, '.playbook/cycle-state.json', { schemaVersion: '1.0', kind: 'cycle-state' });
     writeArtifact(playbookRepo, '.playbook/cycle-history.json', { schemaVersion: '1.0', kind: 'cycle-history' });
     writeArtifact(playbookRepo, '.playbook/policy-evaluation.json', { schemaVersion: '1.0', kind: 'policy-evaluation' });

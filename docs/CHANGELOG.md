@@ -10,6 +10,8 @@
 
 ### CLI
 
+- WHAT: Added a deterministic adoption/readiness contract surfaced through `pnpm playbook status --json` and Observer repo APIs/UI (lifecycle stage, fallback-proof readiness, cross-repo eligibility, blockers, and exact next command recommendations) backed by governed artifact producers instead of heuristics. WHY: Gives operators a single actionable readiness view without manual cross-command artifact interpretation.
+
 - WHAT: Temporarily relaxed the security workflow Grype gate by raising `severity-cutoff` from `medium` to `high` in Step 3.1 so fallback release proofing can proceed through tarball upload and validation without disabling SARIF scanning. WHY: Current milestone priority is end-to-end fallback infrastructure validation, not vulnerability remediation.
 - Rule: Security gates should align with the current milestone; strict enforcement should not block unrelated system validation.
 - Failure Mode: Allowing policy gates (security thresholds) to block infrastructure proof-of-function, causing unnecessary iteration loops.
