@@ -160,15 +160,25 @@ jobs:
       - name: Step 5 — Provenance Attestation
         run: |
           mkdir -p artifacts
-          cat > artifacts/provenance.json <<EOF
-          {
-            "buildType": "playbook-security-program",
-            "builder": "github-actions",
-            "commit": "${{ github.sha }}",
-            "workflow": "${{ github.workflow }}",
-            "runId": "${{ github.run_id }}"
-          }
-          EOF
+          node <<'NODE'
+          const fs = require('node:fs');
+          const payload = {
+            buildType: 'playbook-security-program',
+            builder: 'github-actions',
+            commit: process.env.GITHUB_SHA,
+            workflow: process.env.GITHUB_WORKFLOW,
+            runId: process.env.GITHUB_RUN_ID
+          };
+          fs.writeFileSync(
+            'artifacts/provenance.json',
+            JSON.stringify(payload, null, 2) + '\n',
+            'utf8'
+          );
+          NODE
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_WORKFLOW: ${{ github.workflow }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
 
       - name: Step 6 — Security Policy Gate
         run: |
