@@ -10,6 +10,8 @@
 
 ### CLI
 
+- WHAT: Added deterministic fleet-level adoption readiness aggregation across status, Observer API, and Observer UI (`pnpm playbook status fleet --json`, `GET /api/readiness/fleet`, plus a fleet summary panel) including stable lifecycle counts, blocker/action frequencies, eligibility counts, and prioritized repo ordering. WHY: Enables portfolio-level adoption triage while preserving repo-first inspection workflows.
+
 - WHAT: Aligned root and all publishable package manifests to release version `0.1.6` so producer publish/tag/fallback flows resolve one canonical version across workspace and release artifacts. WHY: Prevents split release state between root metadata and publishable packages during clean release proof.
 - Failure Mode: Tagging a new release version without aligning publishable package manifests creates split-brain release state and confusing publish behavior.
 - Pattern: Release tags should only be cut from a fully version-aligned workspace.
