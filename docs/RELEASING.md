@@ -51,8 +51,17 @@ When `--consumer-repo` is provided, the command performs the clean-environment s
 1. `npm install`
 2. package acquisition attempt (intentional miss)
 3. fallback acquisition from the published tarball URL
-4. canonical ladder (`verify -> plan -> apply`)
-5. required artifact assertions (`.playbook/findings.json`, `.playbook/plan.json`, `.playbook/repo-graph.json`, `.playbook/last-run.json`)
+4. prerequisite generation (`npx @fawxzzy/playbook index --json`)
+5. canonical ladder (`verify -> plan -> apply`)
+6. required artifact assertions (`.playbook/repo-graph.json`, `.playbook/plan.json`)
+
+Fallback proof now reports artifact failures with deterministic categories:
+
+- `missing_prerequisite_artifact`: prerequisite lifecycle step was not completed
+- `stale_artifact`: artifact exists but predates the producer command run in this proof
+- `invalid_artifact`: artifact exists but JSON/schema validation failed
+
+Each artifact failure includes `artifactPath`, `reason`, `expectedProducerCommand`, `remediation`, and `severity` (`setup_precondition_fail` or `hard_fail`) in JSON output so consumer remediation is explicit.
 
 ## 5.1) Operational proof status tracking (required)
 
@@ -63,6 +72,17 @@ Record each real-network proof outcome in release notes/changelog with:
 - explicit drift callout when either side fails (producer or consumer)
 
 Fallback is only considered operationally proven when both producer and consumer checks succeed in a network-capable environment.
+
+Example remediation for a consumer repo:
+
+```bash
+cd /path/to/FawxzzyFitness
+npm install
+npx @fawxzzy/playbook index --json
+npx @fawxzzy/playbook verify --json
+npx @fawxzzy/playbook plan --json
+npx @fawxzzy/playbook apply --json
+```
 
 ## 6) Push the release tag
 

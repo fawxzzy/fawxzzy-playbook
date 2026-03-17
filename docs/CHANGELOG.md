@@ -10,6 +10,8 @@
 
 ### CLI
 
+- WHAT: Reworked `pnpm release:fallback:proof` consumer artifact validation to enforce the real lifecycle (`index -> verify -> plan -> apply`), replacing opaque file-exists checks with deterministic artifact contract diagnostics (`missing_prerequisite_artifact`, `stale_artifact`, `invalid_artifact`) that include artifact path, producer command, remediation text, and severity. WHY: Fixes contract drift where proof required non-existent `.playbook/last-run.json` / `.playbook/findings.json` artifacts and makes downstream remediation actionable.
+
 - WHAT: Hardened `publish-npm` tag reruns to skip `pnpm publish` when the exact package version is already present on npm (`npm view <pkg>@<version>`), then continue to fallback pack/upload steps. WHY: The `v0.1.4` publish run stopped at the first pre-upload blocker (`pnpm publish` version-already-exists), so release fallback tarball upload never executed and proof checks observed a 404 missing asset.
 - Rule: Release-proof flows are blocked by the first pre-upload failure in publish; 404 on fallback asset usually means publish never reached release upload.
 - Failure Mode: Assuming tag existence implies release asset existence.
