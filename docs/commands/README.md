@@ -40,6 +40,7 @@ Do not hand-edit entries inside the managed markers.
 | `cycle` | Run the hardened execution primitives as one deterministic cycle orchestration pass | canonical | remediation | primary | — | Current (implemented) | `pnpm playbook cycle --json` |
 | `apply` | Execute deterministic auto-fixable plan tasks | canonical | remediation | primary | 10 | Current (implemented) | `pnpm playbook apply --from-plan .playbook/plan.json` |
 | `analyze-pr` | Analyze local branch/worktree changes with deterministic PR intelligence | canonical | repo-intelligence | secondary | — | Current (implemented) | `pnpm playbook analyze-pr --json` |
+| `review-pr` | Run governed read-only PR review by composing analyze-pr, improve, and policy evaluate outputs | canonical | governance | secondary | — | Current (implemented) | `pnpm playbook review-pr --json` |
 | `doctor` | Diagnose repository health by aggregating verify, risk, docs, and index analyzers | canonical | governance | secondary | — | Current (implemented) | `pnpm playbook doctor --fix --dry-run` |
 | `diagram` | Generate deterministic architecture Mermaid diagrams | utility | utility | secondary | — | Current (implemented) | `pnpm playbook diagram --repo . --out docs/ARCHITECTURE_DIAGRAMS.md` |
 | `patterns` | Inspect pattern knowledge graph data and review promotion candidates | canonical | governance | secondary | — | Current (implemented) | `pnpm playbook patterns list --json` |

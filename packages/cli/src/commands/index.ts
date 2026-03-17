@@ -73,6 +73,20 @@ const parseAnalyzePrFormat = (allArgs: string[], globalFormat: 'text' | 'json'):
   return format === 'json' ? 'json' : 'text';
 };
 
+
+const parseReviewPrFormat = (allArgs: string[], globalFormat: 'text' | 'json'): 'text' | 'json' | 'github-comment' => {
+  if (globalFormat === 'json') {
+    return 'json';
+  }
+
+  const format = parseOptionValue(allArgs, '--format');
+  if (format === 'github-comment') {
+    return 'github-comment';
+  }
+
+  return format === 'json' ? 'json' : 'text';
+};
+
 const parseOrchestrateArtifactFormat = (allArgs: string[], globalFormat: 'text' | 'json'): 'md' | 'json' | 'both' => {
   if (globalFormat === 'json') {
     return 'json';
@@ -123,6 +137,16 @@ const commandRunners: Record<string, (context: CommandContext) => Promise<Comman
       format: parseAnalyzePrFormat(commandArgs, format),
       quiet,
       baseRef: parseOptionValue(commandArgs, '--base')
+    });
+  },
+
+  'review-pr': async ({ cwd, commandArgs, format, quiet }) => {
+    const { runReviewPr } = await import('./reviewPr.js');
+    return runReviewPr(cwd, {
+      format: parseReviewPrFormat(commandArgs, format),
+      quiet,
+      baseRef: parseOptionValue(commandArgs, '--base'),
+      help: parseFlag(commandArgs, '--help') || parseFlag(commandArgs, '-h')
     });
   },
   verify: async ({ cwd, commandArgs, ci, explain, format, quiet }) => {
@@ -440,6 +464,7 @@ const commandOrder = [
   'analyze',
   'pilot',
   'analyze-pr',
+  'review-pr',
   'ignore',
   'verify',
   'plan',
