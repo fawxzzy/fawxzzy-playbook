@@ -191,6 +191,8 @@ Do not hand-edit entries inside the managed markers.
 
 - `analyze-pr`: Analyze local branch/worktree changes with deterministic PR intelligence
   - Example: `pnpm playbook analyze-pr --json`
+- `review-pr`: Run governed read-only PR review by composing analyze-pr, improve, and policy evaluate outputs
+  - Example: `pnpm playbook review-pr --json`
 - `doctor`: Diagnose repository health by aggregating verify, risk, docs, and index analyzers
   - Example: `pnpm playbook doctor --fix --dry-run`
 - `diagram`: Generate deterministic architecture Mermaid diagrams
@@ -282,6 +284,7 @@ Do not hand-edit entries inside the managed markers.
 | `cycle` | `pnpm playbook cycle --json` |
 | `apply` | `pnpm playbook apply --from-plan .playbook/plan.json` |
 | `analyze-pr` | `pnpm playbook analyze-pr --json` |
+| `review-pr` | `pnpm playbook review-pr --json` |
 | `doctor` | `pnpm playbook doctor --fix --dry-run` |
 | `diagram` | `pnpm playbook diagram --repo . --out docs/ARCHITECTURE_DIAGRAMS.md` |
 | `patterns` | `pnpm playbook patterns list --json` |

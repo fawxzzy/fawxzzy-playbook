@@ -162,6 +162,20 @@ export const commandMetadata: CommandMetadata[] = [
     exampleArgs: 'analyze-pr --json',
     machineReadable: true
   },
+
+  {
+    name: 'review-pr',
+    description: 'Run governed read-only PR review by composing analyze-pr, improve, and policy evaluate outputs',
+    category: 'Repository tools',
+    role: 'governance',
+    lifecycle: 'canonical',
+    discoverability: 'secondary',
+    onboardingPriority: null,
+    canonicalSequence: null,
+    productFacing: true,
+    exampleArgs: 'review-pr --json',
+    machineReadable: true
+  },
   {
     name: 'doctor',
     description: 'Diagnose repository health by aggregating verify, risk, docs, and index analyzers',
