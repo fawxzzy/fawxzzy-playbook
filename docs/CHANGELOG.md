@@ -11,6 +11,13 @@
 ### CLI
 
 - WHAT: Added a deterministic adoption/readiness contract surfaced through `pnpm playbook status --json` and Observer repo APIs/UI (lifecycle stage, fallback-proof readiness, cross-repo eligibility, blockers, and exact next command recommendations) backed by governed artifact producers instead of heuristics. WHY: Gives operators a single actionable readiness view without manual cross-command artifact interpretation.
+- WHAT: Replaced the Step 5 provenance attestation heredoc in `.github/workflows/security.yml` with a deterministic Node-based file write while preserving the existing payload fields and artifact path (`artifacts/provenance.json`). WHY: Prevents YAML-parse fragility from embedded shell heredoc indentation so the workflow remains syntactically valid and runnable.
+- Pattern: Prefer programmatic file writes over shell heredocs in GitHub Actions when embedding structured JSON inside YAML.
+- Failure Mode: Shell heredocs inside workflow YAML are easy to break with indentation/copy-paste changes and can invalidate the whole workflow before runtime.
+
+- WHAT: Updated the README version badge from `v0.1.1` to `v0.1.4` to match the current release baseline referenced by this branch. WHY: Keeps human-facing release metadata aligned with active release state and avoids false signals of stale publishing.
+- Pattern: Human-visible release indicators should either be generated from the canonical package version or updated as part of the release checklist.
+- Failure Mode: Stale human-facing release metadata can make successful release work look unfinished even when package/version state has moved forward.
 
 - WHAT: Temporarily relaxed the security workflow Grype gate by raising `severity-cutoff` from `medium` to `high` in Step 3.1 so fallback release proofing can proceed through tarball upload and validation without disabling SARIF scanning. WHY: Current milestone priority is end-to-end fallback infrastructure validation, not vulnerability remediation.
 - Rule: Security gates should align with the current milestone; strict enforcement should not block unrelated system validation.
