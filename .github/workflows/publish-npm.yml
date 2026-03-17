@@ -3,7 +3,7 @@ name: publish-npm
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   publish:
@@ -21,9 +21,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'pnpm'
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          cache: "pnpm"
 
       - name: Enable Corepack
         run: corepack enable
@@ -37,15 +37,35 @@ jobs:
       - name: Test
         run: pnpm -r test
 
-      - name: Publish packages
+      - name: Publish @fawxzzy/playbook-core
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          pnpm -C packages/core publish --access public --no-git-checks --provenance
-          pnpm -C packages/node publish --access public --no-git-checks --provenance
-          pnpm -C packages/engine publish --access public --no-git-checks --provenance
-          pnpm -C packages/cli publish --access public --no-git-checks --provenance
-          pnpm -C packages/cli-wrapper publish --access public --no-git-checks --provenance
+        working-directory: packages/core
+        run: pnpm publish --access public --no-git-checks --provenance
+
+      - name: Publish @fawxzzy/playbook-node
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: packages/node
+        run: pnpm publish --access public --no-git-checks --provenance
+
+      - name: Publish @fawxzzy/playbook-engine
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: packages/engine
+        run: pnpm publish --access public --no-git-checks --provenance
+
+      - name: Publish @fawxzzy/playbook-cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: packages/cli
+        run: pnpm publish --access public --no-git-checks --provenance
+
+      - name: Publish @fawxzzy/playbook-cli-wrapper
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: packages/cli-wrapper
+        run: pnpm publish --access public --no-git-checks --provenance
 
       - name: Pack deterministic fallback tarball
         id: fallback_pack
