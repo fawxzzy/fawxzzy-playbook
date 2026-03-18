@@ -8,10 +8,18 @@ import { fileURLToPath } from 'node:url';
 const DEFAULT_OWNER = 'ZachariahRedfield';
 const DEFAULT_REPO = 'playbook';
 const IS_WINDOWS = process.platform === 'win32';
-const NPM_COMMAND = IS_WINDOWS ? 'npm.cmd' : 'npm';
-const NPX_COMMAND = IS_WINDOWS ? 'npx.cmd' : 'npx';
-const CURL_COMMAND = IS_WINDOWS ? 'curl.exe' : 'curl';
-const TAR_COMMAND = IS_WINDOWS ? 'tar.exe' : 'tar';
+
+export const resolveCommand = (command, platform = process.platform) => {
+  if (platform !== 'win32') return command;
+  if (command === 'npm' || command === 'npx') return `${command}.cmd`;
+  if (command === 'curl' || command === 'tar') return `${command}.exe`;
+  return command;
+};
+
+const NPM_COMMAND = resolveCommand('npm');
+const NPX_COMMAND = resolveCommand('npx');
+const CURL_COMMAND = resolveCommand('curl');
+const TAR_COMMAND = resolveCommand('tar');
 
 const parseArgs = () => {
   const args = process.argv.slice(2);
@@ -51,18 +59,27 @@ const parseArgs = () => {
   return result;
 };
 
-const run = (cmd, args, cwd = process.cwd()) => {
+export const run = (cmd, args, cwd = process.cwd(), spawnImpl = spawnSync) => {
   const startedAt = Date.now();
-  const child = spawnSync(cmd, args, { cwd, encoding: 'utf8' });
+  const child = spawnImpl(cmd, args, { cwd, encoding: 'utf8' });
   const endedAt = Date.now();
+  const spawnError = child.error ?? null;
+
   return {
-    ok: child.status === 0,
+    ok: child.status === 0 && spawnError === null,
     status: child.status,
     stdout: child.stdout,
     stderr: child.stderr,
     command: `${cmd} ${args.join(' ')}`,
     startedAt,
-    endedAt
+    endedAt,
+    errorMessage: spawnError?.message,
+    errorCode: spawnError?.code,
+    errorName: spawnError?.name,
+    errorErrno: spawnError?.errno,
+    errorSyscall: spawnError?.syscall,
+    errorPath: spawnError?.path,
+    errorSpawnargs: Array.isArray(spawnError?.spawnargs) ? spawnError.spawnargs : undefined
   };
 };
 
@@ -301,7 +318,14 @@ const main = async () => {
       expectedProducerCommand: item.expectedProducerCommand,
       remediation: item.remediation,
       severity: item.severity,
-      details: item.details
+      details: item.details,
+      errorMessage: item.errorMessage,
+      errorCode: item.errorCode,
+      errorName: item.errorName,
+      errorErrno: item.errorErrno,
+      errorSyscall: item.errorSyscall,
+      errorPath: item.errorPath,
+      errorSpawnargs: item.errorSpawnargs
     }))
   };
 
@@ -316,6 +340,9 @@ const main = async () => {
         );
       }
       if (!item.ok && item.reason) process.stdout.write(`  -> ${item.reason}\n`);
+      if (!item.ok && item.errorMessage) {
+        process.stdout.write(`  -> spawn error: ${item.errorMessage}${item.errorCode ? ` [${item.errorCode}]` : ''}\n`);
+      }
       if (!item.ok && item.remediation) process.stdout.write(`  -> remediation: ${item.remediation}\n`);
     }
     process.stdout.write(`Asset URL: ${assetUrl}\n`);

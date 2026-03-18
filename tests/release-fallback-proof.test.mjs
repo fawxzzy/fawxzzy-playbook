@@ -6,7 +6,9 @@ import path from 'node:path';
 import {
   evaluateArtifactContracts,
   evaluateTarballEntries,
-  parseTarEntries
+  parseTarEntries,
+  resolveCommand,
+  run
 } from '../scripts/release-fallback-proof.mjs';
 
 const withTempRepo = (fn) => {
@@ -111,4 +113,36 @@ test('evaluateTarballEntries validates exact entries and vendored runtime in JS'
   assert.ok(checks.every((check) => check.ok));
   assert.match(checks[0].command, /^node tar-entry-check /);
   assert.match(checks[2].command, /^node tar-entry-prefix-check /);
+});
+
+
+test('resolveCommand maps npm and npx to cmd executables on Windows only', () => {
+  assert.equal(resolveCommand('npm', 'win32'), 'npm.cmd');
+  assert.equal(resolveCommand('npx', 'win32'), 'npx.cmd');
+  assert.equal(resolveCommand('npm', 'linux'), 'npm');
+  assert.equal(resolveCommand('npx', 'darwin'), 'npx');
+});
+
+test('run surfaces spawn errors when command launch fails', () => {
+  const result = run('npm.cmd', ['install'], '/tmp/consumer', () => ({
+    status: null,
+    stdout: '',
+    stderr: '',
+    error: Object.assign(new Error('spawnSync npm.cmd ENOENT'), {
+      code: 'ENOENT',
+      errno: -2,
+      syscall: 'spawnSync npm.cmd',
+      path: 'npm.cmd',
+      spawnargs: ['install']
+    })
+  }));
+
+  assert.equal(result.ok, false);
+  assert.equal(result.status, null);
+  assert.equal(result.errorMessage, 'spawnSync npm.cmd ENOENT');
+  assert.equal(result.errorCode, 'ENOENT');
+  assert.equal(result.errorErrno, -2);
+  assert.equal(result.errorSyscall, 'spawnSync npm.cmd');
+  assert.equal(result.errorPath, 'npm.cmd');
+  assert.deepEqual(result.errorSpawnargs, ['install']);
 });

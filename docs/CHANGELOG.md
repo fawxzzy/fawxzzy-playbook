@@ -1,3 +1,8 @@
+- WHAT: Hardened `scripts/release-fallback-proof.mjs` consumer-proof command execution so machine-readable results now include spawn-launch diagnostics (`errorMessage`, `errorCode`, and related fields) and the consumer npm/npx ladder resolves platform-specific executables explicitly on Windows. WHY: Windows consumer-proof failures were surfacing as opaque `status: null` checks, which hid the real command-launch blocker and made fallback-proof triage nondeterministic across platforms.
+- Failure Mode: Windows spawn failures reported as `status: null` without `child.error` hide the real proof blocker.
+- Pattern: Cross-platform proof scripts should resolve platform-specific executables explicitly and always surface spawn errors in machine-readable output.
+- Rule: Release-proof diagnostics must report command-launch failures directly, not just downstream missing-artifact symptoms.
+
 ## 2026-03-16 — Docs truth-boundary canonicalization
 
 - WHAT: Formalized `.playbook/pr-review.json` as a governed control-plane artifact emitted by `pnpm playbook review-pr` on every run without changing review logic; added deterministic artifact persistence, schema contract registration (`packages/contracts/src/pr-review.schema.json`), `playbook explain artifact .playbook/pr-review.json` summaries, and session evidence envelope linkage (`pr_review` lineage stage + artifact reference) with focused CLI/contract tests. WHY: Converts previously ephemeral PR review output into an auditable, reusable, explainable control-plane artifact for higher-level automation.
