@@ -10,6 +10,7 @@ import {
   buildFleetCodexExecutionPlan,
   buildFleetExecutionReceipt,
   buildFleetUpdatedAdoptionState,
+  deriveNextAdoptionQueueFromUpdatedState,
   buildRepoAdoptionReadiness,
   type FleetAdoptionWorkQueue,
   type FleetCodexExecutionPlan,
@@ -80,6 +81,7 @@ type StatusUpdatedStateResult = {
   command: 'status';
   mode: 'updated';
   updated_state: FleetUpdatedAdoptionState;
+  next_queue: FleetAdoptionWorkQueue;
 };
 
 type ObserverRegistry = {
@@ -265,7 +267,8 @@ const toUpdatedStateStatusResult = (cwd: string): StatusUpdatedStateResult => {
     schemaVersion: '1.0',
     command: 'status',
     mode: 'updated',
-    updated_state: updatedState
+    updated_state: updatedState,
+    next_queue: deriveNextAdoptionQueueFromUpdatedState(updatedState)
   };
 };
 
@@ -400,6 +403,7 @@ export const runStatus = async (cwd: string, options: StatusOptions): Promise<nu
         console.log(`Needs retry: ${updatedResult.updated_state.summary.repos_needing_retry.length}`);
         console.log(`Needs replan: ${updatedResult.updated_state.summary.repos_needing_replan.length}`);
         console.log(`Needs review: ${updatedResult.updated_state.summary.repos_needing_review.length}`);
+        console.log(`Next queue items: ${updatedResult.next_queue.work_items.length}`);
       }
       return ExitCode.Success;
     }

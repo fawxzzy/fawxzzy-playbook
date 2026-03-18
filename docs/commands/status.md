@@ -9,7 +9,7 @@ Deterministic adoption/readiness summary for governed Playbook usage.
 - `pnpm playbook status queue --json`: deterministic read-only adoption work-queue from fleet readiness.
 - `pnpm playbook status execute --json`: deterministic Codex-ready execution-plan packaging derived from the queue.
 - `pnpm playbook status receipt --json`: canonical planned-vs-actual execution receipt derived from readiness, queue, plan, and ingested execution outcomes.
-- `pnpm playbook status updated --json`: reconciled updated adoption state derived from prior state plus the canonical execution receipt; writes `.playbook/execution-updated-state.json`.
+- `pnpm playbook status updated --json`: reconciled updated adoption state derived from prior state plus the canonical execution receipt; writes `.playbook/execution-updated-state.json` and returns `next_queue`, which is derived downstream from updated-state only.
 
 If no Observer registry exists, fleet mode falls back to the current repository as a single-repo fleet.
 
@@ -69,8 +69,10 @@ Within a priority stage, repos are sorted by blocker severity, then `repo_id` to
   - `recommended_command`, `priority_stage`, `severity`
   - `parallel_group`, `dependencies[]`, `rationale`, `wave`
 - `waves[]`: deterministic wave allocation (`wave_1`, `wave_2`) with repo/action counts
+- `queue_source`: `readiness` for readiness-driven queue generation or `updated_state` for post-execution next-queue derivation
 - `grouped_actions[]`: parallel-safe lanes (`init lane`, `index lane`, `verify/plan lane`, `apply lane`)
 - `blocked_items[]`: items with unmet dependencies
+- updated-state-derived `work_items[]` additionally preserve `next_action` and `prompt_lineage[]` so retry/replan routing stays deterministic
 
 ## Queue wave and grouping logic
 
@@ -191,3 +193,27 @@ Each repo also carries `action_state` booleans:
 - `needs_review`
 
 Summary aggregation keeps observed outcome counts (`by_reconciliation_status`) separate from follow-up routing counts (`action_counts`). In particular, `completed_with_drift` is a successful observed outcome class and does **not** automatically imply retry.
+
+
+## Updated-state-driven next queue
+
+Once `.playbook/execution-updated-state.json` exists, that artifact becomes the single source of truth for the next adoption queue. Playbook now derives retry/replan routing from updated-state instead of re-reading raw execution receipts or recomputing directly from readiness.
+
+Deterministic mapping:
+
+- `partial` -> `retry`
+- `failed` -> `retry`
+- `not_run` -> `retry`
+- `blocked` -> remain blocked / no automatic retry
+- `stale_plan_or_superseded` -> `replan`
+- `completed_with_drift` -> no retry; review-only signal
+
+Control-loop pattern:
+
+`state -> queue -> execution plan -> execution receipt -> updated state -> next queue`
+
+Playbook notes:
+
+- **Rule**: Do not derive next actions from raw receipt once updated-state exists.
+- **Pattern**: Updated-state is the canonical driver for the next adoption work queue.
+- **Failure Mode**: Deriving queue from both readiness and updated-state creates split-brain control flow and nondeterministic execution loops.

@@ -196,17 +196,30 @@ Failure Mode: If the dashboard emphasizes large static summaries over interactiv
 
 ## Execution outcome panel
 
-Observer now exposes `/api/readiness/receipt` and `/api/readiness/updated-state`. The dashboard renders separate panels for raw receipt visibility and reconciled updated state, showing:
+Observer now exposes `/api/readiness/receipt`, `/api/readiness/updated-state`, and `/api/readiness/next-queue`. The dashboard renders separate panels for raw receipt visibility, reconciled updated state, and the downstream next queue derived from updated state, showing:
 
 - latest wave result
 - completed prompts
 - failed prompts
 - observed outcome counts from updated-state reconciliation
 - derived next actions (`needs_retry`, `needs_replan`, `needs_review`)
+- a `Next Queue (Derived from Updated State)` panel with retry/replan items, wave grouping, and prompt lineage
 - planned vs actual drift
 
-These panels are read-only-friendly: the receipt remains the canonical planned-vs-actual contract, and updated state is derived deterministically from current readiness, work queue, execution plan, receipt, and `.playbook/execution-outcome-input.json` when present. Updated state separates what happened from what action is needed next so CLI, Observer, and automation layers do not overload one enum with multiple meanings.
+These panels are read-only-friendly: the receipt remains the canonical planned-vs-actual contract, updated state is derived deterministically from current readiness, work queue, execution plan, receipt, and `.playbook/execution-outcome-input.json` when present, and the next queue is then derived from updated state only. Updated state separates what happened from what action is needed next so CLI, Observer, and automation layers do not overload one enum with multiple meanings.
 
 - **Rule**: Observer outcome views must stay evidence-backed and must not auto-execute repo commands.
 - **Pattern**: Surface retry/drift summaries next to readiness and queue state so the next prioritization pass stays deterministic.
 - **Failure Mode**: Operators can lose remediation continuity when failed prompts are visible in logs but not reflected in the next queue.
+
+
+Updated-state next-queue routing is deterministic and non-heuristic:
+
+- `partial`, `failed`, and `not_run` re-enter the queue as `retry` items.
+- `blocked` remains blocked and does not auto-retry.
+- `stale_plan_or_superseded` routes to `replan`.
+- `completed_with_drift` stays review-only and does not auto-retry.
+
+- **Rule**: Once updated-state exists, Observer must derive the next queue from updated-state instead of raw receipt parsing.
+- **Pattern**: Observer now visualizes `updated state -> next queue` as explicit downstream control-plane stages.
+- **Failure Mode**: Mixing readiness-derived and updated-state-derived queue routing creates split-brain fleet execution.

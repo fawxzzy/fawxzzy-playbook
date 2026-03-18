@@ -51,6 +51,7 @@ const fleetSummaryPanelEl = document.getElementById('fleetSummaryPanel');
 const queueSummaryPanelEl = document.getElementById('queueSummaryPanel');
 const executionReceiptPanelEl = document.getElementById('executionReceiptPanel');
 const updatedStatePanelEl = document.getElementById('updatedStatePanel');
+const nextQueuePanelEl = document.getElementById('nextQueuePanel');
 const executionPlanPanelEl = document.getElementById('executionPlanPanel');
 let selectedRepoId = null;
 let selectedBlueprintNodeId = null;
@@ -440,6 +441,25 @@ const loadUpdatedState = async () => {
   renderUpdatedStateSummary(payload.updated_state || null);
 };
 
+const renderNextQueueSummary = (queue) => {
+  if (!queue || typeof queue !== 'object') {
+    nextQueuePanelEl.innerHTML = '<div class="empty-state">Next queue unavailable.</div>';
+    return;
+  }
+
+  const topActions = Array.isArray(queue.work_items) ? queue.work_items.slice(0, 5) : [];
+  nextQueuePanelEl.innerHTML =
+    '<div><strong>Queue source:</strong> ' + escapeHtml(queue.queue_source || 'unknown') + '</div>' +
+    '<div><strong>Next items:</strong> ' + escapeHtml(String(topActions.length ? (queue.work_items || []).length : 0)) + '</div>' +
+    '<div><strong>Top actions</strong><ul>' + (topActions.length > 0 ? topActions.map((item) => '<li>' + escapeHtml(item.repo_id + ' • ' + (item.next_action || 'n/a') + ' • ' + item.recommended_command + ' • lineage ' + ((item.prompt_lineage || []).join(', ') || 'none')) + '</li>').join('') : '<li>none</li>') + '</ul></div>' +
+    '<div><strong>Wave breakdown</strong><ul>' + (Array.isArray(queue.waves) ? queue.waves.map((wave) => '<li>' + escapeHtml(wave.wave + ': ' + wave.action_count + ' actions') + '</li>').join('') : '<li>none</li>') + '</ul></div>';
+};
+
+const loadNextQueueSummary = async () => {
+  const payload = await getJson('/api/readiness/next-queue');
+  renderNextQueueSummary(payload.next_queue || null);
+};
+
 const renderQueueSummary = (queue) => {
   if (!queue || typeof queue !== 'object') {
     queueSummaryPanelEl.innerHTML = '<div class="empty-state">Work queue unavailable.</div>';
@@ -650,6 +670,7 @@ const refreshAll = async () => {
     await loadQueueSummary();
     await loadExecutionReceipt();
     await loadUpdatedState();
+    await loadNextQueueSummary();
     await loadExecutionPlanSummary();
   } catch (error) {
     healthEl.textContent = 'error: ' + error.message;

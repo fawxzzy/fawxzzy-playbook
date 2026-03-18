@@ -96,7 +96,6 @@ const determineReconciliationStatus = (input: {
 
 const determineActionState = (input: {
   reconciliationStatus: ReconciliationStatus;
-  receiptStatus: ExecutionComparisonStatus | 'unknown';
   blockerCodes: string[];
 }): ReconciledActionState => {
   const hasBlockers = input.blockerCodes.length > 0;
@@ -110,19 +109,11 @@ const determineActionState = (input: {
     case 'failed':
       return { needs_retry: true, needs_replan: false, needs_review: hasBlockers };
     case 'blocked':
-      return {
-        needs_retry: input.receiptStatus === 'failed' || input.receiptStatus === 'partial_success',
-        needs_replan: false,
-        needs_review: true
-      };
+      return { needs_retry: false, needs_replan: false, needs_review: true };
     case 'not_run':
-      return { needs_retry: false, needs_replan: false, needs_review: false };
+      return { needs_retry: true, needs_replan: false, needs_review: false };
     case 'stale_plan_or_superseded':
-      return {
-        needs_retry: input.receiptStatus === 'failed' || input.receiptStatus === 'partial_success',
-        needs_replan: true,
-        needs_review: true
-      };
+      return { needs_retry: false, needs_replan: true, needs_review: true };
   }
 };
 
@@ -162,7 +153,6 @@ export const buildFleetUpdatedAdoptionState = (
     });
     const actionState = determineActionState({
       reconciliationStatus,
-      receiptStatus,
       blockerCodes
     });
 

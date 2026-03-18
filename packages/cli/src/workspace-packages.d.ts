@@ -24,6 +24,7 @@ declare module "@zachariahredfield/playbook-engine" {
   export const buildFleetCodexExecutionPlan: (...args: any[]) => any;
   export const buildFleetExecutionReceipt: (...args: any[]) => any;
   export const buildFleetUpdatedAdoptionState: (...args: any[]) => any;
+  export const deriveNextAdoptionQueueFromUpdatedState: (...args: any[]) => any;
   export type RepoAdoptionReadiness = any;
   export type FleetAdoptionReadinessSummary = any;
   export type FleetAdoptionWorkQueue = any;

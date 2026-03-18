@@ -21,8 +21,9 @@ const buildFleetAdoptionWorkQueue = vi.fn();
 const buildFleetCodexExecutionPlan = vi.fn();
 const buildFleetExecutionReceipt = vi.fn();
 const buildFleetUpdatedAdoptionState = vi.fn();
+const deriveNextAdoptionQueueFromUpdatedState = vi.fn();
 
-vi.mock('@zachariahredfield/playbook-engine', () => ({ buildRepoAdoptionReadiness, buildFleetAdoptionReadinessSummary, buildFleetAdoptionWorkQueue, buildFleetCodexExecutionPlan, buildFleetExecutionReceipt, buildFleetUpdatedAdoptionState }));
+vi.mock('@zachariahredfield/playbook-engine', () => ({ buildRepoAdoptionReadiness, buildFleetAdoptionReadinessSummary, buildFleetAdoptionWorkQueue, buildFleetCodexExecutionPlan, buildFleetExecutionReceipt, buildFleetUpdatedAdoptionState, deriveNextAdoptionQueueFromUpdatedState }));
 
 const makeAnalyzeReport = (overrides?: Partial<AnalyzeReport>): AnalyzeReport => ({
   repoPath: '/tmp/repo',
@@ -56,6 +57,7 @@ describe('runStatus', () => {
     buildFleetCodexExecutionPlan.mockReset();
     buildFleetExecutionReceipt.mockReset();
     buildFleetUpdatedAdoptionState.mockReset();
+    deriveNextAdoptionQueueFromUpdatedState.mockReset();
     buildRepoAdoptionReadiness.mockReturnValue({
       schemaVersion: '1.0',
       connection_status: 'connected',
@@ -165,6 +167,17 @@ describe('runStatus', () => {
         completed_repo_ids: []
       },
       repos: []
+    });
+    deriveNextAdoptionQueueFromUpdatedState.mockReturnValue({
+      schemaVersion: '1.0',
+      kind: 'fleet-adoption-work-queue',
+      generated_at: '2026-01-01T00:00:00.000Z',
+      total_repos: 0,
+      queue_source: 'updated_state',
+      work_items: [],
+      waves: [],
+      grouped_actions: [],
+      blocked_items: []
     });
   });
 
@@ -414,6 +427,7 @@ describe('runStatus', () => {
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.mode).toBe('updated');
     expect(payload.updated_state.kind).toBe('fleet-adoption-updated-state');
+    expect(payload.next_queue.queue_source).toBe('updated_state');
     const artifactPath = path.join(cwd, '.playbook', 'execution-updated-state.json');
     expect(fs.existsSync(artifactPath)).toBe(true);
     logSpy.mockRestore();

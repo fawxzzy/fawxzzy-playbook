@@ -77,9 +77,9 @@ describe('buildFleetUpdatedAdoptionState', () => {
     const updated = buildFleetUpdatedAdoptionState(plan, queue, blockedFleet, receipt);
 
     expect(updated.repos[0]?.reconciliation_status).toBe('blocked');
-    expect(updated.repos[0]?.action_state).toEqual({ needs_retry: true, needs_replan: false, needs_review: true });
+    expect(updated.repos[0]?.action_state).toEqual({ needs_retry: false, needs_replan: false, needs_review: true });
     expect(updated.summary.by_reconciliation_status.blocked).toBe(1);
-    expect(updated.summary.action_counts.needs_retry).toBe(1);
+    expect(updated.summary.action_counts.needs_retry).toBe(0);
   });
 
   it('marks partial and failed outcomes as observed classes with retry follow-up separated in action_state', () => {
@@ -102,11 +102,11 @@ describe('buildFleetUpdatedAdoptionState', () => {
     expect(byRepo['repo-b']?.reconciliation_status).toBe('failed');
     expect(byRepo['repo-b']?.action_state).toEqual({ needs_retry: true, needs_replan: false, needs_review: false });
     expect(byRepo['repo-c']?.reconciliation_status).toBe('not_run');
-    expect(byRepo['repo-c']?.action_state).toEqual({ needs_retry: false, needs_replan: false, needs_review: false });
+    expect(byRepo['repo-c']?.action_state).toEqual({ needs_retry: true, needs_replan: false, needs_review: false });
     expect(updated.summary.by_reconciliation_status.partial).toBe(1);
     expect(updated.summary.by_reconciliation_status.failed).toBe(1);
-    expect(updated.summary.action_counts.needs_retry).toBe(2);
-    expect(updated.summary.repos_needing_retry).toEqual(['repo-a', 'repo-b']);
+    expect(updated.summary.action_counts.needs_retry).toBe(3);
+    expect(updated.summary.repos_needing_retry).toEqual(['repo-a', 'repo-b', 'repo-c']);
   });
 
   it('marks stale_plan_or_superseded separately from replan and review follow-up', () => {

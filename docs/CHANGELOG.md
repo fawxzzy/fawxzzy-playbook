@@ -22,6 +22,10 @@
 
 ### CLI
 
+- WHAT: Made `execution-updated-state` the canonical driver of the next adoption work queue by adding deterministic `deriveNextAdoptionQueueFromUpdatedState(updatedState)` routing, preserving repo identity/wave grouping/prompt lineage, exposing `next_queue` from `pnpm playbook status updated --json`, and adding an Observer `Next Queue (Derived from Updated State)` panel/API. WHY: Prevents split-brain control flow by ensuring retry/replan decisions are derived only from reconciled updated-state rather than re-reading raw receipts or recomputing from readiness.
+- Rule: Do not derive next actions from raw receipt once updated-state exists.
+- Pattern: `state -> queue -> execution plan -> execution receipt -> updated state -> next queue` is the canonical adoption loop.
+- Failure Mode: Deriving queue from both readiness and updated-state causes nondeterministic execution loops.
 - WHAT: Finalized the hosted fallback release cut for `0.1.8` by bumping all release-coupled workspace/package manifests and release-facing docs/examples in parity so the next clean tag publishes one deterministic wrapper/runtime version. WHY: Release/tag correctness depends on root package, published packages, wrapper tarball naming, and operator docs all agreeing on the same immutable version.
 - WHAT: Documented the hosted fallback fix as a release-finalization requirement: the uploaded GitHub release asset must be the staged `cli-wrapper` tarball and must validate `package/bin/playbook.js`, `package/runtime/main.js`, and vendored `package/runtime/node_modules/**` before upload. WHY: The prior hosted asset failure showed that a locally valid packaging path can still publish an invalid release artifact if upload-time content checks are skipped.
 - Rule: A fallback release is not complete until the hosted asset is proven, not just locally packed.
