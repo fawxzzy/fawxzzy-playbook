@@ -17,7 +17,14 @@ import {
   readCrossRepoPatternsArtifact,
   type CrossRepoPatternsArtifact,
   type FleetExecutionOutcomeInput,
-  type RepoAdoptionReadiness
+  type RepoAdoptionReadiness,
+  readStoriesArtifact,
+  summarizeStoriesBacklog,
+  findStoryById,
+  sortStoriesForBacklog,
+  type StoriesArtifact,
+  type StoryBacklogSummary,
+  type StoryRecord
 } from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../../lib/cliContract.js';
 import {
@@ -43,6 +50,31 @@ type ObserverRepoEntry = {
 };
 
 type ObserverRepoReadinessState = 'connected_only' | 'playbook_detected' | 'partially_observable' | 'observable';
+
+type ObserverStoryBacklog = {
+  artifact_path: '.playbook/stories.json';
+  stories: StoriesArtifact['stories'];
+  summary: StoryBacklogSummary;
+};
+
+type ObserverStoryDetail = {
+  story: StoryRecord;
+  linked_status: {
+    readiness_state: ObserverRepoReadinessState;
+    lifecycle_stage: RepoAdoptionReadiness['lifecycle_stage'];
+  };
+  linked_evidence: Array<{
+    label: string;
+    artifact_path: string;
+    artifact_kind: string;
+    href: string | null;
+  }>;
+  linked_route: {
+    label: string;
+    href: string | null;
+  } | null;
+  raw_artifact_path: '.playbook/stories.json';
+};
 
 type ObserverRepoReadiness = {
   connected: true;
@@ -380,6 +412,61 @@ const readRepoArtifact = (repo: ObserverRepoEntry, kind: ObserverArtifactKind): 
   } catch {
     return { kind, value: null };
   }
+};
+
+
+const readRepoStories = (repo: ObserverRepoEntry): StoriesArtifact => {
+  try {
+    return readStoriesArtifact(repo.root);
+  } catch {
+    return { schemaVersion: '1.0', repo: repo.name, stories: [] };
+  }
+};
+
+const buildStoryEvidenceLinks = (repoId: string, story: StoryRecord): ObserverStoryDetail['linked_evidence'] => {
+  const links = story.evidence.map((entry) => {
+    const normalized = String(entry);
+    const artifactPath = normalized.startsWith('.playbook/') ? normalized : '.playbook/' + normalized.replace(/^\/+/, '');
+    const artifactKind = artifactPath.split('/').pop()?.replace(/\.json$/,'') || 'evidence';
+    return {
+      label: normalized,
+      artifact_path: artifactPath,
+      artifact_kind: artifactKind,
+      href: artifactKindsForStoryEvidence().includes(artifactKind) ? `/repos/${encodeURIComponent(repoId)}/artifacts/${encodeURIComponent(artifactKind)}` : null
+    };
+  });
+  return links;
+};
+
+const artifactKindsForStoryEvidence = (): string[] => ['cycle-state', 'cycle-history', 'policy-evaluation', 'policy-apply-result', 'pr-review', 'session', 'system-map'];
+
+const buildRepoBacklog = (repo: ObserverRepoEntry, readiness: ObserverRepoReadiness): ObserverStoryBacklog => {
+  const artifact = readRepoStories(repo);
+  return {
+    artifact_path: '.playbook/stories.json',
+    stories: sortStoriesForBacklog(artifact.stories),
+    summary: summarizeStoriesBacklog(artifact)
+  };
+};
+
+const buildStoryDetail = (repo: ObserverRepoEntry, storyId: string, readiness: ObserverRepoReadiness): ObserverStoryDetail | null => {
+  const artifact = readRepoStories(repo);
+  const story = findStoryById(artifact, storyId);
+  if (!story) return null;
+  const linkedEvidence = buildStoryEvidenceLinks(repo.id, story);
+  return {
+    story,
+    linked_status: {
+      readiness_state: readiness.readiness_state,
+      lifecycle_stage: readiness.lifecycle_stage
+    },
+    linked_evidence: linkedEvidence,
+    linked_route: story.suggested_route ? {
+      label: story.suggested_route,
+      href: null
+    } : null,
+    raw_artifact_path: '.playbook/stories.json'
+  };
 };
 
 const repoReadiness = (repo: ObserverRepoEntry): ObserverRepoReadiness => {
@@ -870,7 +957,35 @@ const observerServerResponse = (observerRoot: string, invocationCwd: string, pat
     if (!repo) {
       return { statusCode: 404, payload: { ...base, kind: 'observer-server-error', error: 'repo-not-found' } };
     }
-    return { statusCode: 200, payload: { ...base, kind: 'observer-server-repo', repo, readiness: repoReadiness(repo) } };
+    const readiness = repoReadiness(repo);
+    return { statusCode: 200, payload: { ...base, kind: 'observer-server-repo', repo, readiness, backlog: buildRepoBacklog(repo, readiness) } };
+  }
+
+  const backlogMatch = /^\/repos\/([^/]+)\/backlog$/.exec(pathname);
+  if (backlogMatch) {
+    const repo = registry.repos.find((entry: any) => entry.id === decodeURIComponent(backlogMatch[1] ?? ''));
+    if (!repo) {
+      return { statusCode: 404, payload: { ...base, kind: 'observer-server-error', error: 'repo-not-found' } };
+    }
+    const readiness = repoReadiness(repo);
+    return {
+      statusCode: 200,
+      payload: { ...base, kind: 'observer-server-backlog', repoId: repo.id, backlog: buildRepoBacklog(repo, readiness), readiness }
+    };
+  }
+
+  const storyMatch = /^\/repos\/([^/]+)\/backlog\/stories\/([^/]+)$/.exec(pathname);
+  if (storyMatch) {
+    const repo = registry.repos.find((entry: any) => entry.id === decodeURIComponent(storyMatch[1] ?? ''));
+    if (!repo) {
+      return { statusCode: 404, payload: { ...base, kind: 'observer-server-error', error: 'repo-not-found' } };
+    }
+    const readiness = repoReadiness(repo);
+    const detail = buildStoryDetail(repo, decodeURIComponent(storyMatch[2] ?? ''), readiness);
+    if (!detail) {
+      return { statusCode: 404, payload: { ...base, kind: 'observer-server-error', error: 'story-not-found' } };
+    }
+    return { statusCode: 200, payload: { ...base, kind: 'observer-server-story-detail', repoId: repo.id, detail } };
   }
 
   const artifactMatch = /^\/repos\/([^/]+)\/artifacts\/([^/]+)$/.exec(pathname);
