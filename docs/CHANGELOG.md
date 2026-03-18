@@ -15,6 +15,13 @@
 - Rule: Execution-plan output must remain deterministic and read-only for identical queue inputs.
 - Pattern: Package queue actions by wave and command-family lanes so operators can run Codex workers in parallel with low overlap risk.
 - Failure Mode: Merge-conflict churn and contradictory operator prompts when the same repo is assigned to conflicting same-wave command lanes.
+- WHAT: Updated `packages/cli-wrapper/package.json` so `build` is a deterministic no-op while runtime staging runs only in `prepack` and `prepublishOnly`. WHY: Prevents parallel monorepo `pnpm -r build` races by moving fallback wrapper runtime staging to packaging-only lifecycle hooks.
+- Failure Mode: Using package build for fallback artifact staging causes races in parallel monorepo builds because upstream dist outputs may not exist yet.
+- Pattern: Fallback wrapper runtime staging should happen in packaging lifecycle hooks (`prepack` / `prepublishOnly`), not in the standard workspace build script.
+
+- WHAT: Hardened `scripts/prepare-cli-wrapper-runtime.mjs` so cli-wrapper runtime staging bootstraps `packages/cli/dist` by running `pnpm -C packages/cli build` when dist is missing in clean CI environments. WHY: Prevents build-order/bootstrap failures during wrapper runtime preparation without changing the self-contained packaging model.
+- Failure Mode: Self-contained packaging can still fail in CI if runtime prep assumes a prebuilt upstream dist that clean environments do not have yet.
+- Pattern: Wrapper runtime staging scripts should bootstrap their upstream build prerequisites instead of assuming prior build order.
 
 - WHAT: Added deterministic adoption work-queue planning on top of fleet readiness (`pnpm playbook status queue --json`) with a stable `fleet-adoption-work-queue` contract (`work_items`, `waves`, `grouped_actions`, `blocked_items`), observer API/UI integration (`GET /api/readiness/queue` + dashboard queue panel), and focused ordering/wave/grouping tests. WHY: Converts fleet readiness into an executable, parallel-safe queue without mutating repositories.
 - Rule: Queue output must remain read-only and deterministic for identical readiness input.
