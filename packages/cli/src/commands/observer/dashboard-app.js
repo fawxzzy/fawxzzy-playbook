@@ -49,6 +49,7 @@ const repoViewPanelEl = document.getElementById('repoViewPanel');
 const crossRepoViewPanelEl = document.getElementById('crossRepoViewPanel');
 const fleetSummaryPanelEl = document.getElementById('fleetSummaryPanel');
 const queueSummaryPanelEl = document.getElementById('queueSummaryPanel');
+const executionReceiptPanelEl = document.getElementById('executionReceiptPanel');
 const executionPlanPanelEl = document.getElementById('executionPlanPanel');
 let selectedRepoId = null;
 let selectedBlueprintNodeId = null;
@@ -388,6 +389,28 @@ const loadFleetSummary = async () => {
   renderFleetSummary(payload.fleet || null);
 };
 
+
+
+const renderExecutionReceiptSummary = (receipt) => {
+  if (!receipt || typeof receipt !== 'object') {
+    executionReceiptPanelEl.innerHTML = '<div class="empty-state">Execution outcome receipt unavailable.</div>';
+    return;
+  }
+
+  const latestWave = Array.isArray(receipt.wave_results) && receipt.wave_results.length > 0 ? receipt.wave_results[receipt.wave_results.length - 1] : null;
+  const summary = receipt.verification_summary || {};
+  executionReceiptPanelEl.innerHTML =
+    '<div><strong>Latest wave result:</strong> ' + escapeHtml(latestWave ? latestWave.wave_id + ' • ' + latestWave.status : 'none') + '</div>' +
+    '<div><strong>Completed prompts:</strong> ' + escapeHtml(String(summary.succeeded_count || 0)) + '</div>' +
+    '<div><strong>Failed prompts:</strong> ' + escapeHtml(String((summary.failed_count || 0) + (summary.mismatch_count || 0))) + '</div>' +
+    '<div><strong>Repos needing retry:</strong> ' + escapeHtml(Array.isArray(summary.repos_needing_retry) && summary.repos_needing_retry.length > 0 ? summary.repos_needing_retry.join(', ') : 'none') + '</div>' +
+    '<div><strong>Planned vs actual drift:</strong> ' + escapeHtml(String((summary.planned_vs_actual_drift || []).length || 0)) + '</div>';
+};
+
+const loadExecutionReceipt = async () => {
+  const payload = await getJson('/api/readiness/receipt');
+  renderExecutionReceiptSummary(payload.receipt || null);
+};
 
 const renderQueueSummary = (queue) => {
   if (!queue || typeof queue !== 'object') {

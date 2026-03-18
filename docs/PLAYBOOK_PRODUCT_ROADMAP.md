@@ -2130,3 +2130,5 @@ Execution state is persisted under `.playbook/runs/<run-id>.json` and is queryab
 
 - `pnpm playbook status --json` provides a deterministic adoption contract for connected repos: connection status, Playbook detection, governed artifact readiness, lifecycle stage, fallback-proof eligibility, cross-repo eligibility, blockers, and exact next commands.
 - Observer repo cards/details now expose this readiness stage and first actionable next command without requiring manual artifact interpretation.
+
+- Execution outcomes: adoption execution now has a deterministic receipt model, planned-vs-actual lifecycle comparison, and observer retry/drift surfacing.

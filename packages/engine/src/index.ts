@@ -28,6 +28,8 @@ export { buildFleetAdoptionWorkQueue } from './adoption/workQueue.js';
 export type { FleetAdoptionWorkQueue, AdoptionWorkItem, AdoptionWorkWave, AdoptionGroupedActionLane, AdoptionBlockedItem, WorkQueueAction, WorkQueueParallelGroup, WorkQueueSeverity } from './adoption/workQueue.js';
 export { buildFleetCodexExecutionPlan } from './adoption/executionPlan.js';
 export type { FleetCodexExecutionPlan, CodexExecutionWave, CodexExecutionWorkerLane, CodexExecutionPrompt, CodexExecutionBlockedFollowup } from './adoption/executionPlan.js';
+export { buildFleetExecutionReceipt } from './adoption/executionReceipt.js';
+export type { FleetExecutionOutcomeInput, ExecutionPromptOutcomeInput, FleetExecutionReceipt, ExecutionPromptResult, ExecutionWaveResult, ExecutionRepoResult, ExecutionArtifactEvidence, ExecutionBlocker, ExecutionVerificationSummary, ExecutionObservedStatus, ExecutionComparisonStatus, LifecycleTransition } from './adoption/executionReceipt.js';
 
 export { generateRepositoryIndex } from './indexer/repoIndexer.js';
 export type { RepositoryIndex, RepositoryModule, RepositoryDependencyEdge, RepositoryWorkspaceNode, RepositoryTestCoverage, RepositoryConfigEntry } from './indexer/repoIndexer.js';

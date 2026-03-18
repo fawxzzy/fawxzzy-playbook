@@ -408,3 +408,5 @@
 - Added `workset-plan` artifact contract and `.playbook/workset-plan.json` output for `orchestrate --tasks-file`.
 - Added deterministic lane planner that groups compatible surfaces, separates conflict surfaces, respects dependency levels, and blocks ambiguous/unsupported tasks conservatively.
 - Added lane-level worker-ready Codex prompts and tests for parallel docs+cli routing, engine conflict isolation, ambiguous blocking, unsupported prerequisites, and mixed worksets.
+
+- Added deterministic execution receipt / outcome-ingestion support so adoption execution can compare planned vs observed lifecycle transitions and feed retry prioritization.

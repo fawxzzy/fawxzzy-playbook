@@ -8,10 +8,13 @@ import {
   buildFleetAdoptionReadinessSummary,
   buildFleetAdoptionWorkQueue,
   buildFleetCodexExecutionPlan,
+  buildFleetExecutionReceipt,
   buildRepoAdoptionReadiness,
   type FleetAdoptionWorkQueue,
   type FleetCodexExecutionPlan,
   type FleetAdoptionReadinessSummary,
+  type FleetExecutionOutcomeInput,
+  type FleetExecutionReceipt,
   type RepoAdoptionReadiness
 } from '@zachariahredfield/playbook-engine';
 import fs from 'node:fs';
@@ -23,7 +26,7 @@ type StatusOptions = {
   ci: boolean;
   format: 'text' | 'json';
   quiet: boolean;
-  scope?: 'repo' | 'fleet' | 'queue' | 'execute';
+  scope?: 'repo' | 'fleet' | 'queue' | 'execute' | 'receipt';
 };
 
 type StatusResult = {
@@ -62,6 +65,13 @@ type StatusExecutionResult = {
   execution_plan: FleetCodexExecutionPlan;
 };
 
+type StatusReceiptResult = {
+  schemaVersion: '1.0';
+  command: 'status';
+  mode: 'receipt';
+  receipt: FleetExecutionReceipt;
+};
+
 type ObserverRegistry = {
   repos: Array<{ id: string; name: string; root: string }>;
 };
@@ -76,6 +86,26 @@ type RepoIndexSummary = {
 type TopIssue = {
   id: string;
   description: string;
+};
+
+
+const EXECUTION_OUTCOME_INPUT_RELATIVE_PATH = path.join('.playbook', 'execution-outcome-input.json');
+
+const defaultOutcomeInput = (): FleetExecutionOutcomeInput => ({
+  schemaVersion: '1.0',
+  kind: 'fleet-adoption-execution-outcome-input',
+  generated_at: new Date(0).toISOString(),
+  session_id: 'unrecorded-session',
+  prompt_outcomes: []
+});
+
+const readExecutionOutcomeInput = (cwd: string): FleetExecutionOutcomeInput => {
+  const targetPath = path.join(cwd, EXECUTION_OUTCOME_INPUT_RELATIVE_PATH);
+  if (!fs.existsSync(targetPath)) {
+    return defaultOutcomeInput();
+  }
+
+  return JSON.parse(fs.readFileSync(targetPath, 'utf8')) as FleetExecutionOutcomeInput;
 };
 
 const readRepoIndexSummary = (cwd: string): RepoIndexSummary | null => {
@@ -197,6 +227,18 @@ const toExecutionStatusResult = (cwd: string): StatusExecutionResult => {
   };
 };
 
+const toReceiptStatusResult = (cwd: string): StatusReceiptResult => {
+  const fleet = toFleetStatusResult(cwd).fleet;
+  const queue = buildFleetAdoptionWorkQueue(fleet);
+  const executionPlan = buildFleetCodexExecutionPlan(queue);
+  return {
+    schemaVersion: '1.0',
+    command: 'status',
+    mode: 'receipt',
+    receipt: buildFleetExecutionReceipt(executionPlan, queue, fleet, readExecutionOutcomeInput(cwd))
+  };
+};
+
 const printHuman = (
   result: StatusResult,
   ci: boolean,
@@ -297,6 +339,21 @@ export const runStatus = async (cwd: string, options: StatusOptions): Promise<nu
         console.log(`Wave 2 repos: ${wave2?.repos.length ?? 0}`);
         console.log(`Worker lanes: ${executionResult.execution_plan.worker_lanes.length}`);
         console.log(`Top prompt: ${executionResult.execution_plan.codex_prompts[0]?.prompt_id ?? 'n/a'}`);
+      }
+      return ExitCode.Success;
+    }
+
+    if (options.scope === 'receipt') {
+      const receiptResult = toReceiptStatusResult(cwd);
+      if (options.format === 'json') {
+        console.log(JSON.stringify(receiptResult, null, 2));
+      } else {
+        console.log(`Execution receipt kind: ${receiptResult.receipt.kind}`);
+        console.log(`Prompts total: ${receiptResult.receipt.verification_summary.prompts_total}`);
+        console.log(`Succeeded: ${receiptResult.receipt.verification_summary.succeeded_count}`);
+        console.log(`Failed: ${receiptResult.receipt.verification_summary.failed_count}`);
+        console.log(`Partial: ${receiptResult.receipt.verification_summary.partial_count}`);
+        console.log(`Drift: ${receiptResult.receipt.verification_summary.mismatch_count}`);
       }
       return ExitCode.Success;
     }

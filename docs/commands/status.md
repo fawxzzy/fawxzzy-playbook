@@ -97,6 +97,7 @@ pnpm playbook status
 pnpm playbook status fleet --json
 pnpm playbook status queue --json
 pnpm playbook status execute --json
+pnpm playbook status receipt --json
 ```
 
 ## Codex execution-plan JSON contract highlights
@@ -134,3 +135,29 @@ Canonical ordering comparator:
 2. Keep workers lane-scoped and repo-scoped; do not mix command families in one PR.
 3. Start with Wave 1 prompts only; generate a fresh execution plan after Wave 1 merges.
 4. Use `merge_conflict_risk` and lane rationale to schedule high-risk apply work last.
+
+## Execution receipt JSON contract highlights
+
+- `kind`: `fleet-adoption-execution-receipt`
+- `execution_plan_digest`: stable digest of the execution plan being evaluated
+- `session_id`: operator/session identifier from ingested outcome input
+- `wave_results[]`: latest wave result, completed/failed/partial prompts, retry repos, and drift markers
+- `prompt_results[]`: one entry per planned prompt with `intended_transition`, `observed_transition`, `status`, `verification_passed`, and evidence
+- `repo_results[]`: repo-level aggregate outcome with retry recommendation
+- `artifact_deltas[]`: governed artifact evidence tied to lifecycle proof
+- `blockers[]`: explicit operator-ingested blockers with evidence
+- `verification_summary`: counts plus `repos_needing_retry[]` and `planned_vs_actual_drift[]`
+
+### Planned vs actual semantics
+
+- **Planned lifecycle move** is derived from the queue/execution-plan lane.
+- **Observed lifecycle move** is derived from current readiness artifacts after execution.
+- **Success** requires both a successful ingested prompt outcome and governed evidence that the repo reached the planned lifecycle target.
+- **Mismatch** occurs when the operator-reported result says success but governed lifecycle evidence does not match the planned target.
+- **Partial success** captures incomplete forward progress without full target completion.
+
+Governance notes:
+
+- **Rule**: Prefer governed artifact evidence over operator claims when proving lifecycle transitions.
+- **Pattern**: Reuse readiness + queue + execution plan instead of inventing a separate outcome reasoner.
+- **Failure Mode**: Retry drift occurs when failed or mismatched prompts are not surfaced back into the next queue.

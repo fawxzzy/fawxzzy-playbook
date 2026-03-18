@@ -193,3 +193,19 @@ System blueprint rendering is now read-only but stateful:
 Rule: Blueprint state must be derived from governed artifact truth, not UI heuristics.
 Pattern: Static architecture map -> stateful blueprint -> selected-node inspection.
 Failure Mode: If the dashboard emphasizes large static summaries over interactive system state, the UI becomes cluttered and less operationally useful.
+
+## Execution outcome panel
+
+Observer now exposes `/api/readiness/receipt` and the dashboard renders a compact execution outcome panel showing:
+
+- latest wave result
+- completed prompts
+- failed prompts
+- repos needing retry
+- planned vs actual drift
+
+This panel is read-only-friendly: it derives its result from the current readiness summary, work queue, execution plan, and `.playbook/execution-outcome-input.json` when present.
+
+- **Rule**: Observer outcome views must stay evidence-backed and must not auto-execute repo commands.
+- **Pattern**: Surface retry/drift summaries next to readiness and queue state so the next prioritization pass stays deterministic.
+- **Failure Mode**: Operators can lose remediation continuity when failed prompts are visible in logs but not reflected in the next queue.

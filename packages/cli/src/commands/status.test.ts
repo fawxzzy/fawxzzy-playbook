@@ -16,8 +16,9 @@ const buildRepoAdoptionReadiness = vi.fn();
 const buildFleetAdoptionReadinessSummary = vi.fn();
 const buildFleetAdoptionWorkQueue = vi.fn();
 const buildFleetCodexExecutionPlan = vi.fn();
+const buildFleetExecutionReceipt = vi.fn();
 
-vi.mock('@zachariahredfield/playbook-engine', () => ({ buildRepoAdoptionReadiness, buildFleetAdoptionReadinessSummary, buildFleetAdoptionWorkQueue, buildFleetCodexExecutionPlan }));
+vi.mock('@zachariahredfield/playbook-engine', () => ({ buildRepoAdoptionReadiness, buildFleetAdoptionReadinessSummary, buildFleetAdoptionWorkQueue, buildFleetCodexExecutionPlan, buildFleetExecutionReceipt }));
 
 const makeAnalyzeReport = (overrides?: Partial<AnalyzeReport>): AnalyzeReport => ({
   repoPath: '/tmp/repo',
@@ -49,6 +50,7 @@ describe('runStatus', () => {
     buildFleetAdoptionReadinessSummary.mockReset();
     buildFleetAdoptionWorkQueue.mockReset();
     buildFleetCodexExecutionPlan.mockReset();
+    buildFleetExecutionReceipt.mockReset();
     buildRepoAdoptionReadiness.mockReturnValue({
       schemaVersion: '1.0',
       connection_status: 'connected',
@@ -104,6 +106,29 @@ describe('runStatus', () => {
       codex_prompts: [],
       execution_notes: [],
       blocked_followups: []
+    });
+    buildFleetExecutionReceipt.mockReturnValue({
+      schemaVersion: '1.0',
+      kind: 'fleet-adoption-execution-receipt',
+      generated_at: '2026-01-01T00:00:00.000Z',
+      execution_plan_digest: 'abc123',
+      session_id: 'session-1',
+      wave_results: [],
+      prompt_results: [],
+      repo_results: [],
+      artifact_deltas: [],
+      blockers: [],
+      verification_summary: {
+        prompts_total: 0,
+        verification_passed_count: 0,
+        succeeded_count: 0,
+        failed_count: 0,
+        partial_count: 0,
+        mismatch_count: 0,
+        not_run_count: 0,
+        repos_needing_retry: [],
+        planned_vs_actual_drift: []
+      }
     });
   });
 
@@ -279,6 +304,21 @@ describe('runStatus', () => {
     expect(payload.mode).toBe('queue');
     expect(payload.queue.kind).toBe('fleet-adoption-work-queue');
     expect(collectDoctorReport).not.toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
+
+  it('prints receipt JSON output when receipt scope is requested', async () => {
+    const { runStatus } = await import('./status.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runStatus(process.cwd(), { ci: false, format: 'json', quiet: false, scope: 'receipt' });
+    expect(exitCode).toBe(ExitCode.Success);
+
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.mode).toBe('receipt');
+    expect(payload.receipt.kind).toBe('fleet-adoption-execution-receipt');
+    expect(buildFleetExecutionReceipt).toHaveBeenCalled();
     logSpy.mockRestore();
   });
 

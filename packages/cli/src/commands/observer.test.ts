@@ -319,6 +319,12 @@ describe('observer server', () => {
     expect(snapshotJson.fleet.total_repos).toBe(1);
 
 
+    const receiptResponse = await fetch(`http://127.0.0.1:${port}/api/readiness/receipt`);
+    expect(receiptResponse.status).toBe(200);
+    const receiptJson = await receiptResponse.json() as { kind: string; receipt: { kind: string; verification_summary: { prompts_total: number } } };
+    expect(receiptJson.kind).toBe('observer-fleet-adoption-execution-receipt');
+    expect(receiptJson.receipt.kind).toBe('fleet-adoption-execution-receipt');
+
     const fleetReadiness = await fetch(`http://127.0.0.1:${port}/api/readiness/fleet`);
     expect(fleetReadiness.status).toBe(200);
     const fleetReadinessJson = await fleetReadiness.json() as { kind: string; fleet: { total_repos: number; repos_by_priority: Array<{ repo_id: string }> } };
