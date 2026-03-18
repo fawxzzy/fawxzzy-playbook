@@ -736,7 +736,19 @@ For portfolio-level triage, run `pnpm playbook status fleet --json` to aggregate
 
 For actionable execution sequencing, run `pnpm playbook status queue --json` to produce a deterministic, read-only adoption work queue with ordered work items, explicit dependencies, Wave 1/Wave 2 breakdown, and parallel-safe grouped action lanes.
 
-For Codex-ready operator packaging, run `pnpm playbook status execute --json` to translate queue data into a stable execution-plan contract with explicit waves, worker lanes, copy-paste prompts, execution notes, and blocked followups.
+For deterministic execution outcome ingestion, place operator-supplied prompt outcomes in `.playbook/execution-outcome-input.json` and run `pnpm playbook status receipt --json`. Playbook combines the current execution plan, current work queue, current readiness summary, and outcome input to emit a governed execution receipt that records prompt/wave/repo outcomes, artifact deltas, blockers, and planned-vs-actual lifecycle drift.
+
+Receipt semantics:
+
+- `intended_transition`: the lifecycle move implied by the planned lane (`connect` -> `playbook_not_detected`, `init` -> `playbook_detected_index_pending`, `index` -> `indexed_plan_pending`, `verify/plan` -> `planned_apply_pending`, `apply` -> `ready`).
+- `observed_transition`: the lifecycle move proven by current governed readiness artifacts after execution.
+- `status`: `success`, `failed`, `partial_success`, `mismatch`, or `not_run`, derived from the ingested operator outcome plus governed artifact evidence.
+
+This receipt is designed to feed future prioritization cleanly: `verification_summary.repos_needing_retry[]` and `planned_vs_actual_drift[]` identify the exact repos/prompts that should return to the next deterministic work queue.
+
+- Rule: execution receipts must prefer governed artifact evidence over operator claims whenever lifecycle state can be proven from readiness artifacts.
+- Pattern: reuse execution plan + work queue + readiness as the only planning inputs so outcome ingestion does not invent a second reasoning system.
+- Failure Mode: execution-outcome drift appears when operators report success but lifecycle evidence does not reach the planned target stage.
 
 - Rule: identical readiness input must produce identical queue ordering, wave assignment, and execution-plan packaging.
 - Pattern: execute grouped lanes in stage order (`init` -> `index` -> `verify/plan` -> `apply`) and keep one repo in one active lane per wave to reduce conflicts.
