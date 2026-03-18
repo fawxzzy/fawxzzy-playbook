@@ -469,6 +469,12 @@ describe('observer server', () => {
     expect(uiScriptText).toContain('renderSelfObservation');
     expect(uiScriptText).toContain('deriveNodeState');
     expect(uiScriptText).toContain('node-state-');
+    expect(uiScriptText).toContain("document.getElementById('controlLoopSummaryPanel')");
+    expect(uiScriptText).toContain('renderControlLoopSummary');
+    expect(uiScriptText).toContain('summary-strip');
+    expect(uiScriptText).toContain('summary-pill');
+    expect(uiScriptText).toContain('narrative-secondary');
+    expect(uiScriptText).toContain('raw-truth-note');
     expect(uiScriptText).toContain('Control-plane artifacts present:</strong>');
     expect(uiScriptText).toContain('Runtime loop available:</strong>');
     expect(uiScriptText).toContain('Lifecycle stage:');
@@ -596,6 +602,7 @@ describe('observer server', () => {
     expect(uiResponse.status).toBe(200);
     const uiHtml = await uiResponse.text();
     expect(uiHtml).toContain('Observer Dashboard');
+    expect(uiHtml).toContain('id="controlLoopSummaryPanel"');
     expect(uiHtml).toContain('System Blueprint');
     expect(uiHtml).toContain('details id="selfPanel"');
     expect(uiHtml).toContain('Selected Blueprint Node');

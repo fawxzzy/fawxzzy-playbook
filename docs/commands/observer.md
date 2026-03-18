@@ -154,6 +154,36 @@ Observer cross-repo mode now includes a compact **Fleet Readiness Summary** card
 
 This is additive and does not replace repo-first inspection flows.
 
+### Control-loop summary strip (UI)
+
+Observer now leads both repo view and cross-repo view with a compact **Control-Loop Summary** card so operators can understand the loop in seconds before reading dense artifact-backed panels.
+
+The default summary answers:
+
+- `state`
+- `why`
+- `next step`
+
+It also surfaces:
+
+- promotion status
+- whether the current plan is `blocked`, `stale`, or `ready`
+- whether new queue work exists
+
+Progressive disclosure is explicit:
+
+- **Default**: concise narrative, one primary next action, and the key blocker if present
+- **Secondary detail**: blocker list, reasoning, promotion/receipt summary, and drift indicators
+- **Deep/raw truth references**: raw truth refs, artifact paths, diagnostics, and promotion metadata refs
+
+The existing artifact detail viewer remains the canonical raw drilldown for governed artifacts.
+
+Pattern: Observer should behave like a runtime inspector with interpretation, not a second source of truth.
+Pattern: Default control-plane views should compress state into state / why / next step.
+Pattern: Observer behavior tests should target stable semantic surfaces, not fragile display strings.
+Failure Mode: A data-rich Observer that defaults to dense artifact text increases operator friction even when the underlying control system is correct.
+Failure Mode: Copy-coupled UI tests fail during presentation refactors even when deterministic behavior is unchanged.
+
 ### Self-observation cockpit (UI)
 
 Observer UI keeps **Playbook Self-Observation** available as a collapsible panel so blueprint/repo detail surfaces remain primary by default. The panel still presents read-only summaries for the selected home repo:
@@ -219,3 +249,6 @@ Updated-state next-queue routing is deterministic and non-heuristic:
 - **Rule**: Once updated-state exists, Observer must derive the next queue from updated-state instead of raw receipt parsing.
 - **Pattern**: Observer now visualizes `updated state -> next queue` as explicit downstream control-plane stages.
 - **Failure Mode**: Mixing readiness-derived and updated-state-derived queue routing creates split-brain fleet execution.
+- **Pattern**: Observer should behave like a runtime inspector with interpretation, not a second source of truth.
+- **Pattern**: Default control-plane views should compress state into state / why / next step.
+- **Failure Mode**: A data-rich Observer that defaults to dense artifact text increases operator friction even when the underlying control system is correct.
