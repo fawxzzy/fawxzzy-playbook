@@ -54,12 +54,20 @@ const promotionPanelEl = document.getElementById('promotionPanel');
 const updatedStatePanelEl = document.getElementById('updatedStatePanel');
 const nextQueuePanelEl = document.getElementById('nextQueuePanel');
 const executionPlanPanelEl = document.getElementById('executionPlanPanel');
+const controlLoopSummaryPanelEl = document.getElementById('controlLoopSummaryPanel');
 let selectedRepoId = null;
 let selectedBlueprintNodeId = null;
 let homeRepoId = null;
 let latestRepoPayload = null;
 let latestSnapshotRepoEntry = null;
 let activeView = 'repo';
+let latestFleetPayload = null;
+let latestQueuePayload = null;
+let latestExecutionPlanPayload = null;
+let latestExecutionReceiptPayload = null;
+let latestPromotionPayload = null;
+let latestUpdatedStatePayload = null;
+let latestNextQueuePayload = null;
 
 const NODE_LINKED_ARTIFACT = {
   'cycle-state': 'cycle-state',
@@ -86,17 +94,133 @@ const parseTimestamp = (value) => {
 const escapeHtml = (value) => String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const format = (value) => '<pre>' + JSON.stringify(value, null, 2) + '</pre>';
 
+const renderSummaryMetric = (label, value) => '<div class="summary-metric"><div class="summary-metric-label">' + escapeHtml(label) + '</div><div class="summary-metric-value">' + escapeHtml(value || 'n/a') + '</div></div>';
+const renderSummaryPill = (label, tone) => '<span class="summary-pill ' + escapeHtml(tone || '') + '">' + escapeHtml(label) + '</span>';
+
 const renderInterpretation = (interpretation) => {
   const defaultView = interpretation && interpretation.progressive_disclosure && interpretation.progressive_disclosure.default_view;
   const secondaryView = interpretation && interpretation.progressive_disclosure && interpretation.progressive_disclosure.secondary_view;
+  const deepView = interpretation && interpretation.progressive_disclosure && interpretation.progressive_disclosure.deep_view;
   if (!defaultView) return '';
-  const blockers = secondaryView && Array.isArray(secondaryView.blockers) ? secondaryView.blockers.slice(0, 3) : [];
-  return '<div class="interpretation-shell">' +
-    '<div><strong>State:</strong> ' + escapeHtml(defaultView.state || 'unknown') + '</div>' +
-    '<div><strong>Why:</strong> ' + escapeHtml(defaultView.why || 'n/a') + '</div>' +
-    '<div><strong>Next step:</strong> ' + escapeHtml((defaultView.next_step && (defaultView.next_step.command || defaultView.next_step.label)) || 'n/a') + '</div>' +
-    (blockers.length > 0 ? '<div><strong>Blockers</strong><ul>' + blockers.map((blocker) => '<li>' + escapeHtml(blocker) + '</li>').join('') + '</ul></div>' : '') +
+  const blockers = secondaryView && Array.isArray(secondaryView.blockers) ? secondaryView.blockers.slice(0, 5) : [];
+  const reasoning = secondaryView && Array.isArray(secondaryView.reasoning) ? secondaryView.reasoning.slice(0, 5) : [];
+  const secondaryActions = secondaryView && Array.isArray(secondaryView.secondary_actions) ? secondaryView.secondary_actions.slice(0, 3) : [];
+  const rawTruthRefs = deepView && Array.isArray(deepView.raw_truth_refs) ? deepView.raw_truth_refs.slice(0, 6) : [];
+  const artifactPaths = deepView && Array.isArray(deepView.artifact_paths) ? deepView.artifact_paths.slice(0, 6) : [];
+  const promotionRefs = deepView && Array.isArray(deepView.promotion_metadata_refs) ? deepView.promotion_metadata_refs.slice(0, 4) : [];
+  const diagnostics = deepView && Array.isArray(deepView.diagnostics) ? deepView.diagnostics.slice(0, 5) : [];
+  return '<div class="narrative-card">' +
+    '<div class="summary-strip">' +
+    renderSummaryMetric('Current state', defaultView.state || 'unknown') +
+    renderSummaryMetric('Why', defaultView.why || 'n/a') +
+    renderSummaryMetric('Next step', (defaultView.next_step && (defaultView.next_step.command || defaultView.next_step.label)) || 'n/a') +
+    '</div>' +
+    '<div class="narrative-primary"><strong>Primary next action:</strong> ' + escapeHtml((defaultView.next_step && (defaultView.next_step.command || defaultView.next_step.label)) || 'n/a') + '</div>' +
+    (blockers[0] ? '<div class="narrative-secondary"><strong>Key blocker:</strong> ' + escapeHtml(blockers[0]) + '</div>' : '') +
+    '<details class="narrative-secondary"><summary>Secondary detail</summary>' +
+    '<div><strong>Blockers</strong><ul>' + (blockers.length ? blockers.map((blocker) => '<li>' + escapeHtml(blocker) + '</li>').join('') : '<li>none</li>') + '</ul></div>' +
+    '<div><strong>Reasoning</strong><ul>' + (reasoning.length ? reasoning.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') : '<li>none</li>') + '</ul></div>' +
+    '<div><strong>Secondary actions</strong><ul>' + (secondaryActions.length ? secondaryActions.map((item) => '<li>' + escapeHtml(item.command || item.label || 'n/a') + '</li>').join('') : '<li>none</li>') + '</ul></div>' +
+    '</details>' +
+    '<details class="raw-truth-note"><summary>Deep/raw truth references</summary>' +
+    '<div><strong>Raw refs</strong><ul>' + (rawTruthRefs.length ? rawTruthRefs.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') : '<li>none</li>') + '</ul></div>' +
+    '<div><strong>Artifact paths</strong><ul>' + (artifactPaths.length ? artifactPaths.map((item) => '<li><code>' + escapeHtml(item) + '</code></li>').join('') : '<li>none</li>') + '</ul></div>' +
+    '<div><strong>Promotion metadata refs</strong><ul>' + (promotionRefs.length ? promotionRefs.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') : '<li>none</li>') + '</ul></div>' +
+    '<div><strong>Diagnostics</strong><ul>' + (diagnostics.length ? diagnostics.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') : '<li>none</li>') + '</ul></div>' +
+    '<div class="meta">Raw canonical artifacts remain available below via the existing artifact viewer and governed readiness endpoints.</div>' +
+    '</details>' +
     '</div>';
+};
+
+const computePlanStatus = () => {
+  const plan = latestExecutionPlanPayload && latestExecutionPlanPayload.execution_plan;
+  const queue = latestQueuePayload && latestQueuePayload.queue;
+  const updatedState = latestUpdatedStatePayload && latestUpdatedStatePayload.updated_state;
+  if (!plan || !queue) return 'missing';
+  if (Array.isArray(updatedState && updatedState.summary && updatedState.summary.stale_or_superseded_repo_ids) && updatedState.summary.stale_or_superseded_repo_ids.length > 0) {
+    return 'stale';
+  }
+  if (Array.isArray(plan.blocked_followups) && plan.blocked_followups.length > 0) return 'blocked';
+  if (Array.isArray(queue.blocked_items) && queue.blocked_items.length > 0 && (!Array.isArray(queue.work_items) || queue.work_items.length === 0)) return 'blocked';
+  if (Array.isArray(plan.codex_prompts) && plan.codex_prompts.length > 0) return 'ready';
+  return 'idle';
+};
+
+const renderControlLoopSummary = () => {
+  if (activeView === 'repo') {
+    if (!latestRepoPayload || !latestRepoPayload.repo) {
+      controlLoopSummaryPanelEl.innerHTML = '<div class="empty-state">Select a repo to summarize current state, why, and next step.</div>';
+      return;
+    }
+    const readiness = latestRepoPayload.readiness || {};
+    const blockers = Array.isArray(readiness.blockers) ? readiness.blockers : [];
+    const promotion = latestPromotionPayload && latestPromotionPayload.promotion;
+    const nextQueue = latestNextQueuePayload && latestNextQueuePayload.next_queue;
+    const nextStep = Array.isArray(readiness.recommended_next_steps) && readiness.recommended_next_steps.length > 0 ? readiness.recommended_next_steps[0] : 'n/a';
+    const missingArtifacts = Array.isArray(readiness.missing_artifacts) ? readiness.missing_artifacts : [];
+    const planStatus = computePlanStatus();
+    const pills = [
+      renderSummaryPill('Promotion: ' + ((promotion && (promotion.promotion_status || (promotion.promoted ? 'promoted' : 'blocked'))) || 'unknown'), promotion && promotion.promoted ? 'good' : ((promotion && promotion.promotion_status === 'blocked') ? 'bad' : 'warn')),
+      renderSummaryPill('Plan: ' + planStatus, planStatus === 'ready' ? 'good' : (planStatus === 'blocked' ? 'bad' : 'warn')),
+      renderSummaryPill('New queue work: ' + (((nextQueue && Array.isArray(nextQueue.work_items) && nextQueue.work_items.length > 0) || false) ? 'yes' : 'no'), (nextQueue && Array.isArray(nextQueue.work_items) && nextQueue.work_items.length > 0) ? 'warn' : 'good')
+    ];
+    controlLoopSummaryPanelEl.innerHTML =
+      '<div class="summary-strip">' +
+      renderSummaryMetric('Current state', readiness.lifecycle_stage || readiness.readiness_state || 'unknown') +
+      renderSummaryMetric('Why', (blockers[0] && blockers[0].message) || (missingArtifacts[0] ? 'Missing artifact: ' + missingArtifacts[0] : 'Repo truth surfaces are available for inspection.')) +
+      renderSummaryMetric('Next step', nextStep) +
+      '</div>' +
+      '<div class="summary-pill-row">' + pills.join('') + '</div>' +
+      '<details class="narrative-secondary"><summary>Secondary detail</summary>' +
+      '<div><strong>Blockers</strong><ul>' + (blockers.length ? blockers.map((blocker) => '<li>' + escapeHtml((blocker.code || 'blocker') + ': ' + blocker.message) + '</li>').join('') : '<li>none</li>') + '</ul></div>' +
+      '<div><strong>Reasoning</strong><ul><li>' + escapeHtml('Readiness state is derived from canonical repo adoption artifacts only.') + '</li><li>' + escapeHtml('Missing artifacts: ' + (missingArtifacts.length ? missingArtifacts.join(', ') : 'none')) + '</li></ul></div>' +
+      '<div><strong>Promotion / receipt summary</strong><ul><li>' + escapeHtml((promotion && (promotion.summary || promotion.promotion_status)) || 'No fleet promotion summary available yet.') + '</li></ul></div>' +
+      '<div><strong>Drift indicators</strong><ul><li>' + escapeHtml(planStatus === 'stale' ? 'Updated state contains stale or superseded repo results.' : 'No stale plan indicator for the currently loaded fleet state.') + '</li></ul></div>' +
+      '</details>' +
+      '<div class="meta">Deep/raw truth remains available through Artifact Detail Viewer and the readiness panels.</div>';
+    return;
+  }
+
+  const fleetInterpretation = latestFleetPayload && latestFleetPayload.interpretation;
+  const queueInterpretation = latestQueuePayload && latestQueuePayload.interpretation;
+  const nextQueue = latestNextQueuePayload && latestNextQueuePayload.next_queue;
+  const promotion = latestPromotionPayload && latestPromotionPayload.promotion;
+  const queue = latestQueuePayload && latestQueuePayload.queue;
+  const plan = latestExecutionPlanPayload && latestExecutionPlanPayload.execution_plan;
+  if (!fleetInterpretation || !queueInterpretation || !queue || !plan) {
+    controlLoopSummaryPanelEl.innerHTML = '<div class="empty-state">Fleet control-loop summary unavailable.</div>';
+    return;
+  }
+  const fleetDefault = fleetInterpretation.progressive_disclosure.default_view || {};
+  const queueDefault = queueInterpretation.progressive_disclosure.default_view || {};
+  const blockers = queueInterpretation.progressive_disclosure.secondary_view && Array.isArray(queueInterpretation.progressive_disclosure.secondary_view.blockers)
+    ? queueInterpretation.progressive_disclosure.secondary_view.blockers
+    : [];
+  const promotionStatus = (promotion && (promotion.promotion_status || (promotion.promoted ? 'promoted' : 'blocked'))) || 'unknown';
+  const planStatus = computePlanStatus();
+  const hasNewQueueWork = !!(nextQueue && Array.isArray(nextQueue.work_items) && nextQueue.work_items.length > 0);
+  controlLoopSummaryPanelEl.innerHTML =
+    '<div class="summary-strip">' +
+    renderSummaryMetric('Current state', fleetDefault.state || 'unknown') +
+    renderSummaryMetric('Why', queueDefault.why || fleetDefault.why || 'n/a') +
+    renderSummaryMetric('Next step', (queueDefault.next_step && (queueDefault.next_step.command || queueDefault.next_step.label)) || 'n/a') +
+    '</div>' +
+    '<div class="summary-pill-row">' +
+    renderSummaryPill('Promotion: ' + promotionStatus, promotionStatus === 'promoted' ? 'good' : (promotionStatus === 'blocked' ? 'bad' : 'warn')) +
+    renderSummaryPill('Plan: ' + planStatus, planStatus === 'ready' ? 'good' : (planStatus === 'blocked' ? 'bad' : 'warn')) +
+    renderSummaryPill('New queue work: ' + (hasNewQueueWork ? 'yes' : 'no'), hasNewQueueWork ? 'warn' : 'good') +
+    '</div>' +
+    '<details class="narrative-secondary"><summary>Secondary detail</summary>' +
+    '<div><strong>Blocker list</strong><ul>' + (blockers.length ? blockers.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') : '<li>none</li>') + '</ul></div>' +
+    '<div><strong>Reasoning</strong><ul>' +
+    '<li>' + escapeHtml(fleetDefault.why || 'Fleet interpretation unavailable.') + '</li>' +
+    '<li>' + escapeHtml(queueDefault.why || 'Queue interpretation unavailable.') + '</li>' +
+    '<li>' + escapeHtml((promotion && (promotion.summary || promotion.blocked_reason || promotion.error_summary)) || 'No promotion summary available.') + '</li>' +
+    '</ul></div>' +
+    '<div><strong>Promotion / receipt summary</strong><ul><li>' + escapeHtml((promotion && (promotion.summary || promotion.promotion_status)) || 'none') + '</li><li>' + escapeHtml((latestExecutionReceiptPayload && latestExecutionReceiptPayload.receipt && latestExecutionReceiptPayload.receipt.verification_summary && ('Drift count: ' + (latestExecutionReceiptPayload.receipt.verification_summary.mismatch_count || 0))) || 'Receipt summary unavailable') + '</li></ul></div>' +
+    '<div><strong>Drift indicators</strong><ul><li>' + escapeHtml(planStatus === 'stale' ? 'Updated state reports stale or superseded work.' : 'No stale-plan signal from updated state.') + '</li></ul></div>' +
+    '</details>' +
+    '<div class="meta">Deep/raw truth remains available through each readiness panel and the existing artifact detail viewer.</div>';
 };
 
 const getJson = async (url, init) => {
@@ -347,6 +471,7 @@ const loadRepoDetail = async () => {
   removeRepoEl.style.display = '';
   await loadArtifact();
   await loadBlueprint();
+  renderControlLoopSummary();
 };
 
 const loadArtifact = async () => {
@@ -403,7 +528,9 @@ const renderFleetSummary = (fleet, interpretation) => {
 
 const loadFleetSummary = async () => {
   const payload = await getJson('/api/readiness/fleet');
+  latestFleetPayload = payload;
   renderFleetSummary(payload.fleet || null, payload.interpretation || null);
+  renderControlLoopSummary();
 };
 
 
@@ -435,7 +562,9 @@ const renderPromotionSummary = (promotion) => {
 
 const loadPromotionSummary = async () => {
   const payload = await getJson('/api/readiness/promotion');
+  latestPromotionPayload = payload;
   renderPromotionSummary(payload.promotion || null);
+  renderControlLoopSummary();
 };
 
 const renderExecutionReceiptSummary = (receipt, interpretation) => {
@@ -456,8 +585,10 @@ const renderExecutionReceiptSummary = (receipt, interpretation) => {
 
 const loadExecutionReceipt = async () => {
   const payload = await getJson('/api/readiness/receipt');
+  latestExecutionReceiptPayload = payload;
   renderExecutionReceiptSummary(payload.receipt || null, payload.interpretation || null);
   renderPromotionSummary((payload.receipt && payload.receipt.workflow_promotion) || payload.promotion || null);
+  renderControlLoopSummary();
 };
 
 
@@ -484,7 +615,9 @@ const renderUpdatedStateSummary = (updatedState, interpretation) => {
 
 const loadUpdatedState = async () => {
   const payload = await getJson('/api/readiness/updated-state');
+  latestUpdatedStatePayload = payload;
   renderUpdatedStateSummary(payload.updated_state || null, payload.interpretation || null);
+  renderControlLoopSummary();
 };
 
 const renderNextQueueSummary = (queue, interpretation) => {
@@ -503,7 +636,9 @@ const renderNextQueueSummary = (queue, interpretation) => {
 
 const loadNextQueueSummary = async () => {
   const payload = await getJson('/api/readiness/next-queue');
+  latestNextQueuePayload = payload;
   renderNextQueueSummary(payload.next_queue || null, payload.interpretation || null);
+  renderControlLoopSummary();
 };
 
 const renderQueueSummary = (queue, interpretation) => {
@@ -533,7 +668,9 @@ const renderQueueSummary = (queue, interpretation) => {
 
 const loadQueueSummary = async () => {
   const payload = await getJson('/api/readiness/queue');
+  latestQueuePayload = payload;
   renderQueueSummary(payload.queue || null, payload.interpretation || null);
+  renderControlLoopSummary();
 };
 
 
@@ -562,7 +699,9 @@ const renderExecutionPlanSummary = (plan, interpretation) => {
 
 const loadExecutionPlanSummary = async () => {
   const payload = await getJson('/api/readiness/execute');
+  latestExecutionPlanPayload = payload;
   renderExecutionPlanSummary(payload.execution_plan || null, payload.interpretation || null);
+  renderControlLoopSummary();
 };
 
 const setActiveView = (view) => {
@@ -574,6 +713,7 @@ const setActiveView = (view) => {
   crossRepoModeBtnEl.classList.toggle('active', !repoMode);
   repoModeBtnEl.setAttribute('aria-selected', repoMode ? 'true' : 'false');
   crossRepoModeBtnEl.setAttribute('aria-selected', repoMode ? 'false' : 'true');
+  renderControlLoopSummary();
 };
 
 const renderCompareSelectors = (repos) => {

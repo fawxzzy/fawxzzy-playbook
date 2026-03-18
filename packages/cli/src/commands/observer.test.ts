@@ -473,6 +473,11 @@ describe('observer server', () => {
     expect(uiScriptText).toContain('Runtime loop available:</strong>');
     expect(uiScriptText).toContain('Lifecycle stage:');
     expect(uiScriptText).toContain('Next command:');
+    expect(uiScriptText).toContain('Control-Loop Summary');
+    expect(uiScriptText).toContain('Current state');
+    expect(uiScriptText).toContain('Secondary detail');
+    expect(uiScriptText).toContain('Deep/raw truth references');
+    expect(uiScriptText).toContain('Raw canonical artifacts remain available below via the existing artifact viewer');
     expect(uiScriptText).toContain('Reconciled updated state unavailable');
     expect(uiScriptText).toContain('Observed outcome counts:');
     expect(uiScriptText).toContain('Needs replan:');
@@ -596,6 +601,7 @@ describe('observer server', () => {
     expect(uiResponse.status).toBe(200);
     const uiHtml = await uiResponse.text();
     expect(uiHtml).toContain('Observer Dashboard');
+    expect(uiHtml).toContain('Control-Loop Summary');
     expect(uiHtml).toContain('System Blueprint');
     expect(uiHtml).toContain('details id="selfPanel"');
     expect(uiHtml).toContain('Selected Blueprint Node');

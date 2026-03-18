@@ -588,6 +588,20 @@ const observerDashboardHtml = (): string => `<!doctype html>
       .node-state-stale { fill: #3b321f; stroke: #d8a052; }
       .node-box.selected { stroke: #ffffff; stroke-width: 2.3; }
       .badge { display: inline-flex; border-radius: 999px; padding: 2px 8px; border: 1px solid #35519c; font-size: 11px; margin-right: 6px; }
+      .summary-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-bottom: 10px; }
+      .summary-metric { background: #0a1129; border: 1px solid #243252; border-radius: 6px; padding: 8px; }
+      .summary-metric-label { color: #95addf; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+      .summary-metric-value { font-size: 13px; line-height: 1.4; }
+      .summary-pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+      .summary-pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 8px; font-size: 11px; border: 1px solid #35519c; background: #13214a; }
+      .summary-pill.good { border-color: #3f9f74; background: #173629; }
+      .summary-pill.warn { border-color: #d8a052; background: #3b321f; }
+      .summary-pill.bad { border-color: #cf6a8e; background: #3a1f2f; }
+      .narrative-card { background: #0a1129; border: 1px solid #243252; border-radius: 6px; padding: 10px; margin-top: 8px; }
+      .narrative-primary { margin-top: 8px; padding: 8px; border-radius: 6px; background: #13214a; border: 1px solid #35519c; }
+      .narrative-secondary { margin-top: 8px; }
+      .narrative-secondary ul { margin-top: 6px; padding-left: 18px; }
+      .raw-truth-note { margin-top: 8px; }
       .layout-main { min-width: 0; }
       .layout-side { min-width: 0; }
       .mode-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
@@ -622,6 +636,7 @@ const observerDashboardHtml = (): string => `<!doctype html>
             <button id="repoModeBtn" class="mode-tab active" role="tab" aria-selected="true">Repo View</button>
             <button id="crossRepoModeBtn" class="mode-tab" role="tab" aria-selected="false">Cross-Repo View</button>
           </div>
+          <div class="card"><h2>Control-Loop Summary</h2><div id="controlLoopSummaryPanel" class="meta">Control-loop summary loads from governed readiness artifacts.</div></div>
           <div id="repoViewPanel">
           <div class="card"><h2 id="repoTitle">Repo Detail</h2><div id="repoDetail" class="meta">Select a repo.</div><button id="removeRepo" style="display:none">Remove repo</button></div>
           <div class="card"><h3>System Blueprint</h3><div id="blueprintMeta" class="meta">Select a repo.</div><svg id="blueprintPanel" class="blueprint" viewBox="0 0 980 420" aria-label="System Blueprint"></svg></div>
