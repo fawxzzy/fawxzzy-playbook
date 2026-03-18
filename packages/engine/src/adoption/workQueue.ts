@@ -1,11 +1,15 @@
 import type { FleetAdoptionReadinessSummary, FleetPriorityStage, FleetRepoPriorityEntry } from './fleetReadiness.js';
 import type { ReadinessLifecycleStage, RepoAdoptionBlocker } from './readiness.js';
 
-export type WorkQueueAction = 'connect' | 'init' | 'index' | 'verify_plan' | 'apply';
+export type WorkQueueAction = 'connect' | 'init' | 'index' | 'verify_plan' | 'apply' | 'retry' | 'replan';
 
 export type WorkQueueSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
-export type WorkQueueParallelGroup = 'connect lane' | 'init lane' | 'index lane' | 'verify/plan lane' | 'apply lane';
+export type WorkQueueParallelGroup = 'connect lane' | 'init lane' | 'index lane' | 'verify/plan lane' | 'apply lane' | 'retry lane' | 'replan lane';
+
+export type AdoptionQueueSource = 'readiness' | 'updated_state';
+
+export type AdoptionNextAction = 'retry' | 'replan';
 
 export type AdoptionWorkItem = {
   item_id: string;
@@ -19,6 +23,9 @@ export type AdoptionWorkItem = {
   dependencies: string[];
   rationale: string;
   wave: 'wave_1' | 'wave_2';
+  queue_source?: AdoptionQueueSource;
+  next_action?: AdoptionNextAction;
+  prompt_lineage?: string[];
 };
 
 export type AdoptionWorkWave = {
@@ -46,6 +53,7 @@ export type FleetAdoptionWorkQueue = {
   kind: 'fleet-adoption-work-queue';
   generated_at: string;
   total_repos: number;
+  queue_source?: AdoptionQueueSource;
   work_items: AdoptionWorkItem[];
   waves: AdoptionWorkWave[];
   grouped_actions: AdoptionGroupedActionLane[];
@@ -66,7 +74,9 @@ const ACTION_ORDER: Record<WorkQueueAction, number> = {
   init: 1,
   index: 2,
   verify_plan: 3,
-  apply: 4
+  apply: 4,
+  retry: 5,
+  replan: 6
 };
 
 const COMMAND_BY_ACTION: Record<WorkQueueAction, string> = {
@@ -74,7 +84,9 @@ const COMMAND_BY_ACTION: Record<WorkQueueAction, string> = {
   init: 'pnpm playbook init',
   index: 'pnpm playbook index --json',
   verify_plan: 'pnpm playbook verify --json && pnpm playbook plan --json',
-  apply: 'pnpm playbook apply --json'
+  apply: 'pnpm playbook apply --json',
+  retry: 'pnpm playbook apply --json',
+  replan: 'pnpm playbook verify --json && pnpm playbook plan --json'
 };
 
 const PARALLEL_GROUP_BY_ACTION: Record<WorkQueueAction, WorkQueueParallelGroup> = {
@@ -82,7 +94,9 @@ const PARALLEL_GROUP_BY_ACTION: Record<WorkQueueAction, WorkQueueParallelGroup> 
   init: 'init lane',
   index: 'index lane',
   verify_plan: 'verify/plan lane',
-  apply: 'apply lane'
+  apply: 'apply lane',
+  retry: 'retry lane',
+  replan: 'replan lane'
 };
 
 const SEVERITY_BY_PRIORITY: Record<FleetPriorityStage, WorkQueueSeverity> = {

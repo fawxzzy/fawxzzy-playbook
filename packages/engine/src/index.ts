@@ -25,13 +25,14 @@ export type { RepoAdoptionReadiness, RepoAdoptionBlocker, ReadinessLifecycleStag
 export { buildFleetAdoptionReadinessSummary } from './adoption/fleetReadiness.js';
 export type { FleetRepoReadinessEntry, FleetPriorityStage, FleetBlockerFrequency, FleetRecommendedAction, FleetRepoPriorityEntry, FleetAdoptionReadinessSummary } from './adoption/fleetReadiness.js';
 export { buildFleetAdoptionWorkQueue } from './adoption/workQueue.js';
-export type { FleetAdoptionWorkQueue, AdoptionWorkItem, AdoptionWorkWave, AdoptionGroupedActionLane, AdoptionBlockedItem, WorkQueueAction, WorkQueueParallelGroup, WorkQueueSeverity } from './adoption/workQueue.js';
+export type { FleetAdoptionWorkQueue, AdoptionWorkItem, AdoptionWorkWave, AdoptionGroupedActionLane, AdoptionBlockedItem, WorkQueueAction, WorkQueueParallelGroup, WorkQueueSeverity, AdoptionQueueSource, AdoptionNextAction } from './adoption/workQueue.js';
 export { buildFleetCodexExecutionPlan } from './adoption/executionPlan.js';
 export type { FleetCodexExecutionPlan, CodexExecutionWave, CodexExecutionWorkerLane, CodexExecutionPrompt, CodexExecutionBlockedFollowup } from './adoption/executionPlan.js';
 export { buildFleetExecutionReceipt } from './adoption/executionReceipt.js';
 export type { FleetExecutionOutcomeInput, ExecutionPromptOutcomeInput, FleetExecutionReceipt, ExecutionPromptResult, ExecutionWaveResult, ExecutionRepoResult, ExecutionArtifactEvidence, ExecutionBlocker, ExecutionVerificationSummary, ExecutionObservedStatus, ExecutionComparisonStatus, LifecycleTransition } from './adoption/executionReceipt.js';
 export { buildFleetUpdatedAdoptionState } from './adoption/executionUpdatedState.js';
 export type { FleetUpdatedAdoptionState, ReconciledRepoState, ReconciliationStatus } from './adoption/executionUpdatedState.js';
+export { deriveNextAdoptionQueueFromUpdatedState } from './adoption/updatedStateQueue.js';
 
 export { generateRepositoryIndex } from './indexer/repoIndexer.js';
 export type { RepositoryIndex, RepositoryModule, RepositoryDependencyEdge, RepositoryWorkspaceNode, RepositoryTestCoverage, RepositoryConfigEntry } from './indexer/repoIndexer.js';
