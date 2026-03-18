@@ -3,6 +3,7 @@ import {
   buildStoryRouteTask,
   createDefaultStoriesArtifact,
   deriveStoryLifecycleStatus,
+  deriveStoryTransitionPreview,
   transitionStoryFromEvent,
   type StoryRecord,
 } from './stories.js';
@@ -31,6 +32,11 @@ describe('story helpers', () => {
   });
 
   it('applies conservative lifecycle transitions only when deterministic evidence exists', () => {
+    expect(deriveStoryTransitionPreview({ ...createDefaultStoriesArtifact('repo'), stories: [baseStory] }, 'story-1', 'planned')).toEqual({
+      story_id: 'story-1',
+      previous_status: 'ready',
+      next_status: 'in_progress'
+    });
     expect(deriveStoryLifecycleStatus(baseStory, 'planned')).toBe('in_progress');
     expect(deriveStoryLifecycleStatus({ ...baseStory, status: 'in_progress' }, 'receipt_completed')).toBe('done');
     expect(deriveStoryLifecycleStatus({ ...baseStory, status: 'in_progress' }, 'receipt_blocked')).toBe('blocked');

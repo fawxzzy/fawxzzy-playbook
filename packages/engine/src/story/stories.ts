@@ -27,6 +27,12 @@ export type StoryPlanningReference = {
 
 export type StoryLifecycleEvent = 'planned' | 'receipt_blocked' | 'receipt_completed';
 
+export type StoryTransitionPreview = {
+  story_id: string;
+  previous_status: StoryStatus;
+  next_status: StoryStatus;
+};
+
 export type StoryRecord = {
   id: string;
   repo: string;
@@ -174,16 +180,28 @@ export const deriveStoryLifecycleStatus = (story: StoryRecord, event: StoryLifec
   return null;
 };
 
-export const transitionStoryFromEvent = (artifact: StoriesArtifact, storyId: string, event: StoryLifecycleEvent): StoriesArtifact => {
+export const deriveStoryTransitionPreview = (artifact: StoriesArtifact, storyId: string, event: StoryLifecycleEvent): StoryTransitionPreview | null => {
   const story = findStoryById(artifact, storyId);
   if (!story) {
-    return artifact;
+    return null;
   }
   const nextStatus = deriveStoryLifecycleStatus(story, event);
-  if (!nextStatus || nextStatus == story.status) {
+  if (!nextStatus || nextStatus === story.status) {
+    return null;
+  }
+  return {
+    story_id: storyId,
+    previous_status: story.status,
+    next_status: nextStatus
+  };
+};
+
+export const transitionStoryFromEvent = (artifact: StoriesArtifact, storyId: string, event: StoryLifecycleEvent): StoriesArtifact => {
+  const transition = deriveStoryTransitionPreview(artifact, storyId, event);
+  if (!transition) {
     return artifact;
   }
-  return updateStoryStatus(artifact, storyId, nextStatus);
+  return updateStoryStatus(artifact, storyId, transition.next_status);
 };
 
 const unique = (values: string[]): string[] => [...new Set(values.map((value) => value.trim()).filter(Boolean))];

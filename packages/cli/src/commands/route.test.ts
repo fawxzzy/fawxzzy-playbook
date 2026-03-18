@@ -16,6 +16,7 @@ const readStoriesArtifact = vi.fn();
 const findStoryById = vi.fn();
 const buildStoryRouteTask = vi.fn();
 const toStoryPlanningReference = vi.fn();
+const deriveStoryTransitionPreview = vi.fn();
 const transitionStoryFromEvent = vi.fn();
 const validateStoriesArtifact = vi.fn(() => []);
 
@@ -32,6 +33,7 @@ vi.mock('@zachariahredfield/playbook-engine', () => ({
   findStoryById,
   buildStoryRouteTask,
   toStoryPlanningReference,
+  deriveStoryTransitionPreview,
   transitionStoryFromEvent,
   validateStoriesArtifact,
   STORIES_RELATIVE_PATH: '.playbook/stories.json'
@@ -176,6 +178,11 @@ describe('runRoute', () => {
       artifact_path: '.playbook/stories.json',
       suggested_route: 'docs_only',
       execution_lane: null
+    });
+    deriveStoryTransitionPreview.mockReturnValue({
+      story_id: 'story-1',
+      previous_status: 'ready',
+      next_status: 'in_progress'
     });
     transitionStoryFromEvent.mockReturnValue({
       schemaVersion: '1.0',

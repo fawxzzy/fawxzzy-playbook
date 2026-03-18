@@ -13,6 +13,7 @@ import {
   findStoryById,
   buildStoryRouteTask,
   toStoryPlanningReference,
+  deriveStoryTransitionPreview,
   transitionStoryFromEvent,
   validateStoriesArtifact,
   STORIES_RELATIVE_PATH,
@@ -108,15 +109,11 @@ const tryReadJsonArtifact = <T>(cwd: string, artifactPath: string): T | undefine
 };
 
 const promoteStoryTransition = (cwd: string, current: StoriesArtifact, storyId: string): StoryTransitionOutput => {
-  const before = findStoryById(current, storyId);
-  if (!before) {
+  const transition = deriveStoryTransitionPreview(current, storyId, 'planned');
+  if (!transition) {
     return null;
   }
   const nextArtifact = transitionStoryFromEvent(current, storyId, 'planned');
-  const after = findStoryById(nextArtifact, storyId);
-  if (!after || after.status === before.status) {
-    return null;
-  }
   const promotion = stageWorkflowArtifact({
     cwd,
     workflowKind: 'story-status',
@@ -125,13 +122,13 @@ const promoteStoryTransition = (cwd: string, current: StoriesArtifact, storyId: 
     artifact: nextArtifact,
     validate: () => validateStoriesArtifact(nextArtifact),
     generatedAt: new Date().toISOString(),
-    successSummary: `Updated story ${storyId} to status ${after.status}`,
+    successSummary: `Updated story ${storyId} to status ${transition.next_status}`,
     blockedSummary: 'Story status update blocked; committed backlog state preserved.'
   });
   return {
     story_id: storyId,
-    previous_status: before.status,
-    next_status: after.status,
+    previous_status: transition.previous_status,
+    next_status: transition.next_status,
     promotion
   };
 };
