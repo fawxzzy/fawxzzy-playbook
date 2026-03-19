@@ -95,7 +95,7 @@ describe('promotion materialization', () => {
   it('returns promoted story results for promoted global pattern seeding using storySeed metadata and pattern provenance', () => {
     const home = mkd('playbook-promotion-home-');
     const repo = mkd('repo-pattern-seed-');
-    writeJson(home, 'patterns.json', {
+    writeJson(home, '.playbook/patterns.json', {
       schemaVersion: '1.0',
       kind: 'promoted-patterns',
       patterns: [{
@@ -137,7 +137,8 @@ describe('promotion materialization', () => {
     expect(prepared.record.provenance?.source_ref).toBe('global/patterns/pattern.layering');
     expect(prepared.sourceFingerprint).toBe(prepared.record.provenance?.pattern_story_seed_fingerprint);
     expect(prepared.afterFingerprint).toMatch(/^[a-f0-9]{64}$/);
-    expect(prepared.record.evidence).toContain('patterns.json');
+    expect(prepared.record.evidence).toContain('.playbook/patterns.json');
+    expect(prepared.record.evidence).not.toContain('patterns.json');
     expect(fs.existsSync(path.join(repo, '.playbook/stories.json'))).toBe(false);
   });
 

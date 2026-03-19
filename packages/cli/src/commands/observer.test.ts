@@ -586,26 +586,21 @@ describe("observer server", () => {
         2,
       ),
     );
-    fs.writeFileSync(
-      path.join(repo, ".playbook", "patterns.json"),
-      JSON.stringify(
+    // Repo promotion-layer joins are repo-scoped and read promoted memory from
+    // `.playbook/memory/knowledge/patterns.json`, distinct from global lineage views.
+    writeArtifact(repo, ".playbook/memory/knowledge/patterns.json", {
+      schemaVersion: "1.0",
+      command: "pattern-compaction",
+      patterns: [
         {
-          schemaVersion: "1.0",
-          command: "pattern-compaction",
-          patterns: [
-            {
-              id: "pattern-promoted-repo",
-              title: "Repo promoted",
-              normalizationKey: "observer-layer",
-              promotedFrom: "story-ready",
-              sourceRefs: [".playbook/stories.json"],
-            },
-          ],
+          id: "pattern-promoted-repo",
+          title: "Repo promoted",
+          normalizationKey: "observer-layer",
+          promotedFrom: "story-ready",
+          sourceRefs: [".playbook/stories.json"],
         },
-        null,
-        2,
-      ),
-    );
+      ],
+    });
     fs.writeFileSync(
       path.join(cwd, ".playbook", "pattern-candidates.json"),
       JSON.stringify(
