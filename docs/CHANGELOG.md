@@ -1,5 +1,6 @@
 ## Unreleased
 
+- WHAT: Added the public `pnpm playbook promote story|pattern ... --json` command surface and refreshed the stable CLI contract snapshot to include `promote` in the canonical command inventory. WHY: Stable automation contracts must change in the same PR as intentional public command-surface additions so help, docs, and snapshots remain aligned.
 - WHAT: Upgraded `pnpm playbook patterns proposals --json` from a raw cross-repo comparison dump into grouped promotion candidates that carry normalized evidence lineage (`repo_id`, `artifact_kind`, semantics), explicit portability rationale, and deterministic promotion targets for reusable memory and repo stories. WHY: Cross-repo comparison becomes materially more useful when it yields promotable pattern/story candidates instead of mostly raw candidate-family rows.
 - WHAT: Added `pnpm playbook patterns proposals promote --proposal <proposal-id> --target memory|story [--repo <repo-id>] --json` so portable candidates can be explicitly promoted into governed memory knowledge and repo-scoped adoption candidates can be explicitly promoted into the canonical backlog surface. WHY: Cross-repo intelligence may suggest promotion, but promotion must remain explicit.
 - Pattern: Cross-repo comparison becomes useful when it yields promotable pattern/story candidates with evidence.
