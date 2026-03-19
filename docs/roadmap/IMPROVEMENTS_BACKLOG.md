@@ -46,6 +46,17 @@ Canonical roadmap directions for Repository Memory System, Replay / Consolidatio
 - Refine outcome taxonomy quality gates for confidence and attribution clarity.
 - Improve provenance-link completeness checks for feedback artifacts used in later learning decisions.
 
+### 4) Playbook Agents follow-on questions
+
+- Clarify the thinnest viable contract for Playbook-native agents as governed lane executors rather than generic chat surfaces.
+- Define the minimum artifact/runtime seam between `story -> plan -> lane -> execution -> receipt` needed before a first agent runtime slice is worth implementing.
+- Identify the first bounded agent roles that improve operator leverage without expanding trust scope too early (for example docs cleanup, upgrade assistance, audit/remediation support).
+- Clarify whether future agent-authoring belongs under Automation Synthesis, Control Plane, or a later reviewed knowledge-consumption layer.
+
+Pattern: Playbook orchestrates intelligence; agents execute bounded work inside governed lanes.
+Rule: Agents must execute from explicit plans and emit receipts for every meaningful state transition.
+Failure Mode: Agents operating outside the Playbook control plane create invisible mutation paths and weaken trust.
+
 ---
 
 ## Backlog hygiene
