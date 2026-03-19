@@ -126,8 +126,9 @@ describe("buildStoryPatternContext", () => {
 
   it("degrades gracefully when no patterns match", () => {
     const home = mkd("playbook-pattern-context-empty-");
+    fs.mkdirSync(path.join(home, ".playbook"), { recursive: true });
     fs.writeFileSync(
-      path.join(home, "patterns.json"),
+      path.join(home, ".playbook", "patterns.json"),
       JSON.stringify(
         { schemaVersion: "1.0", kind: "patterns", patterns: [] },
         null,
@@ -142,6 +143,15 @@ describe("buildStoryPatternContext", () => {
       }),
       { playbookHome: home },
     );
-    expect(context).toEqual({ patterns: [] });
+    // No-match responses still report store resolution metadata so callers can distinguish
+    // canonical `.playbook/patterns.json` resolution from future compatibility-path reads.
+    expect(context.patterns).toEqual([]);
+    expect(context.pattern_store).toEqual({
+      scope: "global_reusable_pattern_memory",
+      artifact_path: ".playbook/patterns.json",
+      canonical_artifact_path: ".playbook/patterns.json",
+      compat_artifact_paths: ["patterns.json"],
+      resolution: "canonical",
+    });
   });
 });
