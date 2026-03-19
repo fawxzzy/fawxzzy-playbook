@@ -27,6 +27,7 @@ describe('knowledge query services', () => {
       expect(listed.command).toBe('knowledge-list');
       expect(listed.summary.byType).toEqual({ evidence: 2, candidate: 2, promoted: 1, superseded: 1 });
       expect(listed.summary.byStatus).toEqual({ observed: 2, active: 2, stale: 1, retired: 0, superseded: 1 });
+      expect(listed.summary.byLifecycle).toEqual({ observed: 2, candidate: 1, active: 1, stale: 1, retired: 0, superseded: 1, demoted: 0 });
       expect(knowledgeQuery(root, { type: 'candidate' }).knowledge.map((record) => record.id)).toEqual(['cand-live', 'cand-stale']);
       expect(knowledgeTimeline(root, { order: 'asc', limit: 4 }).knowledge.map((record) => record.id)).toEqual([
         'cand-stale',

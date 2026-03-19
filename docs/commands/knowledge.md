@@ -53,6 +53,7 @@ Lifecycle guarantees:
 - Query surfaces distinguish `active`, `candidate`, `stale`, `retired`, `superseded`, and `demoted` lifecycle truth explicitly.
 - Read-only inspection reveals lifecycle truth without mutating it.
 - Global reusable patterns are normalized into the same inspection surface as repo-local memory so provenance and supersession remain auditable from one command family.
+- JSON list/query/timeline/stale summaries expose lifecycle counts in `summary.byLifecycle` alongside `byType` and `byStatus` so deterministic consumers can reason about lifecycle distribution without re-aggregating records.
 
 ### `knowledge portability`
 
