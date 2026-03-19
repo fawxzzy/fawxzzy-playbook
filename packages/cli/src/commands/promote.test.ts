@@ -73,7 +73,7 @@ describe('runPromote', () => {
     expect(JSON.parse(fs.readFileSync(path.join(home, 'patterns.json'), 'utf8')).patterns).toHaveLength(1);
   });
 
-  it('emits deterministic receipts for repeated promotions and conflicts', () => {
+  it('persists repeated promotion receipts in deterministic canonical order', () => {
     const home = mkd('playbook-home-');
     process.env.PLAYBOOK_HOME = home;
     writeJson(home, '.playbook/pattern-candidates.json', {
@@ -99,9 +99,13 @@ describe('runPromote', () => {
     expect(payload.outcome).toBe('conflict');
     expect(payload.receipt.outcome).toBe('conflict');
     expect(payload.receipt.before_fingerprint).toBe(payload.receipt.after_fingerprint);
-    const receiptLog = JSON.parse(fs.readFileSync(path.join(home, '.playbook/promotion-receipts.json'), 'utf8'));
-    expect(receiptLog.receipts.map((entry: { outcome: string }) => entry.outcome)).toEqual(['promoted', 'noop', 'conflict']);
-    expect(receiptLog.receipts.map((entry: { receipt_id: string }) => entry.receipt_id)).toEqual([...receiptLog.receipts.map((entry: { receipt_id: string }) => entry.receipt_id)].sort());
+    const receiptLog = JSON.parse(fs.readFileSync(path.join(home, '.playbook/promotion-receipts.json'), 'utf8')) as { receipts: Array<{ outcome: string; generated_at: string; promotion_kind: string; target_artifact_path: string; target_id: string; receipt_id: string }> };
+    expect(receiptLog.receipts).toHaveLength(3);
+    expect(receiptLog.receipts.map((entry) => entry.outcome).sort()).toEqual(['conflict', 'noop', 'promoted']);
+    const persistedOrdering = receiptLog.receipts.map((entry) => `${entry.generated_at}|${entry.promotion_kind}|${entry.target_artifact_path}|${entry.target_id}|${entry.receipt_id}`);
+    const canonicalOrdering = [...persistedOrdering].sort((left, right) => left.localeCompare(right));
+    expect(persistedOrdering).toEqual(canonicalOrdering);
+    expect(receiptLog.receipts.map((entry) => entry.receipt_id)).toEqual([...receiptLog.receipts.map((entry) => entry.receipt_id)].sort());
   });
 
   it('promotes global pattern candidates to repo-local stories and mutates only the target repo scope artifact', () => {
