@@ -539,6 +539,7 @@ export {
 } from './learning/crossRepoCandidateAggregation.js';
 export type {
   CrossRepoCandidateInput,
+  CrossRepoCandidateAggregationOptions,
   CrossRepoPatternCandidate,
   CrossRepoCandidatesArtifact
 } from './learning/crossRepoCandidateAggregation.js';

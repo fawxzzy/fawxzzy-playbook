@@ -29,6 +29,11 @@ export type CrossRepoCandidatesArtifact = {
   candidates: CrossRepoPatternCandidate[];
 };
 
+export type CrossRepoCandidateAggregationOptions = {
+  generatedAt?: string;
+  now?: () => string;
+};
+
 const CROSS_REPO_CANDIDATES_RELATIVE_PATH = '.playbook/cross-repo-candidates.json' as const;
 const DEFAULT_GENERATED_AT = '1970-01-01T00:00:00.000Z';
 
@@ -98,17 +103,22 @@ const toCandidateRecord = (candidate: CrossRepoPatternsArtifact['candidate_patte
   };
 };
 
-export const computeCrossRepoCandidateAggregation = (repositories: CrossRepoCandidateInput[]): CrossRepoCandidatesArtifact => {
+export const computeCrossRepoCandidateAggregation = (
+  repositories: CrossRepoCandidateInput[],
+  options: CrossRepoCandidateAggregationOptions = {}
+): CrossRepoCandidatesArtifact => {
   const patternLearningArtifact = computeCrossRepoPatternLearning(repositories);
   const candidates = (patternLearningArtifact.candidate_patterns ?? [])
     .map(toCandidateRecord)
     .filter((entry): entry is CrossRepoPatternCandidate => entry !== null)
     .sort((left, right) => left.normalizationKey.localeCompare(right.normalizationKey) || left.id.localeCompare(right.id));
 
+  const generatedAt = options.generatedAt ?? options.now?.() ?? candidateGeneratedAt(patternLearningArtifact);
+
   return {
     schemaVersion: '1.0',
     kind: 'cross-repo-candidates',
-    generatedAt: candidateGeneratedAt(patternLearningArtifact),
+    generatedAt,
     repositories: candidateRepositories(patternLearningArtifact),
     candidates
   };

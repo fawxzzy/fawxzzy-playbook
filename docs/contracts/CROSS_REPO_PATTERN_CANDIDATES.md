@@ -48,6 +48,7 @@ Each `candidates[]` entry contains:
 
 - Emit candidates in deterministic order.
 - Emit `sourceRefs` in deterministic order.
+- Tests that assert full artifact equality should inject generation time at the artifact boundary instead of reading wall-clock time inside assertions.
 - Require evidence from at least two repositories before a candidate can appear.
 - Store references only; do not copy source artifact bodies, receipts, or raw governed payloads into the shared artifact.
 - Keep materialization read-only. Promotion remains explicit and out of band.

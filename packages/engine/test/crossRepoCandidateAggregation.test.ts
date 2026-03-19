@@ -25,6 +25,8 @@ const seedRepo = (repoPath: string, variant: string): void => {
 const buildInputs = (entries: Array<{ id: string; repoPath: string }>): CrossRepoCandidateInput[] => entries;
 
 describe('crossRepoCandidateAggregation', () => {
+  const fixedGeneratedAt = '2026-03-19T00:00:00.000Z';
+
   it('emits candidates in stable generation order', () => {
     const repoA = createRepo('cross-repo-candidates-a');
     const repoB = createRepo('cross-repo-candidates-b');
@@ -34,11 +36,11 @@ describe('crossRepoCandidateAggregation', () => {
     const forward = computeCrossRepoCandidateAggregation(buildInputs([
       { id: 'repo-b', repoPath: repoB },
       { id: 'repo-a', repoPath: repoA }
-    ]));
+    ]), { generatedAt: fixedGeneratedAt });
     const reverse = computeCrossRepoCandidateAggregation(buildInputs([
       { id: 'repo-a', repoPath: repoA },
       { id: 'repo-b', repoPath: repoB }
-    ]));
+    ]), { generatedAt: fixedGeneratedAt });
 
     expect(forward).toEqual(reverse);
     expect(forward.candidates.map((entry) => entry.normalizationKey)).toEqual([
@@ -57,8 +59,8 @@ describe('crossRepoCandidateAggregation', () => {
       { id: 'repo-b', repoPath: repoB }
     ]);
 
-    const first = computeCrossRepoCandidateAggregation(inputs);
-    const second = computeCrossRepoCandidateAggregation(inputs);
+    const first = computeCrossRepoCandidateAggregation(inputs, { generatedAt: fixedGeneratedAt });
+    const second = computeCrossRepoCandidateAggregation(inputs, { generatedAt: fixedGeneratedAt });
 
     expect(first.candidates.map((entry) => entry.id)).toEqual(second.candidates.map((entry) => entry.id));
     expect(first.candidates.map((entry) => entry.fingerprint)).toEqual(second.candidates.map((entry) => entry.fingerprint));
@@ -74,7 +76,7 @@ describe('crossRepoCandidateAggregation', () => {
     const artifact = computeCrossRepoCandidateAggregation(buildInputs([
       { id: 'repo-a', repoPath: repoA },
       { id: 'repo-b', repoPath: repoB }
-    ]));
+    ]), { generatedAt: fixedGeneratedAt });
 
     const firstPath = writeCrossRepoCandidatesArtifact(outputRoot, artifact);
     const firstContent = fs.readFileSync(firstPath, 'utf8');
