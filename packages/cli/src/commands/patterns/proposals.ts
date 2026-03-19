@@ -1,4 +1,4 @@
-import { generatePatternProposalArtifact, writePatternProposalArtifact } from '@zachariahredfield/playbook-engine';
+import { generatePatternProposalArtifact, promotePatternProposalToMemory, promotePatternProposalToStory, writePatternProposalArtifact } from '@zachariahredfield/playbook-engine';
 import { emitJsonOutput } from '../../lib/jsonArtifact.js';
 import { ExitCode } from '../../lib/cliContract.js';
 
@@ -8,7 +8,42 @@ type PatternsOptions = {
   outFile?: string;
 };
 
-export const runPatternsProposals = (cwd: string, options: PatternsOptions): number => {
+const readOptionValue = (args: string[], flag: string): string | undefined => {
+  const index = args.indexOf(flag);
+  return index >= 0 ? args[index + 1] : undefined;
+};
+
+export const runPatternsProposals = (cwd: string, commandArgs: string[], options: PatternsOptions): number => {
+  const subcommand = commandArgs[0];
+
+  if (subcommand === 'promote') {
+    const proposalId = readOptionValue(commandArgs, '--proposal');
+    const target = readOptionValue(commandArgs, '--target');
+    const repoId = readOptionValue(commandArgs, '--repo');
+    if (!proposalId || (target !== 'memory' && target !== 'story')) {
+      const payload = { schemaVersion: '1.0', command: 'patterns', action: 'proposals-promote', error: 'Usage: playbook patterns proposals promote --proposal <proposal-id> --target memory|story [--repo <repo-id>] --json' };
+      if (options.format === 'json') emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+      else console.error(payload.error);
+      return ExitCode.Failure;
+    }
+    if (target === 'story' && !repoId) {
+      const payload = { schemaVersion: '1.0', command: 'patterns', action: 'proposals-promote', error: 'Story promotion requires --repo <repo-id>.' };
+      if (options.format === 'json') emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+      else console.error(payload.error);
+      return ExitCode.Failure;
+    }
+    const promotion = target === 'memory'
+      ? promotePatternProposalToMemory(cwd, proposalId)
+      : promotePatternProposalToStory(cwd, proposalId, repoId!);
+    const payload = { schemaVersion: '1.0', command: 'patterns', action: 'proposals-promote', promotion };
+    if (options.format === 'json') {
+      emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+      return ExitCode.Success;
+    }
+    if (!options.quiet) console.log(JSON.stringify(payload, null, 2));
+    return ExitCode.Success;
+  }
+
   const artifact = generatePatternProposalArtifact(cwd);
   writePatternProposalArtifact(cwd, artifact);
 

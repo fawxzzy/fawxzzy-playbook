@@ -154,7 +154,7 @@ export const runPatterns = async (cwd: string, commandArgs: string[], options: P
     }
 
     if (subcommand === 'proposals') {
-      return runPatternsProposals(cwd, options);
+      return runPatternsProposals(cwd, commandArgs.slice(1), options);
     }
 
     if (subcommand === 'cross-repo') {

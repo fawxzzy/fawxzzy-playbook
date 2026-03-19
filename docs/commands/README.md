@@ -549,7 +549,9 @@ Use query surfaces to inspect state:
 - `pnpm playbook patterns portability --pattern <patternId> --json` returns deterministic portability factors and evidence refs for candidate patterns.
 - `pnpm playbook patterns generalized --json` returns high-portability read-only/manual-only candidate recommendations (no auto-promotion).
 - `pnpm playbook patterns repo-delta --left <repoId> --right <repoId> --json` reports governed artifact deltas between two repositories.
-- Cross-repo comparison is read-only in this phase: no cross-repo mutation, no automatic doctrine updates, and no non-governed artifact ingestion.
+- `pnpm playbook patterns proposals --json` now groups cross-repo evidence into promotable portable-pattern candidates with explicit memory/story promotion targets and evidence lineage.
+- `pnpm playbook patterns proposals promote --proposal <proposal-id> --target memory|story [--repo <repo-id>] --json` keeps cross-repo promotion explicit while writing into governed memory or backlog surfaces.
+- Cross-repo comparison may suggest promotion, but promotion remains explicit: no automatic doctrine updates, no hidden story mutation, and no non-governed artifact ingestion.
 
 
 - `playbook story list --json` exposes the canonical repo-local story backlog artifact at `.playbook/stories.json`.

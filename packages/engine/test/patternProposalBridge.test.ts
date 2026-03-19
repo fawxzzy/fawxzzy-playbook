@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import {
   buildPatternProposalArtifact,
   generatePatternProposalArtifact,
+  promotePatternProposalToMemory,
+  promotePatternProposalToStory,
   readPatternProposalArtifact,
   writePatternProposalArtifact,
   type CrossRepoCandidatesArtifact
@@ -58,7 +60,7 @@ describe('pattern proposal bridge', () => {
 
     expect(artifact.kind).toBe('pattern-proposals');
     expect(artifact.proposals).toHaveLength(1);
-    expect(artifact.proposals[0]).toEqual({
+    expect(artifact.proposals[0]).toMatchObject({
       proposal_id: 'proposal.layering.generalization',
       pattern_family: 'layering',
       candidate_repos: ['a', 'b', 'c'],
@@ -67,6 +69,9 @@ describe('pattern proposal bridge', () => {
       proposed_action: 'append_instance',
       target_pattern: 'pattern.layering'
     });
+    expect(artifact.proposals[0].portability_rationale).toContain('Portable across 3 repos');
+    expect(artifact.proposals[0].evidence).toHaveLength(3);
+    expect(artifact.proposals[0].promotion_targets.map((entry) => entry.kind)).toEqual(['memory', 'story']);
   });
 
   it('generates and persists proposal artifacts without mutating pattern graph artifacts', () => {
@@ -96,5 +101,34 @@ describe('pattern proposal bridge', () => {
     const loaded = readPatternProposalArtifact(repoRoot);
     expect(loaded.proposals).toHaveLength(1);
     expect(loaded.proposals[0].target_pattern).toBe('pattern.layering');
+  });
+
+  it('explicitly promotes a cross-repo proposal into memory knowledge and repo stories', () => {
+    const repoRoot = createRepo();
+    writeCrossRepoCandidates(repoRoot, {
+      schemaVersion: '1.0',
+      kind: 'cross-repo-candidates',
+      generatedAt: '2026-01-03T00:00:00.000Z',
+      repositories: ['playbook', 'fawxzzy-fitness'],
+      families: [{
+        pattern_family: 'layering',
+        repo_count: 2,
+        candidate_count: 4,
+        mean_confidence: 0.84,
+        repos: ['playbook', 'fawxzzy-fitness'],
+        first_seen: '2026-01-01T00:00:00.000Z',
+        last_seen: '2026-01-03T00:00:00.000Z'
+      }]
+    });
+    writePatternProposalArtifact(repoRoot, generatePatternProposalArtifact(repoRoot));
+
+    const memoryPromotion = promotePatternProposalToMemory(repoRoot, 'proposal.layering.generalization');
+    expect(memoryPromotion.target).toBe('memory');
+    expect(memoryPromotion.memory?.promoted.kind).toBe('pattern');
+
+    const storyPromotion = promotePatternProposalToStory(repoRoot, 'proposal.layering.generalization', 'playbook');
+    expect(storyPromotion.target).toBe('story');
+    expect(storyPromotion.story?.id).toBe('cross-repo-layering-playbook');
+    expect(fs.existsSync(path.join(repoRoot, '.playbook', 'stories.json'))).toBe(true);
   });
 });

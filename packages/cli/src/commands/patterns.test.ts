@@ -667,6 +667,8 @@ describe('runPatterns', () => {
       proposed_action: 'append_instance',
       target_pattern: 'pattern.layering'
     });
+    expect(payload.proposals[0].evidence).toHaveLength(2);
+    expect(payload.proposals[0].promotion_targets.map((entry: { kind: string }) => entry.kind)).toEqual(['memory', 'story']);
 
     const artifactPath = path.join(repo, '.playbook', 'pattern-proposals.json');
     expect(fs.existsSync(artifactPath)).toBe(true);
@@ -777,5 +779,37 @@ describe('runPatterns', () => {
 
     logSpy.mockRestore();
   });
+
+  it('promotes a cross-repo proposal explicitly into memory knowledge and story backlog surfaces', async () => {
+    const repo = createRepo('playbook-cli-patterns-proposals-promote');
+    writeCrossRepoCandidatesArtifact(repo);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    let exitCode = await runPatterns(repo, ['proposals'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Success);
+    logSpy.mockClear();
+
+    exitCode = await runPatterns(repo, ['proposals', 'promote', '--proposal', 'proposal.layering.generalization', '--target', 'memory'], {
+      format: 'json',
+      quiet: false
+    });
+    expect(exitCode).toBe(ExitCode.Success);
+    let payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.action).toBe('proposals-promote');
+    expect(payload.promotion.target).toBe('memory');
+
+    logSpy.mockClear();
+    exitCode = await runPatterns(repo, ['proposals', 'promote', '--proposal', 'proposal.layering.generalization', '--target', 'story', '--repo', 'playbook'], {
+      format: 'json',
+      quiet: false
+    });
+    expect(exitCode).toBe(ExitCode.Success);
+    payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.promotion.target).toBe('story');
+    expect(payload.promotion.story.id).toBe('cross-repo-layering-playbook');
+
+    logSpy.mockRestore();
+  });
+
 
 });
