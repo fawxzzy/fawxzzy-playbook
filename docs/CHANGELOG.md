@@ -1,5 +1,10 @@
 ## Unreleased
 
+- WHAT: Upgraded `pnpm playbook patterns proposals --json` from a raw cross-repo comparison dump into grouped promotion candidates that carry normalized evidence lineage (`repo_id`, `artifact_kind`, semantics), explicit portability rationale, and deterministic promotion targets for reusable memory and repo stories. WHY: Cross-repo comparison becomes materially more useful when it yields promotable pattern/story candidates instead of mostly raw candidate-family rows.
+- WHAT: Added `pnpm playbook patterns proposals promote --proposal <proposal-id> --target memory|story [--repo <repo-id>] --json` so portable candidates can be explicitly promoted into governed memory knowledge and repo-scoped adoption candidates can be explicitly promoted into the canonical backlog surface. WHY: Cross-repo intelligence may suggest promotion, but promotion must remain explicit.
+- Pattern: Cross-repo comparison becomes useful when it yields promotable pattern/story candidates with evidence.
+- Rule: Cross-repo intelligence may suggest promotion, but promotion must remain explicit.
+- Failure Mode: Raw comparison output without grouping/promotion semantics becomes noisy and underused.
 - WHAT: Hardened Observer’s cross-repo candidate mapper so optional aggregate-array fields such as `supporting_repos` and `evidence` are normalized before iteration/spread, and tightened the observer fixture coverage to prove partially populated read-only candidate payloads do not crash or leak unstable shapes. WHY: Read-only observer endpoints must remain stable even when upstream aggregate artifacts omit additive optional arrays.
 - Rule: Observer/API boundary mappers must normalize optional array fields before iteration or spreading.
 - Pattern: Aggregate read models should be tolerant of additive or partially populated upstream contract shapes.

@@ -761,6 +761,8 @@ This receipt is designed to feed future prioritization cleanly: `verification_su
 - `playbook story list --json` exposes the canonical repo-local story backlog artifact at `.playbook/stories.json`.
 - `playbook story candidates --json` derives and writes the non-canonical inspectable candidate artifact at `.playbook/story-candidates.json` without mutating `.playbook/stories.json`.
 - `playbook story promote <candidate-id> --json` explicitly promotes one candidate into the canonical backlog artifact.
+- `pnpm playbook patterns proposals --json` groups cross-repo comparisons into promotable portable-pattern/story candidates with evidence lineage and explicit governed promotion targets.
+- `pnpm playbook patterns proposals promote --proposal <proposal-id> --target memory|story [--repo <repo-id>] --json` keeps cross-repo adoption explicit while bridging into reusable memory or canonical backlog surfaces.
 
 - Rule: Stories are the durable repo-scoped action unit and must remain structured first, narrative second.
 - Pattern: Backlog state is a canonical repo-local artifact, not a UI-owned construct.

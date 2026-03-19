@@ -560,9 +560,11 @@ export {
   generatePatternProposalArtifact,
   writePatternProposalArtifact,
   readPatternProposalArtifact,
+  promotePatternProposalToMemory,
+  promotePatternProposalToStory,
   PATTERN_PROPOSALS_RELATIVE_PATH
 } from './learning/patternProposalBridge.js';
-export type { PatternProposal, PatternProposalArtifact } from './learning/patternProposalBridge.js';
+export type { PatternProposal, PatternProposalArtifact, PatternProposalPromotionResult, PatternProposalEvidence } from './learning/patternProposalBridge.js';
 export type { PatternTopologySignature, PatternEquivalenceClass, PatternVariant, PatternTopologyTelemetry, PatternEquivalenceArtifact } from './schema/patternTopology.js';
 
 export { buildStateSpaceSnapshot } from './stateSpace/buildStateSpaceSnapshot.js';

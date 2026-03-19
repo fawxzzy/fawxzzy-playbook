@@ -12,27 +12,37 @@
     "proposals"
   ],
   "properties": {
-    "schemaVersion": {
-      "type": "string",
-      "const": "1.0"
-    },
-    "kind": {
-      "type": "string",
-      "const": "pattern-proposals"
-    },
-    "generatedAt": {
-      "type": "string",
-      "format": "date-time"
-    },
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "kind": { "type": "string", "const": "pattern-proposals" },
+    "generatedAt": { "type": "string", "format": "date-time" },
     "proposals": {
       "type": "array",
       "description": "Deterministically ordered proposals that remain governance candidates until explicit review.",
-      "items": {
-        "$ref": "#/$defs/patternProposal"
-      }
+      "items": { "$ref": "#/$defs/patternProposal" }
     }
   },
   "$defs": {
+    "promotionTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "command", "target_artifact"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["memory", "story"] },
+        "command": { "type": "string", "minLength": 1 },
+        "target_artifact": { "type": "string", "minLength": 1 }
+      }
+    },
+    "patternProposalEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repo_id", "artifact_kind", "semantics", "why_portable"],
+      "properties": {
+        "repo_id": { "type": "string", "minLength": 1 },
+        "artifact_kind": { "type": "string", "const": "pattern-candidates" },
+        "semantics": { "type": "string", "const": "presence" },
+        "why_portable": { "type": "string", "minLength": 1 }
+      }
+    },
     "patternProposal": {
       "type": "object",
       "additionalProperties": false,
@@ -43,43 +53,34 @@
         "mean_confidence",
         "portability_score",
         "proposed_action",
-        "target_pattern"
+        "target_pattern",
+        "portability_rationale",
+        "evidence",
+        "promotion_targets"
       ],
       "properties": {
-        "proposal_id": {
-          "type": "string",
-          "pattern": "^proposal\\.[a-z0-9-]+\\.generalization$"
-        },
-        "pattern_family": {
-          "type": "string",
-          "minLength": 1
-        },
+        "proposal_id": { "type": "string", "pattern": "^proposal\\.[a-z0-9-]+\\.generalization$" },
+        "pattern_family": { "type": "string", "minLength": 1 },
         "candidate_repos": {
           "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          },
+          "items": { "type": "string", "minLength": 1 },
           "minItems": 2,
           "uniqueItems": true
         },
-        "mean_confidence": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
+        "mean_confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "portability_score": { "type": "number", "minimum": 0.65, "maximum": 1 },
+        "proposed_action": { "type": "string", "const": "append_instance" },
+        "target_pattern": { "type": "string", "pattern": "^pattern\\.[a-z0-9-]+$" },
+        "portability_rationale": { "type": "string", "minLength": 1 },
+        "evidence": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/patternProposalEvidence" }
         },
-        "portability_score": {
-          "type": "number",
-          "minimum": 0.65,
-          "maximum": 1
-        },
-        "proposed_action": {
-          "type": "string",
-          "const": "append_instance"
-        },
-        "target_pattern": {
-          "type": "string",
-          "pattern": "^pattern\\.[a-z0-9-]+$"
+        "promotion_targets": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/promotionTarget" }
         }
       }
     }

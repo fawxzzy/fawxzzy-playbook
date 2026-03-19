@@ -87,7 +87,14 @@ Compute and show candidate portability scores with signal breakdowns.
 
 ### `patterns proposals`
 
-Build governance-safe enrichment proposals from `.playbook/cross-repo-candidates.json` and write `.playbook/pattern-proposals.json`.
+Build governance-safe enrichment proposals from `.playbook/cross-repo-candidates.json` and write `.playbook/pattern-proposals.json`. Each proposal now carries normalized evidence lineage (`repo_id`, `artifact_kind`, semantics), a portability rationale, and explicit promotion targets for memory and story surfaces.
+
+### `patterns proposals promote --proposal <proposal-id> --target memory|story [--repo <repo-id>]`
+
+Explicitly promote one cross-repo proposal into a governed target:
+
+- `--target memory` promotes a portable pattern candidate into reusable memory knowledge.
+- `--target story --repo <repo-id>` promotes a repo-scoped adoption candidate into the canonical backlog artifact.
 
 ### `patterns cross-repo`
 
@@ -196,12 +203,12 @@ pnpm playbook patterns promote --id <pattern-id> --decision approve --json
 Lifecycle:
 
 1. Extraction and aggregation produce candidate-family observations (`.playbook/cross-repo-candidates.json`).
-2. Proposal bridge emits deterministic enrichment proposals (`.playbook/pattern-proposals.json`).
-3. Human/governance review decides if proposals should be promoted into canonical pattern knowledge.
+2. Proposal bridge emits deterministic grouped promotion candidates (`.playbook/pattern-proposals.json`) with evidence lineage and portable/story promotion targets.
+3. Human/governance review explicitly promotes a candidate into memory knowledge or a repo story/backlog item.
 
 Hard guarantees:
 
-- Automatic extraction may propose enrichment but must never mutate canonical pattern knowledge automatically.
+- Automatic extraction may suggest promotion but must never mutate canonical pattern knowledge or backlog state automatically.
 - Proposals require `repo_count >= 2` and `portability_score >= 0.65` before they can be emitted.
 - Deterministic sorting ensures stable proposal ordering for review and audit.
 
@@ -240,3 +247,7 @@ The aggregate score is designed to rank **representational persistence and pract
 
 - Rule: Attractor scoring must rank persistence and usefulness, not claim ontology.
 - Failure Mode: Treating attractor score as truth collapses governance and invites numerology-style misuse.
+
+- Pattern: Cross-repo comparison becomes useful when it yields promotable pattern/story candidates with evidence.
+- Rule: Cross-repo intelligence may suggest promotion, but promotion must remain explicit.
+- Failure Mode: Raw comparison output without grouping/promotion semantics becomes noisy and underused.

@@ -204,6 +204,8 @@ declare module "@zachariahredfield/playbook-engine" {
   export const generatePatternProposalArtifact: (...args: any[]) => any;
   export const writePatternProposalArtifact: (...args: any[]) => string;
   export const readPatternProposalArtifact: (...args: any[]) => any;
+  export const promotePatternProposalToMemory: (...args: any[]) => any;
+  export const promotePatternProposalToStory: (...args: any[]) => any;
   export type PatternProposalArtifact = any;
   export const explainTarget: (...args: any[]) => any;
   export type ExplainTargetResult = any;
