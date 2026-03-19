@@ -10,7 +10,7 @@ Command boundary:
 
 ### `knowledge list`
 
-List all evidence, candidate, promoted, superseded, and normalized global reusable pattern records.
+List all evidence, candidate, promoted, superseded, and normalized global reusable pattern records. This now includes reviewable pattern lifecycle candidates emitted from runtime receipts, drift signals, promotion history, and later portability outcomes.
 
 ### `knowledge query`
 
@@ -52,6 +52,7 @@ Lifecycle guarantees:
 
 - Query surfaces distinguish `active`, `candidate`, `stale`, `retired`, `superseded`, and `demoted` lifecycle truth explicitly.
 - Read-only inspection reveals lifecycle truth without mutating it.
+- Lifecycle recommendations surface as candidate records sourced from `.playbook/memory/lifecycle-candidates.json`; they remain advisory-only and retain exact evidence references plus target pattern ids.
 - Global reusable patterns are normalized into the same inspection surface as repo-local memory so provenance and supersession remain auditable from one command family.
 - JSON list/query/timeline/stale summaries expose lifecycle counts in `summary.byLifecycle` alongside `byType` and `byStatus` so deterministic consumers can reason about lifecycle distribution without re-aggregating records.
 

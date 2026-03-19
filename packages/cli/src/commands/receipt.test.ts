@@ -11,6 +11,7 @@ const buildFleetCodexExecutionPlan = vi.fn();
 const ingestExecutionResults = vi.fn();
 const loadReplayExecutionOutcomeInput = vi.fn();
 const replayExecutionOutcomeInput = vi.fn();
+const generateAndWriteLifecycleCandidatesArtifact = vi.fn();
 
 vi.mock("@zachariahredfield/playbook-engine", () => ({
   buildRepoAdoptionReadiness,
@@ -18,6 +19,7 @@ vi.mock("@zachariahredfield/playbook-engine", () => ({
   buildFleetAdoptionWorkQueue,
   buildFleetCodexExecutionPlan,
   ingestExecutionResults,
+  generateAndWriteLifecycleCandidatesArtifact,
 }));
 
 vi.mock("./execution/replay.js", () => ({
@@ -113,6 +115,7 @@ describe("runReceipt", () => {
       inputArtifactPath: ".playbook/execution-outcome-input.json",
       replayMode: "current",
     });
+    generateAndWriteLifecycleCandidatesArtifact.mockReturnValue({ artifact: { schemaVersion: '1.0', kind: 'pattern-lifecycle-candidates', generatedAt: '2026-01-03T00:00:00.000Z', evidence: [], candidates: [] }, artifactPath: '.playbook/memory/lifecycle-candidates.json' });
     replayExecutionOutcomeInput.mockReturnValue({
       schemaVersion: "1.0",
       kind: "fleet-adoption-execution-replay",
@@ -185,6 +188,10 @@ describe("runReceipt", () => {
     expect(payload.written_artifacts.execution_receipt).toBe(
       ".playbook/execution-receipt.json",
     );
+    expect(payload.written_artifacts.lifecycle_candidates).toBe(
+      ".playbook/memory/lifecycle-candidates.json",
+    );
+    expect(payload.lifecycle_candidates.kind).toBe('pattern-lifecycle-candidates');
     expect(payload.story_transition).toBeNull();
 
     logSpy.mockRestore();

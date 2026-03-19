@@ -198,3 +198,13 @@ Separation requirements:
 - `docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_AND_INSPECTION_SURFACES.md`
 - `docs/architecture/PLAYBOOK_AUTOMATION_SYNTHESIS_GOVERNED_KNOWLEDGE_CONSUMPTION.md`
 - `docs/architecture/PLAYBOOK_GOVERNED_CROSS_REPO_PATTERN_PROMOTION_AND_TRANSFER.md`
+
+
+## Lifecycle review candidate artifact
+
+- Runtime receipts, drift projections, rollback/deactivation notes, promotion history, and later portability outcomes should converge into `.playbook/memory/lifecycle-candidates.json`.
+- Each recommendation must remain candidate-only until explicit human promotion/demotion/retirement.
+- Every recommendation must preserve exact source evidence references and target pattern ids so freshness, demotion, and supersession suggestions remain explainable.
+- Rule: Runtime outcomes may suggest knowledge changes, but may not mutate promoted knowledge automatically.
+- Pattern: Outcome feedback should produce reviewable lifecycle candidates, not hidden doctrine edits.
+- Failure Mode: Freshness logic without provenance becomes numerology.

@@ -23,6 +23,7 @@ type ReceiptIngestResult = {
   execution_outcome_input: ReturnType<typeof persistExecutionControlLoop>["execution_outcome_input"];
   promotion: ReturnType<typeof persistExecutionControlLoop>["promotion"];
   story_transition: ReturnType<typeof persistExecutionControlLoop>["story_transition"];
+  lifecycle_candidates: ReturnType<typeof persistExecutionControlLoop>["lifecycle_candidates"];
   written_artifacts: ReturnType<typeof persistExecutionControlLoop>["written_artifacts"];
 };
 
@@ -123,6 +124,7 @@ export const runReceipt = async (
       execution_outcome_input: ingested.execution_outcome_input,
       promotion: ingested.promotion,
       story_transition: ingested.story_transition,
+      lifecycle_candidates: ingested.lifecycle_candidates,
       written_artifacts: ingested.written_artifacts,
     };
 

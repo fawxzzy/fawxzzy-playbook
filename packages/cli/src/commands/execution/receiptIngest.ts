@@ -15,6 +15,7 @@ import {
   type StoryPlanningReference,
   type StoriesArtifact,
   type StoryLifecycleEvent,
+  generateAndWriteLifecycleCandidatesArtifact,
 } from "@zachariahredfield/playbook-engine";
 import { writeJsonArtifactAbsolute } from "../../lib/jsonArtifact.js";
 import {
@@ -64,11 +65,13 @@ export type PersistedExecutionIngest = ReturnType<typeof ingestExecutionResults>
   execution_outcome_input: StoryLinkedControlLoop<ReturnType<typeof ingestExecutionResults>["execution_outcome_input"]>;
   promotion: WorkflowPromotion;
   story_transition: StoryTransitionResult;
+  lifecycle_candidates: ReturnType<typeof generateAndWriteLifecycleCandidatesArtifact>["artifact"];
   written_artifacts: {
     execution_outcome_input: string;
     execution_receipt: string;
     updated_state: string;
     staged_updated_state: string;
+    lifecycle_candidates: string;
     stories?: string;
   };
 };
@@ -331,6 +334,12 @@ export const persistExecutionControlLoop = (
       "Staged updated-state candidate blocked; committed adoption state preserved.",
   });
   const storyTransition = promoteStoryLifecycle(cwd, storyReference, updatedState);
+  const lifecycleCandidates = generateAndWriteLifecycleCandidatesArtifact({
+    projectRoot: cwd,
+    receipt: receiptWithPromotion as ReturnType<typeof ingestExecutionResults>["receipt"],
+    updatedState: updatedState as ReturnType<typeof ingestExecutionResults>["updated_state"],
+    outcomeInput: executionOutcomeInput as ReturnType<typeof ingestExecutionResults>["execution_outcome_input"],
+  });
 
   return {
     ...ingested,
@@ -339,11 +348,13 @@ export const persistExecutionControlLoop = (
     updated_state: updatedState,
     promotion,
     story_transition: storyTransition,
+    lifecycle_candidates: lifecycleCandidates.artifact,
     written_artifacts: {
       execution_outcome_input: EXECUTION_OUTCOME_INPUT_RELATIVE_PATH,
       execution_receipt: EXECUTION_RECEIPT_RELATIVE_PATH,
       updated_state: UPDATED_STATE_RELATIVE_PATH,
       staged_updated_state: UPDATED_STATE_STAGING_RELATIVE_PATH,
+      lifecycle_candidates: lifecycleCandidates.artifactPath,
       ...(storyTransition ? { stories: STORIES_RELATIVE_PATH } : {}),
     },
   };

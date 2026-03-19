@@ -7,7 +7,7 @@ export type KnowledgeRecordStatus = (typeof knowledgeRecordStatuses)[number];
 export const knowledgeLifecycleStates = ['observed', 'candidate', 'active', 'stale', 'retired', 'superseded', 'demoted'] as const;
 export type KnowledgeLifecycleState = (typeof knowledgeLifecycleStates)[number];
 
-export const knowledgeSourceKinds = ['memory-event', 'memory-candidate', 'memory-knowledge', 'global-pattern-memory'] as const;
+export const knowledgeSourceKinds = ['memory-event', 'memory-candidate', 'memory-knowledge', 'global-pattern-memory', 'lifecycle-candidate'] as const;
 export type KnowledgeSourceKind = (typeof knowledgeSourceKinds)[number];
 
 export type KnowledgeRecordSource = {

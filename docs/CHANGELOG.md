@@ -1,3 +1,12 @@
+# Changelog
+
+## Unreleased
+
+- WHAT: Added deterministic pattern lifecycle candidate generation at `.playbook/memory/lifecycle-candidates.json` and wired `receipt ingest` to convert execution receipts, drift signals, promotion history, rollback/deactivation notes, and later portability outcomes into reviewable freshness/demotion/supersession recommendations with exact evidence links and target pattern ids. WHY: Outcome feedback should produce explainable, provenance-linked lifecycle candidates instead of hidden doctrine edits or numerology-only freshness logic.
+- Rule: Runtime outcomes may suggest knowledge changes, but may not mutate promoted knowledge automatically.
+- Pattern: Outcome feedback should produce reviewable lifecycle candidates, not hidden doctrine edits.
+- Failure Mode: Freshness logic without provenance becomes numerology.
+
 - WHAT: Normalized reusable pattern knowledge storage behind explicit scope metadata and a shared resolver so repo-local memory, global reusable pattern memory, and cross-repo proposal bridge artifacts now resolve through one contract. WHY: Scope-first resolution removes global path drift and keeps CLI/Observer reads deterministic during legacy-path migration.
 
 ## 2026-03-19 — Pattern retirement lifecycle and transfer packages

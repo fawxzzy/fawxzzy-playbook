@@ -179,6 +179,7 @@ Implementation note: shared staging helpers live in `scripts/staged-artifact-wor
 - Failure Mode: Stale or superseded patterns leaking into planning context creates silent guidance drift.
 - `pnpm playbook promote ... --json` writes `.playbook/promotion-receipts.json` in the mutated scope so Observer artifact inspection can review promotion provenance, target fingerprints, and noop/conflict outcomes.
 - `pnpm playbook promote pattern-retire|pattern-demote|pattern-recall|pattern-supersede --json` reuses the same audited receipt path as initial promotion and preserves provenance/supersession lineage instead of deleting history.
+- `pnpm playbook receipt ingest --json` now writes `.playbook/memory/lifecycle-candidates.json` as a read-only review surface for freshness/demotion/supersession recommendations; outcome evidence may suggest lifecycle changes, but it must not auto-mutate promoted knowledge.
 - `promotion-receipts.json` is canonically sorted for deterministic inspection; it is a governed audit artifact, not an append-order event stream.
 - Pattern: Shared staged-artifact orchestration should provide generation isolation, candidate validation, and gated promotion.
 - Pattern: Reuse one shared workflow promotion contract instead of command-local promotion result shapes.

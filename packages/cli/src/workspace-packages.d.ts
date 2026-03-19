@@ -56,6 +56,7 @@ declare module "@zachariahredfield/playbook-engine" {
   export const promoteMemoryCandidate: (...args: any[]) => any;
   export const retirePromotedKnowledge: (...args: any[]) => any;
   export const pruneMemoryKnowledge: (...args: any[]) => any;
+  export const generateAndWriteLifecycleCandidatesArtifact: (...args: any[]) => any;
   export type KnowledgeQueryOptions = any;
   export const knowledgeList: (...args: any[]) => any;
   export const knowledgeQuery: (...args: any[]) => any;
