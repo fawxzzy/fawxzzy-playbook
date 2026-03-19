@@ -22,6 +22,7 @@ const KNOWLEDGE_PATHS = [
   `${MEMORY_ROOT}/knowledge/failure-modes.json`,
   `${MEMORY_ROOT}/knowledge/invariants.json`
 ] as const;
+const LIFECYCLE_CANDIDATES_PATH = `${MEMORY_ROOT}/lifecycle-candidates.json` as const;
 const DEFAULT_STALE_DAYS = 45;
 const EPOCH_ISO = new Date(0).toISOString();
 const PLAYBOOK_HOME_ENV = 'PLAYBOOK_HOME' as const;
@@ -131,6 +132,33 @@ type GlobalPatternEntry = {
 type GlobalPatternArtifact = {
   kind?: unknown;
   patterns?: unknown;
+};
+
+type LifecycleEvidenceRecord = {
+  evidence_id?: unknown;
+  source_path?: unknown;
+  observed_at?: unknown;
+  payload_fingerprint?: unknown;
+};
+
+type LifecycleCandidateEntry = {
+  recommendation_id?: unknown;
+  target_pattern_id?: unknown;
+  recommended_action?: unknown;
+  confidence?: unknown;
+  explainability?: unknown;
+  source_evidence?: unknown;
+  source_evidence_ids?: unknown;
+  provenance_fingerprints?: unknown;
+  derived_from?: unknown;
+  status?: unknown;
+  created_at?: unknown;
+  freshness?: unknown;
+};
+
+type LifecycleCandidatesArtifact = {
+  generatedAt?: unknown;
+  candidates?: unknown;
 };
 
 const safeReadJson = <T>(filePath: string): T | null => {
@@ -472,6 +500,63 @@ const readPromotedRecords = (projectRoot: string, repo: string): KnowledgeRecord
       });
   });
 
+
+const readLifecycleCandidateRecords = (projectRoot: string, repo: string): KnowledgeRecord[] => {
+  const artifactPath = path.join(projectRoot, LIFECYCLE_CANDIDATES_PATH);
+  const parsed = safeReadJson<LifecycleCandidatesArtifact>(artifactPath);
+  if (!parsed || !Array.isArray(parsed.candidates)) return [];
+
+  return parsed.candidates.flatMap((value) => {
+    const entry = value as LifecycleCandidateEntry;
+    if (typeof entry.recommendation_id !== 'string' || typeof entry.target_pattern_id !== 'string') return [];
+    const evidence = Array.isArray(entry.source_evidence) ? entry.source_evidence as LifecycleEvidenceRecord[] : [];
+    const evidenceIds = evidence.map((item) => typeof item.evidence_id === 'string' ? item.evidence_id : null).filter((item): item is string => item !== null);
+    const sourcePaths = evidence.map((item) => typeof item.source_path === 'string' ? item.source_path : null).filter((item): item is string => item !== null);
+    return [withLifecycle({
+      id: entry.recommendation_id,
+      type: 'candidate' as const,
+      createdAt: toIsoDate(entry.created_at, toIsoDate(parsed.generatedAt)),
+      repo,
+      source: {
+        kind: 'lifecycle-candidate' as const,
+        path: LIFECYCLE_CANDIDATES_PATH,
+        command: 'receipt ingest'
+      },
+      confidence: toNumberOrNull(entry.confidence),
+      status: 'active' as const,
+      provenance: {
+        repo,
+        sourceCommand: 'receipt ingest',
+        runId: null,
+        sourcePath: sourcePaths[0] ?? LIFECYCLE_CANDIDATES_PATH,
+        eventIds: evidenceIds,
+        evidenceIds,
+        fingerprints: [
+          ...new Set([
+            ...evidence.map((item) => typeof item.payload_fingerprint === 'string' ? item.payload_fingerprint : null).filter((item): item is string => item !== null),
+            ...toStringArray(entry.provenance_fingerprints)
+          ])
+        ].sort((a,b)=>a.localeCompare(b)),
+        relatedRecordIds: [entry.target_pattern_id, ...toStringArray(entry.source_evidence_ids)].sort((a,b)=>a.localeCompare(b))
+      },
+      metadata: {
+        kind: 'pattern-lifecycle-candidate',
+        targetPatternId: entry.target_pattern_id,
+        recommendedAction: entry.recommended_action ?? null,
+        explainability: Array.isArray(entry.explainability) ? entry.explainability : [],
+        sourceEvidence: Array.isArray(entry.source_evidence) ? entry.source_evidence : [],
+        derivedFrom: Array.isArray(entry.derived_from) ? entry.derived_from : [],
+        freshness: entry.freshness ?? null
+      }
+    }, {
+      state: 'candidate',
+      warnings: ['Lifecycle recommendations are candidate-only until explicit human promotion, demotion, or retirement.'],
+      supersedes: [],
+      supersededBy: []
+    })];
+  });
+};
+
 const readGlobalPatternRecords = (projectRoot: string): KnowledgeRecord[] => {
   const playbookHome = resolvePlaybookHome();
   const candidatePath = path.join(playbookHome, '.playbook', 'patterns.json');
@@ -590,6 +675,7 @@ const collectKnowledgeRecords = (projectRoot: string, staleDays: number): Knowle
     ...readEvidenceRecords(projectRoot, repo),
     ...readCandidateRecords(projectRoot, repo, staleDays),
     ...readPromotedRecords(projectRoot, repo),
+    ...readLifecycleCandidateRecords(projectRoot, repo),
     ...readGlobalPatternRecords(projectRoot)
   ];
 };

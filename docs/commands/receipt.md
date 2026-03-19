@@ -50,6 +50,7 @@ The ingest command accepts a JSON array of deterministic execution results.
 - Playbook does **not** infer execution success/failure from repo state during ingest.
 - The canonical receipt input artifact is overwritten at `.playbook/execution-outcome-input.json` using deterministic ordering.
 - `updated_state` is reconciled from the receipt, and `next_queue` is derived from `updated_state` only.
+- Runtime outcomes may suggest lifecycle changes, but ingest writes candidate-only recommendations to `.playbook/memory/lifecycle-candidates.json`; it does not mutate promoted knowledge automatically.
 
 ## Output
 
@@ -97,6 +98,7 @@ Replay classification is limited to deterministic evidence already present in ca
 - `.playbook/execution-outcome-input.json`
 - `.playbook/execution-updated-state.json`
 - `.playbook/staged/workflow-status-updated/execution-updated-state.json`
+- `.playbook/memory/lifecycle-candidates.json`
 
 Replay is read-only: it reuses the canonical execution outcome input artifact and compares replayed downstream state against committed truth without mutating committed artifacts.
 

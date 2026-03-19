@@ -380,6 +380,8 @@ export type {
   ImprovementSignalEvent,
   CommandQualityEvent
 } from './memory/events.js';
+export { generateLifecycleCandidatesArtifact, generateAndWriteLifecycleCandidatesArtifact, readLifecycleCandidatesArtifact, writeLifecycleCandidatesArtifact } from './memory/lifecycleCandidates.js';
+export type { LifecycleCandidatesArtifact, LifecycleCandidateRecord, LifecycleEvidenceRef, LifecycleRecommendationAction, LifecycleEvidenceKind } from './schema/lifecycleCandidate.js';
 export { lookupMemoryEventTimeline, lookupMemoryCandidateKnowledge, lookupPromotedMemoryKnowledge, expandMemoryProvenance } from './memory/inspection.js';
 export type { MemoryTimelineLookupOptions, MemoryCandidateLookupOptions, MemoryKnowledgeLookupOptions, ExpandedMemoryProvenance } from './memory/inspection.js';
 export type { DocsAuditResult, DocsAuditFinding, DocsAuditStatus, DocsAuditLevel } from './docs/audit.js';
