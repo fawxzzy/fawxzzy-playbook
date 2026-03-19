@@ -17,27 +17,29 @@ const findStoryById = vi.fn();
 const buildStoryRouteTask = vi.fn();
 const toStoryPlanningReference = vi.fn();
 const deriveStoryTransitionPreview = vi.fn();
-const transitionStoryFromEvent = vi.fn();
 const validateStoriesArtifact = vi.fn(() => []);
 
-vi.mock('@zachariahredfield/playbook-engine', () => ({
-  routeTask,
-  buildExecutionPlan,
-  compileCodexPrompt,
-  recordRouteDecision,
-  safeRecordRepositoryEvent,
-  appendCommandExecutionQualityRecord,
-  recordCommandExecution,
-  recordCommandQuality,
-  readStoriesArtifact,
-  findStoryById,
-  buildStoryRouteTask,
-  toStoryPlanningReference,
-  deriveStoryTransitionPreview,
-  transitionStoryFromEvent,
-  validateStoriesArtifact,
-  STORIES_RELATIVE_PATH: '.playbook/stories.json'
-}));
+vi.mock('@zachariahredfield/playbook-engine', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@zachariahredfield/playbook-engine')>();
+  return {
+    ...actual,
+    routeTask,
+    buildExecutionPlan,
+    compileCodexPrompt,
+    recordRouteDecision,
+    safeRecordRepositoryEvent,
+    appendCommandExecutionQualityRecord,
+    recordCommandExecution,
+    recordCommandQuality,
+    readStoriesArtifact,
+    findStoryById,
+    buildStoryRouteTask,
+    toStoryPlanningReference,
+    deriveStoryTransitionPreview,
+    validateStoriesArtifact,
+    STORIES_RELATIVE_PATH: '.playbook/stories.json'
+  };
+});
 
 describe('runRoute', () => {
   it('returns deterministic failure for missing task argument', async () => {
@@ -172,6 +174,7 @@ describe('runRoute', () => {
     findStoryById.mockImplementation((_artifact, id) => id === 'story-1' ? story : null);
     buildStoryRouteTask.mockReturnValue('update command docs: Update command docs');
     toStoryPlanningReference.mockReturnValue({
+      story_reference: 'story:story-1',
       id: 'story-1',
       title: 'Update command docs',
       status: 'ready',
@@ -183,11 +186,6 @@ describe('runRoute', () => {
       story_id: 'story-1',
       previous_status: 'ready',
       next_status: 'in_progress'
-    });
-    transitionStoryFromEvent.mockReturnValue({
-      schemaVersion: '1.0',
-      repo: 'repo',
-      stories: [{ ...story, status: 'in_progress' }]
     });
     routeTask.mockReturnValue({
       route: 'deterministic_local',
@@ -227,6 +225,7 @@ describe('runRoute', () => {
       recommended_pr_size: 'small',
       worker_ready: true,
       story_reference: {
+        story_reference: 'story:story-1',
         id: 'story-1',
         title: 'Update command docs',
         status: 'ready',
@@ -240,6 +239,7 @@ describe('runRoute', () => {
     expect(exitCode).toBe(ExitCode.Success);
     const payload = JSON.parse(String(logSpy.mock.calls.at(-1)?.[0]));
     expect(payload.story.id).toBe('story-1');
+    expect(payload.executionPlan.story_reference.story_reference).toBe('story:story-1');
     expect(payload.executionPlan.story_reference.id).toBe('story-1');
     expect(payload.story_transition.next_status).toBe('in_progress');
     expect(buildExecutionPlan).toHaveBeenCalledWith(expect.objectContaining({
