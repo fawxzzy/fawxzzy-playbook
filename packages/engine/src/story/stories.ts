@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import type { StoryProvenance } from '../promotion/globalPatterns.js';
 
 export const STORIES_SCHEMA_VERSION = '1.0' as const;
 export const STORIES_RELATIVE_PATH = '.playbook/stories.json' as const;
@@ -302,7 +303,8 @@ export const createStoryRecord = (repoName: string, input: CreateStoryInput): St
   title: input.title.trim(),
   source: input.source.trim(),
   execution_lane: input.execution_lane?.trim() ? input.execution_lane : null,
-  suggested_route: input.suggested_route?.trim() ? input.suggested_route : null
+  suggested_route: input.suggested_route?.trim() ? input.suggested_route : null,
+  provenance: input.provenance
 });
 
 export const upsertStory = (artifact: StoriesArtifact, story: StoryRecord): StoriesArtifact => {
