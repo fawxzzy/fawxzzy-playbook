@@ -1,5 +1,9 @@
 ## Unreleased
 
+- WHAT: Hardened `scripts/demo-refresh.mjs` to deterministically regenerate `docs/contracts/command-truth.json` inside the cloned `playbook-demo` workspace before its refresh script invokes `playbook doctor`, expanded the demo-refresh allowlist to include that managed contract, and added regression coverage for both direct contract repair and the end-to-end refresh preflight path. WHY: Demo refresh was failing late when doctor introduced `command-truth.json` as a required managed artifact but the demo lifecycle had not regenerated it yet.
+- Rule: When doctor introduces a new required managed artifact, demo refresh must regenerate that artifact in the same lifecycle path.
+- Pattern: Required artifact parity between main repo and demo repo must be enforced by refresh automation, not by manual maintenance.
+- Failure Mode: Validation-first refresh flows fail noisily when required managed artifacts are added upstream but not regenerated in demo sync.
 - Added story-linked routing via `playbook route --story <id>` and `playbook story plan <id>` while preserving Story as durable intent and Plan as separate execution shape.
 - Added `story_reference` metadata propagation from execution plans into receipt and updated-state outputs, plus conservative deterministic story lifecycle transitions for planning, blocked execution, and completed execution evidence.
 
