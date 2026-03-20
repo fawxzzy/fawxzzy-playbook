@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
+import type { SpawnSyncReturns } from 'node:child_process';
 import * as engineRuntime from '@zachariahredfield/playbook-engine';
 import {
   TEST_AUTOFIX_ARTIFACT_KIND,
@@ -17,6 +17,7 @@ import {
 import { ExitCode } from '../lib/cliContract.js';
 import { emitJsonOutput, writeJsonArtifact } from '../lib/jsonArtifact.js';
 import { printCommandHelp } from '../lib/commandSurface.js';
+import { runSpawnSync } from '../lib/processRunner.js';
 import { runApply } from './apply.js';
 
 type TestAutofixOptions = {
@@ -115,7 +116,7 @@ const captureJsonConsoleOutput = async <T>(run: () => Promise<number>): Promise<
 };
 
 const runVerificationCommand = (command: string, cwd: string): SpawnSyncReturns<string> =>
-  spawnSync(command, { cwd, shell: true, encoding: 'utf8' });
+  runSpawnSync(command, { cwd, shell: true, encoding: 'utf8' });
 
 const runVerificationPlan = (commands: string[], cwd: string): { results: TestAutofixVerificationCommandResult[]; summary: TestAutofixVerificationSummary } => {
   const results: TestAutofixVerificationCommandResult[] = [];

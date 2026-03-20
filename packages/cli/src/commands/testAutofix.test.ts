@@ -1,18 +1,28 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it, vi, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as applyCommand from './apply.js';
-import * as childProcess from 'node:child_process';
 import { ExitCode } from '../lib/cliContract.js';
 import { listRegisteredCommands } from './index.js';
 import { runTestAutofix } from './testAutofix.js';
+import { runSpawnSync } from '../lib/processRunner.js';
+
+vi.mock('../lib/processRunner.js', () => ({
+  runSpawnSync: vi.fn(),
+}));
+
+const mockedRunSpawnSync = vi.mocked(runSpawnSync);
 
 const createRepo = (): string => fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-test-autofix-'));
 
 const writeFailureLog = (repo: string, lines: string[]): void => {
   fs.writeFileSync(path.join(repo, 'failure.log'), lines.join('\n'));
 };
+
+beforeEach(() => {
+  mockedRunSpawnSync.mockReset();
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -38,7 +48,7 @@ describe('runTestAutofix', () => {
       }));
       return ExitCode.Success;
     });
-    vi.spyOn(childProcess, 'spawnSync').mockReturnValue({ status: 0, stdout: '', stderr: '', pid: 1, output: ['', '', ''], signal: null } as never);
+    mockedRunSpawnSync.mockReturnValue({ status: 0, stdout: '', stderr: '', pid: 1, output: ['', '', ''], signal: null } as never);
 
     const spy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const exitCode = await runTestAutofix(repo, { format: 'json', quiet: false, input: 'failure.log' });
@@ -52,6 +62,7 @@ describe('runTestAutofix', () => {
       'pnpm --filter @fawxzzy/playbook test',
       'pnpm -r test'
     ]);
+    expect(mockedRunSpawnSync).toHaveBeenCalledTimes(3);
 
     const written = JSON.parse(fs.readFileSync(path.join(repo, '.playbook', 'test-autofix.json'), 'utf8')) as { data: { final_status: string; source_triage: { path: string } } };
     expect(written.data.final_status).toBe('fixed');
@@ -74,6 +85,7 @@ describe('runTestAutofix', () => {
     expect(payload.final_status).toBe('review_required_only');
     expect(payload.apply_result.attempted).toBe(false);
     expect(applySpy).not.toHaveBeenCalled();
+    expect(mockedRunSpawnSync).not.toHaveBeenCalled();
   });
 
   it('classifies apply failures as blocked', async () => {
@@ -96,7 +108,6 @@ describe('runTestAutofix', () => {
       }));
       return ExitCode.Failure;
     });
-    const spawnSpy = vi.spyOn(childProcess, 'spawnSync');
 
     const spy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const exitCode = await runTestAutofix(repo, { format: 'json', quiet: false, input: 'failure.log' });
@@ -105,7 +116,7 @@ describe('runTestAutofix', () => {
     expect(exitCode).toBe(ExitCode.Failure);
     expect(payload.final_status).toBe('blocked');
     expect(payload.verification_result.attempted).toBe(false);
-    expect(spawnSpy).not.toHaveBeenCalled();
+    expect(mockedRunSpawnSync).not.toHaveBeenCalled();
   });
 
   it('classifies verification failures after apply as partially_fixed', async () => {
@@ -127,7 +138,7 @@ describe('runTestAutofix', () => {
       }));
       return ExitCode.Success;
     });
-    vi.spyOn(childProcess, 'spawnSync')
+    mockedRunSpawnSync
       .mockReturnValueOnce({ status: 0, stdout: '', stderr: '', pid: 1, output: ['', '', ''], signal: null } as never)
       .mockReturnValueOnce({ status: 1, stdout: '', stderr: '', pid: 1, output: ['', '', ''], signal: null } as never);
 
@@ -139,6 +150,7 @@ describe('runTestAutofix', () => {
     expect(payload.final_status).toBe('partially_fixed');
     expect(payload.executed_verification_commands).toHaveLength(2);
     expect(payload.executed_verification_commands[1].ok).toBe(false);
+    expect(mockedRunSpawnSync).toHaveBeenCalledTimes(2);
   });
 });
 
