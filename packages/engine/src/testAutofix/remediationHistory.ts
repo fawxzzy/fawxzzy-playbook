@@ -16,7 +16,8 @@ import {
 const compareStrings = (left: string, right: string): number => left.localeCompare(right);
 
 const uniqueSorted = (values: Array<string | null | undefined>): string[] => [...new Set(values.filter((value): value is string => Boolean(value)).map((value) => value.trim()).filter(Boolean))].sort(compareStrings);
-const clampConfidence = (value: number): number => Math.max(0, Math.min(1, Number(value.toFixed(2))));
+const MAX_AUTOFIX_CONFIDENCE = 0.95;
+const clampConfidence = (value: number): number => Math.max(0, Math.min(MAX_AUTOFIX_CONFIDENCE, Number(value.toFixed(2))));
 
 export const createEmptyRemediationHistoryArtifact = (): TestAutofixRemediationHistoryArtifact => ({
   schemaVersion: TEST_AUTOFIX_REMEDIATION_HISTORY_SCHEMA_VERSION,
