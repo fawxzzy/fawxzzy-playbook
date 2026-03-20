@@ -77,6 +77,7 @@ const commandContracts: readonly CommandContract[] = [
   { file: 'doctor.snapshot.json', args: ['doctor', '--json'], setupArgs: [['index', '--json'], ['__seed-memory-index__']], schemaCommand: 'doctor' },
   { file: 'analyze-pr.snapshot.json', args: ['analyze-pr', '--json'], setupArgs: [['index', '--json']], schemaCommand: 'analyze-pr' },
   { file: 'contracts.snapshot.json', args: ['contracts', '--json'], schemaCommand: 'contracts' },
+  // ignore suggest intentionally validates populated recommendation rendering from the persisted runtime artifact.
   { file: 'ignore-suggest.snapshot.json', args: ['ignore', 'suggest', '--json'], schemaCommand: 'ignore' },
   { file: 'knowledge-list.snapshot.json', args: ['knowledge', 'list', '--json'], schemaCommand: 'knowledge' },
   { file: 'knowledge-query.snapshot.json', args: ['knowledge', 'query', '--type', 'candidate', '--json'], schemaCommand: 'knowledge' },
