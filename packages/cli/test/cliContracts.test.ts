@@ -21,6 +21,19 @@ function normalizeLineEndings(text: string): string {
   return text.replace(/\r\n/g, '\n');
 }
 
+
+const contractMemoryEventsDir = (fixtureRepo: string): string => path.join(fixtureRepo, '.playbook', 'memory', 'events');
+
+const removeRuntimeFailureIngestArtifacts = (fixtureRepo: string): void => {
+  const eventsDir = contractMemoryEventsDir(fixtureRepo);
+  if (!fs.existsSync(eventsDir)) return;
+
+  for (const entry of fs.readdirSync(eventsDir)) {
+    if (!entry.startsWith('failure_ingest-') || !entry.endsWith('.json')) continue;
+    // Stable contract fixtures intentionally keep only the curated seeded memory events.
+    fs.rmSync(path.join(eventsDir, entry), { force: true });
+  }
+};
 type CommandContract = {
   file: string;
   args: readonly string[];
@@ -325,6 +338,7 @@ describe('CLI JSON contract snapshots', () => {
 
     for (const contract of commandContracts) {
       fs.rmSync(path.join(fixtureRepo, '.playbook', 'memory', 'events', 'runtime'), { recursive: true, force: true });
+      removeRuntimeFailureIngestArtifacts(fixtureRepo);
       const snapshotPath = path.join(snapshotOutputDir, contract.file);
       const committedSnapshotPath = path.join(committedSnapshotDir, contract.file);
       const actualPayload = runCliJsonContract(contract.args, fixtureRepo);
@@ -346,6 +360,10 @@ describe('CLI JSON contract snapshots', () => {
 
       const expectedJson = fs.readFileSync(shouldUpdateSnapshots ? snapshotPath : committedSnapshotPath, 'utf8');
       expect(normalizeLineEndings(actualJson)).toBe(normalizeLineEndings(expectedJson));
+
+      if (contract.file === 'knowledge-list.snapshot.json') {
+        expect(actualJson).not.toContain('failure_ingest-<RUNTIME_EVENT_ID>');
+      }
       }
   });
 
