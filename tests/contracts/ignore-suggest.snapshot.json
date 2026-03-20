@@ -2,13 +2,106 @@
   "schemaVersion": "1.0",
   "command": "ignore suggest",
   "recommendationSource": ".playbook/runtime/current/ignore-recommendations.json",
-  "recommendations": [],
-  "safe_defaults": [],
-  "review_required": [],
+  "recommendations": [
+    {
+      "path": ".git/",
+      "rank": 1,
+      "class": "vcs-internal",
+      "rationale": "fixture safe default",
+      "confidence": 0.99,
+      "expected_scan_impact": {
+        "estimated_files_reduced": 10,
+        "estimated_bytes_reduced": 1024,
+        "impact_level": "low"
+      },
+      "safety_level": "safe-default",
+      "already_covered": false,
+      "eligible_for_safe_apply": true
+    },
+    {
+      "path": "playwright-report/",
+      "rank": 2,
+      "class": "generated-report",
+      "rationale": "fixture safe default",
+      "confidence": 0.97,
+      "expected_scan_impact": {
+        "estimated_files_reduced": 6,
+        "estimated_bytes_reduced": 2048,
+        "impact_level": "low"
+      },
+      "safety_level": "safe-default",
+      "already_covered": false,
+      "eligible_for_safe_apply": true
+    },
+    {
+      "path": "tmp_file.txt",
+      "rank": 3,
+      "class": "temporary-file",
+      "rationale": "fixture review-first",
+      "confidence": 0.61,
+      "expected_scan_impact": {
+        "estimated_files_reduced": 1,
+        "estimated_bytes_reduced": 64,
+        "impact_level": "low"
+      },
+      "safety_level": "review-first",
+      "already_covered": false,
+      "eligible_for_safe_apply": false
+    }
+  ],
+  "safe_defaults": [
+    {
+      "path": ".git/",
+      "rank": 1,
+      "class": "vcs-internal",
+      "rationale": "fixture safe default",
+      "confidence": 0.99,
+      "expected_scan_impact": {
+        "estimated_files_reduced": 10,
+        "estimated_bytes_reduced": 1024,
+        "impact_level": "low"
+      },
+      "safety_level": "safe-default",
+      "already_covered": false,
+      "eligible_for_safe_apply": true
+    },
+    {
+      "path": "playwright-report/",
+      "rank": 2,
+      "class": "generated-report",
+      "rationale": "fixture safe default",
+      "confidence": 0.97,
+      "expected_scan_impact": {
+        "estimated_files_reduced": 6,
+        "estimated_bytes_reduced": 2048,
+        "impact_level": "low"
+      },
+      "safety_level": "safe-default",
+      "already_covered": false,
+      "eligible_for_safe_apply": true
+    }
+  ],
+  "review_required": [
+    {
+      "path": "tmp_file.txt",
+      "rank": 3,
+      "class": "temporary-file",
+      "rationale": "fixture review-first",
+      "confidence": 0.61,
+      "expected_scan_impact": {
+        "estimated_files_reduced": 1,
+        "estimated_bytes_reduced": 64,
+        "impact_level": "low"
+      },
+      "safety_level": "review-first",
+      "already_covered": false,
+      "eligible_for_safe_apply": false
+    }
+  ],
   "summary": {
-    "total_recommendations": 0,
-    "safe_default_count": 0,
-    "review_required_count": 0,
+    "total_recommendations": 3,
+    "safe_default_count": 2,
+    "review_required_count": 1,
     "already_covered_count": 0
   }
 }
