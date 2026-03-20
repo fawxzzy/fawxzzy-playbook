@@ -8,7 +8,7 @@ const repoRoot = path.resolve(import.meta.dirname, '..', '..', '..');
 const cliEntry = path.join(repoRoot, 'packages', 'cli', 'dist', 'main.js');
 const committedSnapshotDir = path.join(repoRoot, 'tests', 'contracts');
 const snapshotOutputDir = process.env.PLAYBOOK_SNAPSHOT_OUTPUT_DIR ? path.resolve(process.env.PLAYBOOK_SNAPSHOT_OUTPUT_DIR) : committedSnapshotDir;
-const shouldUpdateSnapshots = process.env.UPDATE_CONTRACT_SNAPSHOTS === '1';
+const shouldUpdateSnapshots = process.env.UPDATE_CLI_CONTRACT_SNAPSHOTS === '1' || process.env.UPDATE_CONTRACT_SNAPSHOTS === '1';
 
 function normalizeDynamicContractString(value: string): string {
   return value
@@ -24,13 +24,14 @@ function normalizeLineEndings(text: string): string {
 type CommandContract = {
   file: string;
   args: readonly string[];
+  setupArgs?: readonly (readonly string[])[];
   schemaCommand: 'rules' | 'explain' | 'index' | 'graph' | 'verify' | 'plan' | 'context' | 'ai-context' | 'ai-contract' | 'docs' | 'doctor' | 'analyze-pr' | 'contracts' | 'ignore' | 'knowledge';
 };
 
 const commandContracts: readonly CommandContract[] = [
   { file: 'rules.snapshot.json', args: ['rules', '--json'], schemaCommand: 'rules' },
   { file: 'index.snapshot.json', args: ['index', '--json'], schemaCommand: 'index' },
-  { file: 'graph.snapshot.json', args: ['graph', '--json'], schemaCommand: 'graph' },
+  { file: 'graph.snapshot.json', args: ['graph', '--json'], setupArgs: [['index', '--json']], schemaCommand: 'graph' },
   { file: 'explain-PB001.snapshot.json', args: ['explain', 'PB001', '--json'], schemaCommand: 'explain' },
   { file: 'explain-architecture.snapshot.json', args: ['explain', 'architecture', '--json'], schemaCommand: 'explain' },
   { file: 'verify.snapshot.json', args: ['verify', '--json'], schemaCommand: 'verify' },
@@ -307,46 +308,49 @@ function validateAgainstSchema(value: unknown, schema: unknown): boolean {
 }
 
 describe('CLI JSON contract snapshots', () => {
-  let fixtureRepo = '';
-
-  beforeAll(() => {
-    fixtureRepo = createContractFixtureRepo();
-  });
-
-  afterAll(() => {
-    if (fixtureRepo) {
-      fs.rmSync(fixtureRepo, { recursive: true, force: true });
-    }
-  });
-
   it('matches committed snapshots for stable automation contracts', { timeout: 120000 }, () => {
     fs.mkdirSync(snapshotOutputDir, { recursive: true });
     const schemaByCommand = new Map<CommandContract['schemaCommand'], unknown>();
 
     for (const contract of commandContracts) {
-      fs.rmSync(path.join(fixtureRepo, '.playbook', 'memory', 'events', 'runtime'), { recursive: true, force: true });
-      const snapshotPath = path.join(snapshotOutputDir, contract.file);
-      const committedSnapshotPath = path.join(committedSnapshotDir, contract.file);
-      const actualPayload = runCliJsonContract(contract.args, fixtureRepo);
-      const actualJson = `${JSON.stringify(actualPayload, null, 2)}\n`;
+      // Each contract runs against a fresh seeded repo; commands with artifact prerequisites must declare setupArgs explicitly.
+      const fixtureRepo = createContractFixtureRepo();
 
-      let schema = schemaByCommand.get(contract.schemaCommand);
-      if (!schema) {
-        schema = runCliJsonContract(['schema', contract.schemaCommand, '--json'], fixtureRepo);
-        schemaByCommand.set(contract.schemaCommand, schema);
-      }
-      expect(
-        validateAgainstSchema(actualPayload, schema),
-        `Schema validation failed for ${contract.args.join(' ')}`
-      ).toBe(true);
+      try {
+        const snapshotPath = path.join(snapshotOutputDir, contract.file);
+        const committedSnapshotPath = path.join(committedSnapshotDir, contract.file);
 
-      if (shouldUpdateSnapshots || !fs.existsSync(committedSnapshotPath)) {
-        fs.writeFileSync(snapshotPath, actualJson, 'utf8');
-      }
+        for (const setupArgs of contract.setupArgs ?? []) {
+          runCliJsonContract(setupArgs, fixtureRepo);
+        }
 
-      const expectedJson = fs.readFileSync(shouldUpdateSnapshots ? snapshotPath : committedSnapshotPath, 'utf8');
-      expect(normalizeLineEndings(actualJson)).toBe(normalizeLineEndings(expectedJson));
+        const actualPayload = runCliJsonContract(contract.args, fixtureRepo);
+        const actualJson = `${JSON.stringify(actualPayload, null, 2)}\n`;
+
+        let schema = schemaByCommand.get(contract.schemaCommand);
+        if (!schema) {
+          schema = runCliJsonContract(['schema', contract.schemaCommand, '--json'], fixtureRepo);
+          schemaByCommand.set(contract.schemaCommand, schema);
+        }
+        expect(
+          validateAgainstSchema(actualPayload, schema),
+          `Schema validation failed for ${contract.args.join(' ')}`
+        ).toBe(true);
+
+        if (shouldUpdateSnapshots || !fs.existsSync(committedSnapshotPath)) {
+          fs.writeFileSync(snapshotPath, actualJson, 'utf8');
+        }
+
+        const expectedJson = fs.readFileSync(shouldUpdateSnapshots ? snapshotPath : committedSnapshotPath, 'utf8');
+        expect(normalizeLineEndings(actualJson)).toBe(normalizeLineEndings(expectedJson));
+
+        if (contract.file === 'knowledge-list.snapshot.json') {
+          expect(actualJson).not.toContain('failure_ingest-<RUNTIME_EVENT_ID>');
+        }
+      } finally {
+        fs.rmSync(fixtureRepo, { recursive: true, force: true });
       }
+    }
   });
 
   it('returns valid zero-state payloads for all knowledge commands in empty repositories', { timeout: 30000 }, () => {

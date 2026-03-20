@@ -42,7 +42,7 @@ const createEmptyKnowledgeFixtureRepo = (options = {}) => {
 export const commandContracts = [
   { file: 'rules.snapshot.json', args: ['rules', '--json'], schemaCommand: 'rules' },
   { file: 'index.snapshot.json', args: ['index', '--json'], schemaCommand: 'index' },
-  { file: 'graph.snapshot.json', args: ['graph', '--json'], schemaCommand: 'graph' },
+  { file: 'graph.snapshot.json', args: ['graph', '--json'], setupArgs: [['index', '--json']], schemaCommand: 'graph' },
   { file: 'explain-PB001.snapshot.json', args: ['explain', 'PB001', '--json'], schemaCommand: 'explain' },
   { file: 'explain-architecture.snapshot.json', args: ['explain', 'architecture', '--json'], schemaCommand: 'explain' },
   { file: 'verify.snapshot.json', args: ['verify', '--json'], schemaCommand: 'verify' },
@@ -315,11 +315,16 @@ export function generateContractSnapshots(outputDir) {
   assertSnapshotPreconditions();
   fs.mkdirSync(outputDir, { recursive: true });
   const schemaByCommand = new Map();
-  const fixtureRepo = createContractFixtureRepo();
 
-  try {
-    for (const contract of commandContracts) {
-      fs.rmSync(path.join(fixtureRepo, '.playbook', 'memory', 'events', 'runtime'), { recursive: true, force: true });
+  for (const contract of commandContracts) {
+    // Regenerate each contract from a fresh seeded repo; commands with artifact prerequisites must declare setupArgs explicitly.
+    const fixtureRepo = createContractFixtureRepo();
+
+    try {
+      for (const setupArgs of contract.setupArgs ?? []) {
+        runCliJsonContract(setupArgs, fixtureRepo);
+      }
+
       const actualPayload = runCliJsonContract(contract.args, fixtureRepo);
       let schema = schemaByCommand.get(contract.schemaCommand);
       if (!schema) {
@@ -329,10 +334,16 @@ export function generateContractSnapshots(outputDir) {
       if (!validateAgainstSchema(actualPayload, schema)) {
         throw new Error(`Schema validation failed for ${contract.args.join(' ')}`);
       }
+      if (contract.file === 'knowledge-list.snapshot.json') {
+        const json = JSON.stringify(actualPayload);
+        if (json.includes('failure_ingest-<RUNTIME_EVENT_ID>')) {
+          throw new Error('knowledge-list contract fixture was contaminated by runtime failure_ingest artifacts');
+        }
+      }
       fs.writeFileSync(path.join(outputDir, contract.file), `${JSON.stringify(actualPayload, null, 2)}\n`, 'utf8');
+    } finally {
+      fs.rmSync(fixtureRepo, { recursive: true, force: true });
     }
-  } finally {
-    fs.rmSync(fixtureRepo, { recursive: true, force: true });
   }
 
   const emptyRepo = createEmptyKnowledgeFixtureRepo({ prefix: 'playbook-contract-empty-fixture-' });
