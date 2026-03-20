@@ -39,8 +39,40 @@ const createEmptyKnowledgeFixtureRepo = (options = {}) => {
 };
 
 
-// Under isolated fixtures, any contract that observes repo-index-backed availability or repository intelligence
-// must declare setupArgs explicitly because index is the producer and downstream consumers must seed it first.
+const seedFixtureMemoryIndex = (fixtureRepo) => {
+  const eventsDir = path.join(fixtureRepo, '.playbook', 'memory', 'events');
+  const indexPath = path.join(fixtureRepo, '.playbook', 'memory', 'index.json');
+
+  const events = fs.existsSync(eventsDir)
+    ? fs.readdirSync(eventsDir)
+        .filter((entry) => entry.endsWith('.json'))
+        .sort((left, right) => left.localeCompare(right))
+        .map((entry) => {
+          const payload = JSON.parse(fs.readFileSync(path.join(eventsDir, entry), 'utf8'));
+          const eventId = typeof payload.eventInstanceId === 'string' ? payload.eventInstanceId : entry.replace(/\.json$/u, '');
+          return {
+            eventId,
+            relativePath: `./.playbook/memory/events/${entry}`
+          };
+        })
+    : [];
+
+  fs.mkdirSync(path.dirname(indexPath), { recursive: true });
+  fs.writeFileSync(
+    indexPath,
+    `${JSON.stringify(
+      {
+        schemaVersion: '1.0',
+        events
+      },
+      null,
+      2
+    )}\n`
+  );
+};
+
+// Under isolated fixtures, any contract that consumes generated repo intelligence or memory artifacts
+// must declare setupArgs explicitly because producer steps are not shared across per-contract fixture repos.
 export const commandContracts = [
   { file: 'rules.snapshot.json', args: ['rules', '--json'], schemaCommand: 'rules' },
   { file: 'index.snapshot.json', args: ['index', '--json'], schemaCommand: 'index' },
@@ -53,7 +85,7 @@ export const commandContracts = [
   { file: 'ai-context.snapshot.json', args: ['ai-context', '--json'], setupArgs: [['index', '--json']], schemaCommand: 'ai-context' },
   { file: 'ai-contract.snapshot.json', args: ['ai-contract', '--json'], schemaCommand: 'ai-contract' },
   { file: 'docs-audit.snapshot.json', args: ['docs', 'audit', '--json'], schemaCommand: 'docs' },
-  { file: 'doctor.snapshot.json', args: ['doctor', '--json'], schemaCommand: 'doctor' },
+  { file: 'doctor.snapshot.json', args: ['doctor', '--json'], setupArgs: [['index', '--json'], ['__seed-memory-index__']], schemaCommand: 'doctor' },
   { file: 'analyze-pr.snapshot.json', args: ['analyze-pr', '--json'], schemaCommand: 'analyze-pr' },
   { file: 'contracts.snapshot.json', args: ['contracts', '--json'], schemaCommand: 'contracts' },
   { file: 'ignore-suggest.snapshot.json', args: ['ignore', 'suggest', '--json'], schemaCommand: 'ignore' },
@@ -216,6 +248,11 @@ export function runCli(args, fixtureRepo) {
 }
 
 export function runCliJsonContract(args, fixtureRepo) {
+  if (args.length === 1 && args[0] === '__seed-memory-index__') {
+    seedFixtureMemoryIndex(fixtureRepo);
+    return { ok: true };
+  }
+
   const result = runCli(args, fixtureRepo);
   const stdout = result.stdout.trim();
   if (!stdout) {
