@@ -75,7 +75,7 @@ const commandContracts: readonly CommandContract[] = [
   { file: 'ai-contract.snapshot.json', args: ['ai-contract', '--json'], schemaCommand: 'ai-contract' },
   { file: 'docs-audit.snapshot.json', args: ['docs', 'audit', '--json'], schemaCommand: 'docs' },
   { file: 'doctor.snapshot.json', args: ['doctor', '--json'], setupArgs: [['index', '--json'], ['__seed-memory-index__']], schemaCommand: 'doctor' },
-  { file: 'analyze-pr.snapshot.json', args: ['analyze-pr', '--json'], schemaCommand: 'analyze-pr' },
+  { file: 'analyze-pr.snapshot.json', args: ['analyze-pr', '--json'], setupArgs: [['index', '--json']], schemaCommand: 'analyze-pr' },
   { file: 'contracts.snapshot.json', args: ['contracts', '--json'], schemaCommand: 'contracts' },
   { file: 'ignore-suggest.snapshot.json', args: ['ignore', 'suggest', '--json'], schemaCommand: 'ignore' },
   { file: 'knowledge-list.snapshot.json', args: ['knowledge', 'list', '--json'], schemaCommand: 'knowledge' },
