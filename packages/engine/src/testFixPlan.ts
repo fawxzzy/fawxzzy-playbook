@@ -43,6 +43,22 @@ const LOW_RISK_MAPPING: Record<Extract<TestTriageFailureKind, 'snapshot_drift' |
 
 const compareStrings = (left: string, right: string): number => left.localeCompare(right);
 
+const classifyEvidenceLine = (line: string, summary: string, testName: string | null): number => {
+  const trimmed = line.trim();
+  if (trimmed === summary.trim()) return 0;
+  if (/^(?:AssertionError|Error:|Expected:|Received:|Snapshot\b|ENOENT|Cannot find module)/i.test(trimmed)) return 1;
+  if (testName && trimmed.replace(/^(?:×|✕|❯)\s*/, '') === testName.trim()) return 2;
+  return 3;
+};
+
+// Provenance evidence must use an explicit ordering rule so repeated parsing of the same
+// failure shape cannot churn automation snapshots just because source collection order varied.
+const orderEvidence = (finding: TestTriageFinding): string[] => ([...finding.evidence].sort((left, right) => {
+  const bucketOrder = classifyEvidenceLine(left, finding.summary, finding.test_name) - classifyEvidenceLine(right, finding.summary, finding.test_name);
+  if (bucketOrder !== 0) return bucketOrder;
+  return left.localeCompare(right);
+}));
+
 const stableTaskId = (finding: TestTriageFinding, taskKind: TestFixPlanTaskKind, findingIndex: number): string => {
   const seed = [taskKind, finding.failure_kind, finding.package ?? '', finding.test_file ?? '', finding.test_name ?? '', String(findingIndex)].join('|');
   return `task-${createHash('sha256').update(seed).digest('hex').slice(0, 10)}-${findingIndex + 1}`;
@@ -61,7 +77,7 @@ const toExclusion = (
   detail,
   repair_class: finding.repair_class,
   file: finding.test_file,
-  evidence: [...finding.evidence].sort(compareStrings)
+  evidence: orderEvidence(finding)
 });
 
 const toTask = (finding: TestTriageFinding, findingIndex: number, mapping: MappingSpec): TestFixPlanTask => ({
@@ -78,7 +94,7 @@ const toTask = (finding: TestTriageFinding, findingIndex: number, mapping: Mappi
     summary: finding.summary,
     test_name: finding.test_name,
     verification_commands: [...finding.verification_commands].sort(compareStrings),
-    evidence: [...finding.evidence].sort(compareStrings)
+    evidence: orderEvidence(finding)
   }
 });
 

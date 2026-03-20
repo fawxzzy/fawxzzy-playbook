@@ -56,6 +56,15 @@ describe('test fix plan engine', () => {
 
     expect(plan.tasks).toHaveLength(1);
     expect(plan.tasks[0]?.provenance.failure_kind).toBe('snapshot_drift');
+    expect(plan.tasks[0]?.provenance.evidence).toEqual([
+      '@fawxzzy/playbook test: FAIL  packages/cli/src/commands/schema.test.ts',
+      'Snapshot `renders schema snapshot 1` mismatch',
+      '× renders schema snapshot'
+    ]);
+    expect(plan.excluded[0]?.evidence).toEqual([
+      'Error: Cannot find module @esbuild/linux-x64',
+      'ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL @fawxzzy/playbook test: `node ./scripts/run-tests.mjs`'
+    ]);
     expect(plan.excluded).toEqual([
       expect.objectContaining({
         failure_kind: 'environment_limitation',
