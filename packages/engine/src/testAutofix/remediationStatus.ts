@@ -261,43 +261,51 @@ const summarizeBlockedSignatureRollup = (remediationHistory: TestAutofixRemediat
   }).sort((left, right) => right.blocked_count - left.blocked_count || right.historical_success_count - left.historical_success_count || compareStrings(left.failure_signature, right.failure_signature));
 };
 
+const createSyntheticHistoryEntryFromLatestResult = (latestResult: TestAutofixArtifact): TestAutofixRemediationHistoryEntry => ({
+  run_id: latestResult.run_id,
+  generatedAt: latestResult.generatedAt,
+  input: { path: latestResult.input },
+  mode: latestResult.mode ?? 'apply',
+  retry_policy_decision: latestResult.retry_policy_decision,
+  confidence_threshold: latestResult.confidence_threshold ?? 0,
+  autofix_confidence: latestResult.autofix_confidence ?? 0,
+  failure_signatures: normalizeStringArray(latestResult.failure_signatures),
+  triage_classifications: [],
+  admitted_findings: [],
+  excluded_findings: [],
+  applied_task_ids: [],
+  applied_repair_classes: [],
+  files_touched: [],
+  verification_commands: [],
+  verification_outcomes: [],
+  final_status: latestResult.final_status,
+  stop_reasons: normalizeStringArray(latestResult.stop_reasons),
+  provenance: { failure_log_path: latestResult.input, triage_artifact_path: '', fix_plan_artifact_path: '', apply_result_path: null, autofix_result_path: '' }
+});
+
 const summarizeThresholdCounterfactuals = (
   remediationHistory: TestAutofixRemediationHistoryEntry[],
   latestResult: TestAutofixArtifact
-): RemediationStatusThresholdCounterfactual[] => thresholdCandidates.map((threshold) => {
-  const runsMeetingThreshold = remediationHistory.filter((entry) => getConfidenceForEntry(latestResult, entry) >= threshold);
-  const blockedLowConfidenceRuns = remediationHistory.filter((entry) => entry.final_status === 'blocked_low_confidence');
-  const wouldClear = blockedLowConfidenceRuns.filter((entry) => getConfidenceForEntry(latestResult, entry) >= threshold);
-  return {
-    threshold,
-    eligible_runs: runsMeetingThreshold.length,
-    successful_eligible_runs: runsMeetingThreshold.filter((entry) => isSuccessStatus(entry.final_status)).length,
-    blocked_low_confidence_runs: blockedLowConfidenceRuns.length,
-    blocked_runs_that_would_clear: wouldClear.length,
-    latest_run_would_clear: getConfidenceForEntry(latestResult, remediationHistory.find((entry) => entry.run_id === latestResult.run_id) ?? {
-      ...remediationHistory[0],
-      run_id: latestResult.run_id,
-      generatedAt: latestResult.generatedAt,
-      autofix_confidence: latestResult.autofix_confidence ?? 0,
-      failure_signatures: normalizeStringArray(latestResult.failure_signatures),
-      final_status: latestResult.final_status,
-      triage_classifications: [],
-      input: { path: latestResult.input },
-      admitted_findings: [],
-      excluded_findings: [],
-      applied_task_ids: [],
-      applied_repair_classes: [],
-      files_touched: [],
-      verification_commands: [],
-      verification_outcomes: [],
-      stop_reasons: [],
-      provenance: { failure_log_path: latestResult.input, triage_artifact_path: '', fix_plan_artifact_path: '', apply_result_path: null, autofix_result_path: '' }
-    } as TestAutofixRemediationHistoryEntry) >= threshold,
-    advisory_note: wouldClear.length > 0
-      ? 'Advisory only: some blocked_low_confidence runs would have cleared this threshold.'
-      : 'Advisory only: no blocked_low_confidence runs would have cleared this threshold.'
-  };
-});
+): RemediationStatusThresholdCounterfactual[] => {
+  const latestRelevantRun = remediationHistory[0] ?? createSyntheticHistoryEntryFromLatestResult(latestResult);
+
+  return thresholdCandidates.map((threshold) => {
+    const runsMeetingThreshold = remediationHistory.filter((entry) => getConfidenceForEntry(latestResult, entry) >= threshold);
+    const blockedLowConfidenceRuns = remediationHistory.filter((entry) => entry.final_status === 'blocked_low_confidence');
+    const wouldClear = blockedLowConfidenceRuns.filter((entry) => getConfidenceForEntry(latestResult, entry) >= threshold);
+    return {
+      threshold,
+      eligible_runs: runsMeetingThreshold.length,
+      successful_eligible_runs: runsMeetingThreshold.filter((entry) => isSuccessStatus(entry.final_status)).length,
+      blocked_low_confidence_runs: blockedLowConfidenceRuns.length,
+      blocked_runs_that_would_clear: wouldClear.length,
+      latest_run_would_clear: getConfidenceForEntry(latestResult, latestRelevantRun) >= threshold,
+      advisory_note: wouldClear.length > 0
+        ? 'Advisory only: some blocked_low_confidence runs would have cleared this threshold.'
+        : 'Advisory only: no blocked_low_confidence runs would have cleared this threshold.'
+    };
+  });
+};
 
 const summarizeDryRunVsApplyDelta = (
   remediationHistory: TestAutofixRemediationHistoryEntry[],

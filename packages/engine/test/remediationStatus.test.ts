@@ -206,6 +206,114 @@ describe('buildRemediationStatusArtifact', () => {
     expect(blocked.stable_failure_signatures.find((entry) => entry.failure_signature === 'sig-a')?.retry_outlook).toBe('blocked');
   });
 
+
+
+  it('uses the newest history entry for latest_run_would_clear when the latest artifact is not yet represented in history', () => {
+    const artifact = buildRemediationStatusArtifact({
+      latestResult: latestResult({
+        run_id: 'test-autofix-run-9999',
+        generatedAt: '2026-03-21T00:00:00.000Z',
+        autofix_confidence: 0,
+        confidence_threshold: 0.9
+      }),
+      history: history(),
+      latestResultPath: '.playbook/test-autofix.json',
+      remediationHistoryPath: '.playbook/test-autofix-history.json'
+    });
+
+    expect(artifact.telemetry.threshold_counterfactuals).toEqual([
+      { threshold: 0.5, eligible_runs: 1, successful_eligible_runs: 1, blocked_low_confidence_runs: 0, blocked_runs_that_would_clear: 0, latest_run_would_clear: true, advisory_note: 'Advisory only: no blocked_low_confidence runs would have cleared this threshold.' },
+      { threshold: 0.7, eligible_runs: 1, successful_eligible_runs: 1, blocked_low_confidence_runs: 0, blocked_runs_that_would_clear: 0, latest_run_would_clear: true, advisory_note: 'Advisory only: no blocked_low_confidence runs would have cleared this threshold.' },
+      { threshold: 0.85, eligible_runs: 1, successful_eligible_runs: 1, blocked_low_confidence_runs: 0, blocked_runs_that_would_clear: 0, latest_run_would_clear: true, advisory_note: 'Advisory only: no blocked_low_confidence runs would have cleared this threshold.' }
+    ]);
+  });
+
+  it('keeps latest_run_would_clear tied to the latest history run when older eligible runs still clear the threshold', () => {
+    const artifact = buildRemediationStatusArtifact({
+      latestResult: latestResult({
+        run_id: 'test-autofix-run-0004',
+        generatedAt: '2026-03-20T00:00:00.000Z',
+        failure_signatures: ['sig-a'],
+        final_status: 'blocked_low_confidence',
+        mode: 'dry_run',
+        autofix_confidence: 0.42
+      }),
+      history: {
+        ...history(),
+        runs: [
+          ...history().runs,
+          {
+            run_id: 'test-autofix-run-0004',
+            generatedAt: '2026-03-20T00:00:00.000Z',
+            input: { path: 'failure.log' },
+            mode: 'dry_run',
+            retry_policy_decision: 'allow_repair',
+            confidence_threshold: 0.7,
+            autofix_confidence: 0.42,
+            failure_signatures: ['sig-a'],
+            triage_classifications: [{ failure_signature: 'sig-a', failure_kind: 'snapshot_drift', repair_class: 'snapshot_refresh', package: null, test_file: null, test_name: null }],
+            admitted_findings: ['sig-a'],
+            excluded_findings: [],
+            applied_task_ids: [],
+            applied_repair_classes: ['snapshot_refresh'],
+            files_touched: [],
+            verification_commands: [],
+            verification_outcomes: [],
+            final_status: 'blocked_low_confidence',
+            stop_reasons: ['confidence gate'],
+            provenance: { failure_log_path: 'failure.log', triage_artifact_path: 't', fix_plan_artifact_path: 'f', apply_result_path: null, autofix_result_path: 'r' }
+          }
+        ]
+      },
+      latestResultPath: '.playbook/test-autofix.json',
+      remediationHistoryPath: '.playbook/test-autofix-history.json'
+    });
+
+    expect(artifact.telemetry.threshold_counterfactuals).toEqual([
+      { threshold: 0.5, eligible_runs: 1, successful_eligible_runs: 1, blocked_low_confidence_runs: 1, blocked_runs_that_would_clear: 0, latest_run_would_clear: false, advisory_note: 'Advisory only: no blocked_low_confidence runs would have cleared this threshold.' },
+      { threshold: 0.7, eligible_runs: 1, successful_eligible_runs: 1, blocked_low_confidence_runs: 1, blocked_runs_that_would_clear: 0, latest_run_would_clear: false, advisory_note: 'Advisory only: no blocked_low_confidence runs would have cleared this threshold.' },
+      { threshold: 0.85, eligible_runs: 1, successful_eligible_runs: 1, blocked_low_confidence_runs: 1, blocked_runs_that_would_clear: 0, latest_run_would_clear: false, advisory_note: 'Advisory only: no blocked_low_confidence runs would have cleared this threshold.' }
+    ]);
+  });
+
+  it('reports latest_run_would_clear as false when no eligible runs exist', () => {
+    const artifact = buildRemediationStatusArtifact({
+      latestResult: latestResult({
+        run_id: 'test-autofix-run-0004',
+        generatedAt: '2026-03-20T00:00:00.000Z',
+        final_status: 'blocked_low_confidence',
+        autofix_confidence: 0.2
+      }),
+      history: {
+        ...history(),
+        runs: [
+          {
+            ...history().runs[0]!,
+            autofix_confidence: 0.2,
+            run_id: 'test-autofix-run-0004',
+            generatedAt: '2026-03-20T00:00:00.000Z',
+            final_status: 'blocked_low_confidence'
+          },
+          {
+            ...history().runs[1]!,
+            run_id: 'test-autofix-run-0003',
+            generatedAt: '2026-03-19T12:00:00.000Z',
+            autofix_confidence: 0.3,
+            final_status: 'not_fixed'
+          }
+        ]
+      },
+      latestResultPath: '.playbook/test-autofix.json',
+      remediationHistoryPath: '.playbook/test-autofix-history.json'
+    });
+
+    expect(artifact.telemetry.threshold_counterfactuals).toEqual([
+      { threshold: 0.5, eligible_runs: 0, successful_eligible_runs: 0, blocked_low_confidence_runs: 1, blocked_runs_that_would_clear: 0, latest_run_would_clear: false, advisory_note: 'Advisory only: no blocked_low_confidence runs would have cleared this threshold.' },
+      { threshold: 0.7, eligible_runs: 0, successful_eligible_runs: 0, blocked_low_confidence_runs: 1, blocked_runs_that_would_clear: 0, latest_run_would_clear: false, advisory_note: 'Advisory only: no blocked_low_confidence runs would have cleared this threshold.' },
+      { threshold: 0.85, eligible_runs: 0, successful_eligible_runs: 0, blocked_low_confidence_runs: 1, blocked_runs_that_would_clear: 0, latest_run_would_clear: false, advisory_note: 'Advisory only: no blocked_low_confidence runs would have cleared this threshold.' }
+    ]);
+  });
+
   it('surfaces blocked_low_confidence telemetry and advisory signal from matching successful history', () => {
     const artifact = buildRemediationStatusArtifact({
       latestResult: latestResult({

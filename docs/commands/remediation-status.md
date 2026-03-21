@@ -103,7 +103,7 @@ If either artifact is missing or invalid, the command fails clearly instead of i
 - `dry_run_vs_apply_delta`
 - `manual_review_pressure`
 
-These sections reuse the existing remediation-history artifact only. They do not create a second state store, they do not change retry authority, and they do not make policy decisions on their own.
+These sections reuse the existing remediation-history artifact only. They do not create a second state store, they do not change retry authority, and they do not make policy decisions on their own. Within `threshold_counterfactuals`, `latest_run_would_clear` is anchored to the newest remediation-history entry in evidence order (falling back to the latest result only when history is empty) so the boolean stays aligned with the same newest-first history surface that operators review elsewhere.
 
 - Rule: Telemetry may tune policy, but it must not become a second policy engine.
 - Pattern: One read-only summary surface should answer most soak questions.
