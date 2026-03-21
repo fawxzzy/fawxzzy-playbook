@@ -97,7 +97,7 @@ describe('worker results', () => {
       artifact_refs: []
     })).toEqual(['lane_id missing-lane was not found in .playbook/workset-plan.json']);
 
-    const errors = validateWorkerResultInput(plan, {
+    const invalidTargetErrors = validateWorkerResultInput(plan, {
       lane_id: 'lane-1',
       task_ids: ['task-1'],
       worker_type: 'codex-docs',
@@ -109,8 +109,21 @@ describe('worker results', () => {
       proof_refs: [],
       artifact_refs: []
     });
-    expect(errors).toContain('fragment ref target docs/README.md is not a protected singleton doc');
-    expect(errors.some((entry) => entry.includes('must point to a .playbook artifact'))).toBe(true);
+    expect(invalidTargetErrors).toContain('fragment ref target docs/README.md is not a protected singleton doc');
+
+    const invalidPathErrors = validateWorkerResultInput(plan, {
+      lane_id: 'lane-1',
+      task_ids: ['task-1'],
+      worker_type: 'codex-docs',
+      completion_status: 'completed',
+      summary: 'done',
+      blockers: [],
+      unresolved_items: [],
+      fragment_refs: [{ target_path: 'docs/commands/workers.md', fragment_path: 'docs/README.md' }],
+      proof_refs: [],
+      artifact_refs: []
+    });
+    expect(invalidPathErrors.some((entry) => entry.includes('must point to a .playbook artifact'))).toBe(true);
   });
 
   it('allows worker results to advance lane state while unresolved protected-doc work still blocks merge readiness', () => {
