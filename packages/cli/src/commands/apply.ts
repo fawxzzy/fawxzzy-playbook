@@ -35,6 +35,7 @@ type ApplyResult = {
   autoFix: boolean;
   status: 'applied' | 'skipped' | 'unsupported' | 'failed';
   message?: string;
+  details?: Record<string, unknown>;
 };
 
 type ApplyJsonResult = {

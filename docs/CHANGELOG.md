@@ -1,3 +1,8 @@
+- WHAT: Hardened reviewed singleton-doc execution by stamping target-locked preconditions into `docs-consolidation-plan` tasks and making `apply --from-plan` fail closed when target files, managed blocks, or anchor context drift from the reviewed state. WHY: Reviewed consolidation plans must not apply against drifted protected-doc targets.
+- Rule: Reviewed consolidation plans must apply only against the target state they were reviewed against.
+- Pattern: Review plans on fingerprints, execute only on matching fingerprints.
+- Failure Mode: Applying reviewed singleton-doc writes against drifted targets reopens merge-hotspot risk under a deterministic-looking surface.
+
 - WHAT: Added `pnpm playbook docs consolidate-plan --json`, a first-class `docs-consolidation-plan` contract/schema, engine compilation of `.playbook/docs-consolidation.json` into bounded managed-write tasks, and `apply --from-plan` support for reviewed singleton-doc writes while leaving conflicts and missing seams excluded. WHY: Protected singleton docs now have a reviewed write seam without introducing a second mutation executor.
 - Rule: Consolidation planning may prepare reviewed writes, but `apply` remains the only mutation boundary.
 - Pattern: Workers propose, consolidator compiles, apply executes.

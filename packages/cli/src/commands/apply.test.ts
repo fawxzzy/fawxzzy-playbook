@@ -85,6 +85,13 @@ const createDocsConsolidationPlanPayload = () => ({
 - Added docs consolidation plan.
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_END -->`
     },
+    preconditions: {
+      target_path: 'docs/CHANGELOG.md',
+      target_file_fingerprint: 'target-fingerprint-1',
+      managed_block_fingerprint: 'managed-block-fingerprint-1',
+      approved_fragment_ids: ['fragment-1'],
+      planned_operation: 'replace-managed-block'
+    },
     provenance: {
       source_artifact_path: '.playbook/docs-consolidation.json',
       fragment_ids: ['fragment-1'],

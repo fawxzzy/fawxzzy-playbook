@@ -24,6 +24,7 @@ export type ApplyTaskResult = {
   autoFix: boolean;
   status: ApplyTaskStatus;
   message?: string;
+  details?: Record<string, unknown>;
 };
 
 export type ApplySummary = {
@@ -180,7 +181,8 @@ export class FixExecutor {
           action: task.action,
           autoFix: task.autoFix,
           status: handlerResult.status,
-          message: handlerResult.message
+          message: handlerResult.message,
+          details: handlerResult.details
         });
       } catch (error) {
         results.push({

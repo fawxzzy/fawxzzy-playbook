@@ -3,18 +3,39 @@
   "title": "PlaybookDocsConsolidationPlanArtifact",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "kind", "command", "source", "tasks", "excluded", "summary"],
+  "required": [
+    "schemaVersion",
+    "kind",
+    "command",
+    "source",
+    "tasks",
+    "excluded",
+    "summary"
+  ],
   "properties": {
-    "schemaVersion": { "const": "1.0" },
-    "kind": { "const": "docs-consolidation-plan" },
-    "command": { "const": "docs-consolidate-plan" },
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "kind": {
+      "const": "docs-consolidation-plan"
+    },
+    "command": {
+      "const": "docs-consolidate-plan"
+    },
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "command"],
+      "required": [
+        "path",
+        "command"
+      ],
       "properties": {
-        "path": { "const": ".playbook/docs-consolidation.json" },
-        "command": { "const": "docs consolidate" }
+        "path": {
+          "const": ".playbook/docs-consolidation.json"
+        },
+        "command": {
+          "const": "docs consolidate"
+        }
       }
     },
     "tasks": {
@@ -22,38 +43,183 @@
       "items": {
         "type": "object",
         "additionalProperties": true,
-        "required": ["id", "ruleId", "file", "action", "autoFix", "task_kind", "write", "provenance"],
+        "required": [
+          "id",
+          "ruleId",
+          "file",
+          "action",
+          "autoFix",
+          "task_kind",
+          "write",
+          "provenance",
+          "preconditions"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "ruleId": { "const": "docs-consolidation.managed-write" },
-          "file": { "type": "string" },
-          "action": { "type": "string" },
-          "autoFix": { "const": true },
-          "task_kind": { "const": "docs-managed-write" },
+          "id": {
+            "type": "string"
+          },
+          "ruleId": {
+            "const": "docs-consolidation.managed-write"
+          },
+          "file": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "autoFix": {
+            "const": true
+          },
+          "task_kind": {
+            "const": "docs-managed-write"
+          },
           "write": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["operation", "blockId", "startMarker", "endMarker", "content"],
+            "required": [
+              "operation",
+              "blockId",
+              "startMarker",
+              "endMarker",
+              "content"
+            ],
             "properties": {
-              "operation": { "enum": ["replace-managed-block", "append-managed-block", "insert-under-anchor"] },
-              "blockId": { "type": "string" },
-              "startMarker": { "type": "string" },
-              "endMarker": { "type": "string" },
-              "anchor": { "type": "string" },
-              "content": { "type": "string" }
+              "operation": {
+                "enum": [
+                  "replace-managed-block",
+                  "append-managed-block",
+                  "insert-under-anchor"
+                ]
+              },
+              "blockId": {
+                "type": "string"
+              },
+              "startMarker": {
+                "type": "string"
+              },
+              "endMarker": {
+                "type": "string"
+              },
+              "anchor": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              }
             }
           },
           "provenance": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["source_artifact_path", "fragment_ids", "lane_ids", "target_doc", "section_keys"],
+            "required": [
+              "source_artifact_path",
+              "fragment_ids",
+              "lane_ids",
+              "target_doc",
+              "section_keys"
+            ],
             "properties": {
-              "source_artifact_path": { "const": ".playbook/docs-consolidation.json" },
-              "fragment_ids": { "type": "array", "items": { "type": "string" } },
-              "lane_ids": { "type": "array", "items": { "type": "string" } },
-              "target_doc": { "type": "string" },
-              "section_keys": { "type": "array", "items": { "type": "string" } }
+              "source_artifact_path": {
+                "const": ".playbook/docs-consolidation.json"
+              },
+              "fragment_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "lane_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "target_doc": {
+                "type": "string"
+              },
+              "section_keys": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
             }
+          },
+          "preconditions": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "target_path",
+              "target_file_fingerprint",
+              "approved_fragment_ids",
+              "planned_operation"
+            ],
+            "properties": {
+              "target_path": {
+                "type": "string"
+              },
+              "target_file_fingerprint": {
+                "type": "string"
+              },
+              "managed_block_fingerprint": {
+                "type": "string"
+              },
+              "anchor_context_hash": {
+                "type": "string"
+              },
+              "approved_fragment_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "planned_operation": {
+                "enum": [
+                  "replace-managed-block",
+                  "append-managed-block",
+                  "insert-under-anchor"
+                ]
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "planned_operation": {
+                      "const": "insert-under-anchor"
+                    }
+                  },
+                  "required": [
+                    "planned_operation"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "anchor_context_hash"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "planned_operation": {
+                      "enum": [
+                        "replace-managed-block",
+                        "append-managed-block"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "planned_operation"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "managed_block_fingerprint"
+                  ]
+                }
+              }
+            ]
           }
         }
       }
@@ -63,27 +229,84 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["exclusion_id", "target_doc", "section_keys", "fragment_ids", "lane_ids", "reason", "message"],
+        "required": [
+          "exclusion_id",
+          "target_doc",
+          "section_keys",
+          "fragment_ids",
+          "lane_ids",
+          "reason",
+          "message"
+        ],
         "properties": {
-          "exclusion_id": { "type": "string" },
-          "target_doc": { "type": "string" },
-          "section_keys": { "type": "array", "items": { "type": "string" } },
-          "fragment_ids": { "type": "array", "items": { "type": "string" } },
-          "lane_ids": { "type": "array", "items": { "type": "string" } },
-          "reason": { "enum": ["issue-blocked", "missing-write-seam", "missing-target-file", "missing-anchor", "invalid-fragment-content", "mixed-write-strategies", "mixed-block-markers", "mixed-anchor-values"] },
-          "message": { "type": "string" }
+          "exclusion_id": {
+            "type": "string"
+          },
+          "target_doc": {
+            "type": "string"
+          },
+          "section_keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fragment_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lane_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reason": {
+            "enum": [
+              "issue-blocked",
+              "missing-write-seam",
+              "missing-target-file",
+              "missing-anchor",
+              "invalid-fragment-content",
+              "mixed-write-strategies",
+              "mixed-block-markers",
+              "mixed-anchor-values"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
         }
       }
     },
     "summary": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["total_targets", "executable_targets", "excluded_targets", "auto_fix_tasks"],
+      "required": [
+        "total_targets",
+        "executable_targets",
+        "excluded_targets",
+        "auto_fix_tasks"
+      ],
       "properties": {
-        "total_targets": { "type": "integer", "minimum": 0 },
-        "executable_targets": { "type": "integer", "minimum": 0 },
-        "excluded_targets": { "type": "integer", "minimum": 0 },
-        "auto_fix_tasks": { "type": "integer", "minimum": 0 }
+        "total_targets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "executable_targets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "excluded_targets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "auto_fix_tasks": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     }
   }

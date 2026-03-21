@@ -35,7 +35,7 @@ const createFixtureRepo = (): string => {
   );
   fs.writeFileSync(
     path.join(root, 'docs', 'PLAYBOOK_PRODUCT_ROADMAP.md'),
-    '# Roadmap\n\n## Active Stories\n- Story A\n',
+    '# Roadmap\n\n## Active Stories\n<!-- PLAYBOOK:ROADMAP_UPDATES_ANCHOR -->\n- Story A\n',
     'utf8'
   );
   return root;
@@ -77,7 +77,7 @@ const baseFragment = (overrides: Partial<Record<string, unknown>> = {}): Record<
 });
 
 describe('runDocsConsolidationPlan', () => {
-  it('emits the same consolidation plan for the same fragments', () => {
+  it('emits the same precondition-stamped consolidation plan for the same fragments', () => {
     const root = createFixtureRepo();
     writeFragment(root, 'lane-1', baseFragment());
 
@@ -91,6 +91,13 @@ describe('runDocsConsolidationPlan', () => {
     expect(second.ok).toBe(true);
     expect(firstArtifactText).toBe(secondArtifactText);
     expect(first.artifact.tasks).toHaveLength(1);
+    expect(first.artifact.tasks[0]?.preconditions).toEqual({
+      target_path: 'docs/CHANGELOG.md',
+      target_file_fingerprint: expect.any(String),
+      managed_block_fingerprint: expect.any(String),
+      approved_fragment_ids: ['fragment-1'],
+      planned_operation: 'replace-managed-block'
+    });
   });
 
   it('keeps conflicting or missing-anchor targets excluded and non-executable', () => {
@@ -121,6 +128,7 @@ describe('runDocsConsolidationPlan', () => {
       })
     );
 
+    fs.writeFileSync(path.join(root, 'docs', 'PLAYBOOK_PRODUCT_ROADMAP.md'), '# Roadmap\n\n## Active Stories\n- Story A\n', 'utf8');
     runDocsConsolidation(root);
     const result = runDocsConsolidationPlan(root);
 
@@ -131,7 +139,7 @@ describe('runDocsConsolidationPlan', () => {
     ]);
   });
 
-  it('applies only the targeted protected managed block through apply', async () => {
+  it('applies only the targeted protected managed block through apply when reviewed preconditions still match', async () => {
     const root = createFixtureRepo();
     writeFragment(root, 'lane-1', baseFragment());
     runDocsConsolidation(root);
@@ -145,5 +153,72 @@ describe('runDocsConsolidationPlan', () => {
     expect(result.summary).toEqual({ applied: 1, skipped: 0, unsupported: 0, failed: 0 });
     expect(afterChangelog).toContain('- Added docs consolidation plan.');
     expect(afterRoadmap).toBe(beforeRoadmap);
+  });
+
+  it('fails closed without mutating the conflicted target when the reviewed target drifts', async () => {
+    const root = createFixtureRepo();
+    writeFragment(root, 'lane-1', baseFragment());
+    runDocsConsolidation(root);
+    const plan = runDocsConsolidationPlan(root);
+    const targetPath = path.join(root, 'docs', 'CHANGELOG.md');
+    const reviewedText = fs.readFileSync(targetPath, 'utf8');
+    fs.writeFileSync(targetPath, reviewedText.replace('- Old note.', '- Drifted note.'), 'utf8');
+
+    const result = await applyExecutionPlan(root, plan.artifact.tasks, { dryRun: false });
+    const afterText = fs.readFileSync(targetPath, 'utf8');
+
+    expect(result.summary).toEqual({ applied: 0, skipped: 0, unsupported: 0, failed: 1 });
+    expect(result.results[0]).toEqual(expect.objectContaining({
+      status: 'failed',
+      message: expect.stringContaining('target-drift-detected')
+    }));
+    expect(afterText).toContain('- Drifted note.');
+    expect(afterText).not.toContain('- Added docs consolidation plan.');
+  });
+
+  it('fails closed on anchor drift without partially mutating the conflicted target', async () => {
+    const root = createFixtureRepo();
+    writeFragment(
+      root,
+      'lane-2',
+      baseFragment({
+        lane_id: 'lane-2',
+        worker_id: 'worker-2',
+        fragment_id: 'fragment-2',
+        target_doc: 'docs/PLAYBOOK_PRODUCT_ROADMAP.md',
+        section_key: 'roadmap',
+        conflict_key: 'docs/PLAYBOOK_PRODUCT_ROADMAP.md::roadmap',
+        ordering_key: '0002:docs/PLAYBOOK_PRODUCT_ROADMAP.md::roadmap::lane-2',
+        artifact_path: '.playbook/orchestrator/workers/lane-2/worker-fragment.json',
+        summary: 'Add roadmap rollup note.',
+        content: { format: 'markdown', payload: '- Added roadmap note.' },
+        metadata: {
+          integration: {
+            operation: 'insert-under-anchor',
+            block_id: 'roadmap-rollup',
+            start_marker: '<!-- PLAYBOOK:ROADMAP_ROLLUP_START -->',
+            end_marker: '<!-- PLAYBOOK:ROADMAP_ROLLUP_END -->',
+            anchor: '<!-- PLAYBOOK:ROADMAP_UPDATES_ANCHOR -->'
+          }
+        }
+      })
+    );
+
+    runDocsConsolidation(root);
+    const plan = runDocsConsolidationPlan(root);
+    const roadmapTask = plan.artifact.tasks.find((task) => task.file === 'docs/PLAYBOOK_PRODUCT_ROADMAP.md');
+    expect(roadmapTask?.preconditions.anchor_context_hash).toEqual(expect.any(String));
+
+    const targetPath = path.join(root, 'docs', 'PLAYBOOK_PRODUCT_ROADMAP.md');
+    const reviewedText = fs.readFileSync(targetPath, 'utf8');
+    fs.writeFileSync(targetPath, reviewedText.replace('<!-- PLAYBOOK:ROADMAP_UPDATES_ANCHOR -->', '<!-- PLAYBOOK:ROADMAP_UPDATES_MOVED -->'), 'utf8');
+
+    const result = await applyExecutionPlan(root, [roadmapTask!], { dryRun: false });
+    const afterText = fs.readFileSync(targetPath, 'utf8');
+
+    expect(result.summary).toEqual({ applied: 0, skipped: 0, unsupported: 0, failed: 1 });
+    expect(result.results[0]?.message).toContain('target-drift-detected');
+    expect(afterText).toContain('<!-- PLAYBOOK:ROADMAP_UPDATES_MOVED -->');
+    expect(afterText).not.toContain('<!-- PLAYBOOK:ROADMAP_ROLLUP_START -->');
   });
 });
