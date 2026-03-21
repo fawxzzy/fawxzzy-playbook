@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { PlanTask } from '../execution/types.js';
+import type { DocsWritePreconditions, PlanTask } from '../execution/types.js';
 import type { DocsConsolidationArtifact, WorkerFragmentArtifact } from './consolidate.js';
 
 export type DocsWriteOperation = 'replace-managed-block' | 'append-managed-block' | 'insert-under-anchor';
@@ -18,6 +18,7 @@ export type DocsWriteInstruction = {
 export type DocsConsolidationPlanTask = PlanTask & {
   task_kind: 'docs-managed-write';
   write: DocsWriteInstruction;
+  preconditions: DocsWritePreconditions;
   provenance: {
     source_artifact_path: '.playbook/docs-consolidation.json';
     fragment_ids: string[];
@@ -73,6 +74,7 @@ const compareStrings = (left: string, right: string): number => left.localeCompa
 const uniqueSorted = (values: string[]): string[] => Array.from(new Set(values)).sort(compareStrings);
 const trimTrailingNewlines = (value: string): string => value.replace(/\s+$/u, '').trimEnd();
 const stableHash = (value: string): string => createHash('sha256').update(value, 'utf8').digest('hex').slice(0, 12);
+const fingerprint = (value: string): string => createHash('sha256').update(value, 'utf8').digest('hex');
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -100,6 +102,47 @@ const buildTaskId = (targetDoc: string, sectionKeys: string[], operation: DocsWr
 
 const buildExclusionId = (targetDoc: string, sectionKeys: string[], reason: string): string =>
   `exclude-docs-${stableHash(JSON.stringify({ targetDoc, sectionKeys, reason }))}`;
+
+const collectAnchorContext = (targetText: string, anchor: string): string | null => {
+  const anchorIndex = targetText.indexOf(anchor);
+  if (anchorIndex < 0) return null;
+  const lineStart = targetText.lastIndexOf('\n', anchorIndex);
+  const nextLineBreak = targetText.indexOf('\n', anchorIndex + anchor.length);
+  const lineEnd = nextLineBreak >= 0 ? nextLineBreak : targetText.length;
+  return targetText.slice(lineStart >= 0 ? lineStart + 1 : 0, lineEnd);
+};
+
+const buildPreconditions = (input: {
+  targetDoc: string;
+  fragmentIds: string[];
+  operation: DocsWriteOperation;
+  targetText: string;
+  startMarker: string;
+  endMarker: string;
+  anchor?: string;
+}): DocsWritePreconditions => {
+  const { targetDoc, fragmentIds, operation, targetText, startMarker, endMarker, anchor } = input;
+  const startIndex = targetText.indexOf(startMarker);
+  const endIndex = startIndex >= 0 ? targetText.indexOf(endMarker, startIndex + startMarker.length) : -1;
+  const managedBlockText = startIndex >= 0 && endIndex >= startIndex
+    ? targetText.slice(startIndex, endIndex + endMarker.length)
+    : '__PLAYBOOK_MANAGED_BLOCK_ABSENT__';
+
+  const preconditions: DocsWritePreconditions = {
+    target_path: targetDoc,
+    target_file_fingerprint: fingerprint(targetText),
+    approved_fragment_ids: [...fragmentIds],
+    planned_operation: operation,
+    managed_block_fingerprint: fingerprint(managedBlockText)
+  };
+
+  if (operation === 'insert-under-anchor') {
+    const anchorContext = collectAnchorContext(targetText, anchor ?? '');
+    preconditions.anchor_context_hash = fingerprint(anchorContext ?? '__PLAYBOOK_ANCHOR_MISSING__');
+  }
+
+  return preconditions;
+};
 
 const compileTarget = (
   cwd: string,
@@ -256,6 +299,15 @@ const compileTarget = (
       autoFix: true,
       task_kind: 'docs-managed-write',
       write,
+      preconditions: buildPreconditions({
+        targetDoc,
+        fragmentIds,
+        operation,
+        targetText,
+        startMarker: write.startMarker,
+        endMarker: write.endMarker,
+        anchor: write.anchor
+      }),
       provenance: {
         source_artifact_path: DEFAULT_SOURCE_PATH,
         fragment_ids: fragmentIds,

@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { applySafePlaybookIgnoreRecommendations, getDefaultPlaybookIgnoreSuggestions } from '../indexer/playbookIgnore.js';
-import type { FixHandler } from './types.js';
+import { createHash } from 'node:crypto';
+import type { DocsWritePreconditions, FixHandler } from './types.js';
 
 const PLAYBOOK_NOTES_STARTER = `# Playbook Notes
 
@@ -115,9 +116,78 @@ const fixPb013GitIgnore: FixHandler = async ({ repoRoot, dryRun }) => {
 };
 
 
+
+const fingerprint = (value: string): string => createHash('sha256').update(value, 'utf8').digest('hex');
+
+const collectAnchorContext = (targetText: string, anchor: string): string | null => {
+  const anchorIndex = targetText.indexOf(anchor);
+  if (anchorIndex < 0) return null;
+  const lineStart = targetText.lastIndexOf('\n', anchorIndex);
+  const nextLineBreak = targetText.indexOf('\n', anchorIndex + anchor.length);
+  const lineEnd = nextLineBreak >= 0 ? nextLineBreak : targetText.length;
+  return targetText.slice(lineStart >= 0 ? lineStart + 1 : 0, lineEnd);
+};
+
+const readDocsWritePreconditions = (task: { file: string | null; write?: { operation: 'replace-managed-block' | 'append-managed-block' | 'insert-under-anchor'; blockId: string; startMarker: string; endMarker: string; anchor?: string; content: string }; preconditions?: DocsWritePreconditions }): DocsWritePreconditions => {
+  if (!task.preconditions) {
+    throw new Error('Docs consolidation task must include reviewed preconditions. Rebuild the docs-consolidation-plan artifact before apply.');
+  }
+
+  return task.preconditions;
+};
+
+const validateDocsWritePreconditions = (task: { file: string | null; write?: { operation: 'replace-managed-block' | 'append-managed-block' | 'insert-under-anchor'; blockId: string; startMarker: string; endMarker: string; anchor?: string; content: string }; preconditions?: DocsWritePreconditions }, current: string): void => {
+  const preconditions = readDocsWritePreconditions(task);
+  const details: Record<string, unknown> = {
+    reason: 'target-drift-detected',
+    target_path: task.file,
+    planned_operation: preconditions.planned_operation,
+    approved_fragment_ids: preconditions.approved_fragment_ids,
+    expected: preconditions
+  };
+
+  if (task.file !== preconditions.target_path) {
+    details.current = { target_path: task.file };
+    throw new Error(`Docs consolidation conflict: ${JSON.stringify(details)}`);
+  }
+
+  const currentFileFingerprint = fingerprint(current);
+  if (currentFileFingerprint !== preconditions.target_file_fingerprint) {
+    details.current = { target_file_fingerprint: currentFileFingerprint };
+    throw new Error(`Docs consolidation conflict: ${JSON.stringify(details)}`);
+  }
+
+  if (!task.write) {
+    details.current = { write: null };
+    throw new Error(`Docs consolidation conflict: ${JSON.stringify(details)}`);
+  }
+
+  const { startMarker, endMarker, anchor } = task.write;
+  const startIndex = current.indexOf(startMarker);
+  const endIndex = startIndex >= 0 ? current.indexOf(endMarker, startIndex + startMarker.length) : -1;
+  const managedBlockText = startIndex >= 0 && endIndex >= startIndex
+    ? current.slice(startIndex, endIndex + endMarker.length)
+    : '__PLAYBOOK_MANAGED_BLOCK_ABSENT__';
+  const currentManagedBlockFingerprint = fingerprint(managedBlockText);
+
+  if (preconditions.managed_block_fingerprint && currentManagedBlockFingerprint !== preconditions.managed_block_fingerprint) {
+    details.current = { managed_block_fingerprint: currentManagedBlockFingerprint };
+    throw new Error(`Docs consolidation conflict: ${JSON.stringify(details)}`);
+  }
+
+  if (preconditions.anchor_context_hash) {
+    const anchorContext = collectAnchorContext(current, anchor ?? '');
+    const currentAnchorContextHash = fingerprint(anchorContext ?? '__PLAYBOOK_ANCHOR_MISSING__');
+    if (currentAnchorContextHash !== preconditions.anchor_context_hash) {
+      details.current = { anchor_context_hash: currentAnchorContextHash };
+      throw new Error(`Docs consolidation conflict: ${JSON.stringify(details)}`);
+    }
+  }
+};
+
 const rewriteManagedDocBlock = async (
   repoRoot: string,
-  task: { file: string | null; write?: { operation: 'replace-managed-block' | 'append-managed-block' | 'insert-under-anchor'; blockId: string; startMarker: string; endMarker: string; anchor?: string; content: string } },
+  task: { file: string | null; write?: { operation: 'replace-managed-block' | 'append-managed-block' | 'insert-under-anchor'; blockId: string; startMarker: string; endMarker: string; anchor?: string; content: string }; preconditions?: DocsWritePreconditions },
   dryRun: boolean
 ): Promise<{ changed: boolean; summary: string }> => {
   if (!task.file || !task.write) {
@@ -131,6 +201,8 @@ const rewriteManagedDocBlock = async (
   } catch {
     throw new Error(`Docs consolidation target not found: ${task.file}`);
   }
+
+  validateDocsWritePreconditions(task, current);
 
   const { operation, startMarker, endMarker, anchor, content, blockId } = task.write;
   const startIndex = current.indexOf(startMarker);

@@ -11,6 +11,15 @@ export type Rule = {
   check(context: { repoRoot: string; changedFiles: string[] }): { failures: RuleFailure[] };
 };
 
+export type DocsWritePreconditions = {
+  target_path: string;
+  target_file_fingerprint: string;
+  managed_block_fingerprint?: string;
+  anchor_context_hash?: string;
+  approved_fragment_ids: string[];
+  planned_operation: 'replace-managed-block' | 'append-managed-block' | 'insert-under-anchor';
+};
+
 export type PlanTask = {
   id: string;
   ruleId: string;
@@ -27,6 +36,7 @@ export type PlanTask = {
     content: string;
   };
   provenance?: Record<string, unknown>;
+  preconditions?: DocsWritePreconditions;
   advisory?: {
     outcomeLearning?: {
       influencedByKnowledgeIds: string[];
@@ -59,6 +69,7 @@ export type FixHandlerResult = {
   filesChanged?: string[];
   summary?: string;
   message?: string;
+  details?: Record<string, unknown>;
 };
 
 /**

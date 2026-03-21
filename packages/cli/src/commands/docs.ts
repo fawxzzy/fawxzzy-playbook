@@ -20,7 +20,7 @@ const printConsolidationPlanReport = (result: ReturnType<typeof runDocsConsolida
     decision: result.ok ? 'ready_to_apply' : 'review_required',
     status: result.ok ? 'conflict-free managed write plan prepared' : 'plan excludes ambiguous or blocked targets',
     why: result.ok
-      ? `${result.artifact.summary.executable_targets} executable target(s) are ready for reviewed apply.`
+      ? `${result.artifact.summary.executable_targets} executable target(s) are target-locked and ready for reviewed apply.`
       : `${result.artifact.summary.excluded_targets} target(s) still need manual review or clearer anchors.`,
     affectedSurfaces: [
       `.playbook/docs-consolidation-plan.json`,

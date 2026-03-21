@@ -19,14 +19,17 @@ pnpm playbook docs consolidate --json
 1. Deterministic fragment ordering by `ordering_key`, then `fragment_id`.
 2. Deterministic duplicate/conflict detection by stable `conflict_key` grouping.
 3. Compact human-facing integration guidance without mutating protected docs.
-4. No new mutation executor: v1 stops at the consolidation artifact and brief.
+4. No new mutation executor: consolidation stops at the review artifact, and canonical docs still change only through `apply --from-plan`.
 
 ## Governance
 
+- Rule: Reviewed consolidation plans must apply only against the target state they were reviewed against.
 - Rule: Consolidation planning may prepare reviewed writes, but `apply` remains the only mutation boundary.
+- Pattern: Review plans on fingerprints, execute only on matching fingerprints.
 - Pattern: Workers propose, consolidator compiles, apply executes.
-- Failure Mode: Letting docs consolidation mutate directly creates a shadow executor and breaks the single reviewed write boundary.
 - Pattern: Workers propose; consolidator integrates.
+- Failure Mode: Applying reviewed singleton-doc writes against drifted targets reopens merge-hotspot risk under a deterministic-looking surface.
+- Failure Mode: Letting docs consolidation mutate directly creates a shadow executor and breaks the single reviewed write boundary.
 - Failure Mode: Parallel docs work without consolidation becomes a merge-management problem, not a productivity gain.
 
 ## Follow-on reviewed execution
