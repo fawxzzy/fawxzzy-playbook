@@ -49,7 +49,7 @@ describe('runRemediationStatus', () => {
     writeArtifact(repo, '.playbook/test-autofix.json', baseLatest());
     writeArtifact(repo, '.playbook/test-autofix-history.json', baseHistory([
       {
-        run_id: 'test-autofix-run-0002', generatedAt: '2026-03-19T00:00:00.000Z', input: { path: 'failure.log' }, failure_signatures: ['sig-b'], triage_classifications: [], admitted_findings: ['sig-b'], excluded_findings: [], applied_task_ids: ['task-b'], applied_repair_classes: ['snapshot_refresh'], files_touched: [], verification_commands: ['pnpm -r test'], verification_outcomes: [{ command: 'pnpm -r test', exitCode: 0, ok: true }], final_status: 'fixed', stop_reasons: ['fixed'], provenance: { failure_log_path: 'failure.log', triage_artifact_path: 't', fix_plan_artifact_path: 'f', apply_result_path: 'a', autofix_result_path: 'r' }
+        run_id: 'test-autofix-run-0002', generatedAt: '2026-03-19T00:00:00.000Z', input: { path: 'failure.log' }, mode: 'apply', retry_policy_decision: 'allow_with_preferred_repair_class', confidence_threshold: 0.7, autofix_confidence: 0.95, failure_signatures: ['sig-b'], triage_classifications: [{ failure_signature: 'sig-b', failure_kind: 'snapshot_drift', repair_class: 'snapshot_refresh', package: null, test_file: null, test_name: null }], admitted_findings: ['sig-b'], excluded_findings: [], applied_task_ids: ['task-b'], applied_repair_classes: ['snapshot_refresh'], files_touched: [], verification_commands: ['pnpm -r test'], verification_outcomes: [{ command: 'pnpm -r test', exitCode: 0, ok: true }], final_status: 'fixed', stop_reasons: ['fixed'], provenance: { failure_log_path: 'failure.log', triage_artifact_path: 't', fix_plan_artifact_path: 'f', apply_result_path: 'a', autofix_result_path: 'r' }
       }
     ]));
 
@@ -62,6 +62,8 @@ describe('runRemediationStatus', () => {
     expect(payload.latest_run.mode).toBe('apply');
     expect(payload.latest_run.autofix_confidence).toBe(0.95);
     expect(payload.safe_to_retry_signatures).toEqual(['sig-b']);
+    expect(payload.telemetry.confidence_buckets.at(-1)).toMatchObject({ key: '0.85-0.95', total_runs: 1, success_rate: 1 });
+    expect(payload.telemetry.failure_classes).toEqual([{ failure_class: 'snapshot_drift', total_runs: 1, fixed: 1, partially_fixed: 0, not_fixed: 0, blocked: 0, success_rate: 1 }]);
   });
 
   it('surfaces blocked repeat-failure status and deterministic history ordering in text mode', async () => {
@@ -69,10 +71,10 @@ describe('runRemediationStatus', () => {
     writeArtifact(repo, '.playbook/test-autofix.json', baseLatest({ failure_signatures: ['sig-a'], retry_policy_decision: 'blocked_repeat_failure', preferred_repair_class: null, final_status: 'blocked' }));
     writeArtifact(repo, '.playbook/test-autofix-history.json', baseHistory([
       {
-        run_id: 'test-autofix-run-0001', generatedAt: '2026-03-18T00:00:00.000Z', input: { path: 'failure.log' }, failure_signatures: ['sig-a'], triage_classifications: [], admitted_findings: ['sig-a'], excluded_findings: [], applied_task_ids: ['task-a'], applied_repair_classes: ['snapshot_refresh'], files_touched: [], verification_commands: ['pnpm -r test'], verification_outcomes: [{ command: 'pnpm -r test', exitCode: 1, ok: false }], final_status: 'not_fixed', stop_reasons: ['failed'], provenance: { failure_log_path: 'failure.log', triage_artifact_path: 't', fix_plan_artifact_path: 'f', apply_result_path: 'a', autofix_result_path: 'r' }
+        run_id: 'test-autofix-run-0001', generatedAt: '2026-03-18T00:00:00.000Z', input: { path: 'failure.log' }, mode: 'apply', retry_policy_decision: 'allow_repair', confidence_threshold: 0.7, autofix_confidence: 0.45, failure_signatures: ['sig-a'], triage_classifications: [{ failure_signature: 'sig-a', failure_kind: 'snapshot_drift', repair_class: 'snapshot_refresh', package: null, test_file: null, test_name: null }], admitted_findings: ['sig-a'], excluded_findings: [], applied_task_ids: ['task-a'], applied_repair_classes: ['snapshot_refresh'], files_touched: [], verification_commands: ['pnpm -r test'], verification_outcomes: [{ command: 'pnpm -r test', exitCode: 1, ok: false }], final_status: 'not_fixed', stop_reasons: ['failed'], provenance: { failure_log_path: 'failure.log', triage_artifact_path: 't', fix_plan_artifact_path: 'f', apply_result_path: 'a', autofix_result_path: 'r' }
       },
       {
-        run_id: 'test-autofix-run-0002', generatedAt: '2026-03-19T00:00:00.000Z', input: { path: 'failure.log' }, failure_signatures: ['sig-a'], triage_classifications: [], admitted_findings: ['sig-a'], excluded_findings: [], applied_task_ids: ['task-a'], applied_repair_classes: ['snapshot_refresh'], files_touched: [], verification_commands: ['pnpm -r test'], verification_outcomes: [{ command: 'pnpm -r test', exitCode: 1, ok: false }], final_status: 'blocked', stop_reasons: ['blocked'], provenance: { failure_log_path: 'failure.log', triage_artifact_path: 't', fix_plan_artifact_path: 'f', apply_result_path: 'a', autofix_result_path: 'r' }
+        run_id: 'test-autofix-run-0002', generatedAt: '2026-03-19T00:00:00.000Z', input: { path: 'failure.log' }, mode: 'apply', retry_policy_decision: 'blocked_repeat_failure', confidence_threshold: 0.7, autofix_confidence: 0, failure_signatures: ['sig-a'], triage_classifications: [{ failure_signature: 'sig-a', failure_kind: 'snapshot_drift', repair_class: 'snapshot_refresh', package: null, test_file: null, test_name: null }], admitted_findings: ['sig-a'], excluded_findings: [], applied_task_ids: ['task-a'], applied_repair_classes: ['snapshot_refresh'], files_touched: [], verification_commands: ['pnpm -r test'], verification_outcomes: [{ command: 'pnpm -r test', exitCode: 1, ok: false }], final_status: 'blocked', stop_reasons: ['blocked'], provenance: { failure_log_path: 'failure.log', triage_artifact_path: 't', fix_plan_artifact_path: 'f', apply_result_path: 'a', autofix_result_path: 'r' }
       }
     ]));
 
@@ -83,6 +85,8 @@ describe('runRemediationStatus', () => {
     expect(output).toContain('Blocked signatures');
     expect(output).toContain('sig-a');
     expect(output).toContain('Recent repeated failures');
+    expect(output).toContain('Calibration telemetry');
+    expect(output).toContain('Confidence buckets');
   });
 
   it('registers the remediation-status command', () => {

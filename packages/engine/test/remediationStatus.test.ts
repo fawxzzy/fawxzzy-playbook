@@ -46,8 +46,12 @@ const history = (): TestAutofixRemediationHistoryArtifact => ({
       run_id: 'test-autofix-run-0001',
       generatedAt: '2026-03-18T00:00:00.000Z',
       input: { path: 'failure.log' },
+      mode: 'apply',
+      retry_policy_decision: 'allow_repair',
+      confidence_threshold: 0.7,
+      autofix_confidence: 0.45,
       failure_signatures: ['sig-a'],
-      triage_classifications: [],
+      triage_classifications: [{ failure_signature: 'sig-a', failure_kind: 'snapshot_drift', repair_class: 'snapshot_refresh', package: null, test_file: null, test_name: null }],
       admitted_findings: ['sig-a'],
       excluded_findings: [],
       applied_task_ids: ['task-a'],
@@ -63,8 +67,12 @@ const history = (): TestAutofixRemediationHistoryArtifact => ({
       run_id: 'test-autofix-run-0002',
       generatedAt: '2026-03-19T00:00:00.000Z',
       input: { path: 'failure.log' },
+      mode: 'apply',
+      retry_policy_decision: 'allow_with_preferred_repair_class',
+      confidence_threshold: 0.7,
+      autofix_confidence: 0.88,
       failure_signatures: ['sig-b'],
-      triage_classifications: [],
+      triage_classifications: [{ failure_signature: 'sig-b', failure_kind: 'snapshot_drift', repair_class: 'snapshot_refresh', package: null, test_file: null, test_name: null }],
       admitted_findings: ['sig-b'],
       excluded_findings: [],
       applied_task_ids: ['task-b'],
@@ -98,6 +106,15 @@ describe('buildRemediationStatusArtifact', () => {
       }
     ]);
     expect(artifact.safe_to_retry_signatures).toEqual(['sig-b']);
+    expect(artifact.telemetry.confidence_buckets).toEqual([
+      { key: '0.00-0.49', range: { min: 0, max: 0.49 }, total_runs: 1, fixed: 0, partially_fixed: 0, not_fixed: 1, blocked: 0, success_rate: 0 },
+      { key: '0.50-0.69', range: { min: 0.5, max: 0.69 }, total_runs: 0, fixed: 0, partially_fixed: 0, not_fixed: 0, blocked: 0, success_rate: 0 },
+      { key: '0.70-0.84', range: { min: 0.7, max: 0.84 }, total_runs: 0, fixed: 0, partially_fixed: 0, not_fixed: 0, blocked: 0, success_rate: 0 },
+      { key: '0.85-0.95', range: { min: 0.85, max: 0.95 }, total_runs: 1, fixed: 1, partially_fixed: 0, not_fixed: 0, blocked: 0, success_rate: 1 }
+    ]);
+    expect(artifact.telemetry.failure_classes).toEqual([
+      { failure_class: 'snapshot_drift', total_runs: 2, fixed: 1, partially_fixed: 0, not_fixed: 1, blocked: 0, success_rate: 0.5 }
+    ]);
   });
 
 
@@ -138,5 +155,68 @@ describe('buildRemediationStatusArtifact', () => {
 
     expect(blocked.blocked_signatures).toEqual(['sig-a']);
     expect(blocked.stable_failure_signatures.find((entry) => entry.failure_signature === 'sig-a')?.retry_outlook).toBe('blocked');
+  });
+
+  it('surfaces blocked_low_confidence telemetry and advisory signal from matching successful history', () => {
+    const artifact = buildRemediationStatusArtifact({
+      latestResult: latestResult({
+        run_id: 'test-autofix-run-0004',
+        failure_signatures: ['sig-b'],
+        final_status: 'blocked_low_confidence',
+        mode: 'dry_run',
+        autofix_confidence: 0.68
+      }),
+      history: {
+        ...history(),
+        runs: [
+          ...history().runs,
+          {
+            run_id: 'test-autofix-run-0004',
+            generatedAt: '2026-03-20T00:00:00.000Z',
+            input: { path: 'failure.log' },
+            mode: 'dry_run',
+            retry_policy_decision: 'allow_with_preferred_repair_class',
+            confidence_threshold: 0.7,
+            autofix_confidence: 0.68,
+            failure_signatures: ['sig-b'],
+            triage_classifications: [{ failure_signature: 'sig-b', failure_kind: 'snapshot_drift', repair_class: 'snapshot_refresh', package: null, test_file: null, test_name: null }],
+            admitted_findings: ['sig-b'],
+            excluded_findings: [],
+            applied_task_ids: [],
+            applied_repair_classes: ['snapshot_refresh'],
+            files_touched: [],
+            verification_commands: [],
+            verification_outcomes: [],
+            final_status: 'blocked_low_confidence',
+            stop_reasons: ['confidence gate'],
+            provenance: { failure_log_path: 'failure.log', triage_artifact_path: 't', fix_plan_artifact_path: 'f', apply_result_path: null, autofix_result_path: 'r' }
+          }
+        ]
+      },
+      latestResultPath: '.playbook/test-autofix.json',
+      remediationHistoryPath: '.playbook/test-autofix-history.json'
+    });
+
+    expect(artifact.telemetry.blocked_low_confidence_runs).toBe(1);
+    expect(artifact.telemetry.dry_run_to_apply_ratio).toBe('1:2');
+    expect(artifact.telemetry.repeat_policy_block_counts).toEqual([
+      { decision: 'blocked_repeat_failure', count: 0 },
+      { decision: 'review_required_repeat_failure', count: 0 }
+    ]);
+    expect(artifact.telemetry.top_repeated_blocked_signatures).toEqual([
+      {
+        failure_signature: 'sig-b',
+        blocked_count: 1,
+        latest_run_id: 'test-autofix-run-0004',
+        latest_generatedAt: '2026-03-20T00:00:00.000Z',
+        historical_success_count: 1
+      }
+    ]);
+    expect(artifact.telemetry.conservative_confidence_signal).toEqual({
+      confidence_may_be_conservative: true,
+      reasoning: 'Latest run was blocked_low_confidence, but prior history contains successful outcomes for matching signatures, so the threshold may be conservative.',
+      supporting_failure_signatures: ['sig-b'],
+      supporting_failure_classes: ['snapshot_drift']
+    });
   });
 });

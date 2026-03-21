@@ -19,6 +19,17 @@ type RemediationStatusArtifact = {
   preferred_repair_classes: Array<{ repair_class: string; success_count: number; failure_signatures: string[] }>;
   stable_failure_signatures: Array<{ failure_signature: string; occurrences: number; retry_outlook: string; latest_run_id: string }>;
   recent_final_statuses: Array<{ run_id: string; final_status: string; failure_signatures: string[] }>;
+  telemetry: {
+    confidence_buckets: Array<{ key: string; total_runs: number; fixed: number; partially_fixed: number; not_fixed: number; blocked: number; success_rate: number }>;
+    failure_classes: Array<{ failure_class: string; total_runs: number; success_rate: number }>;
+    blocked_low_confidence_runs: number;
+    top_repeated_blocked_signatures: Array<{ failure_signature: string; blocked_count: number; historical_success_count: number }>;
+    dry_run_runs: number;
+    apply_runs: number;
+    dry_run_to_apply_ratio: string;
+    repeat_policy_block_counts: Array<{ decision: string; count: number }>;
+    conservative_confidence_signal: { confidence_may_be_conservative: boolean; reasoning: string };
+  };
   remediation_history: Array<{ run_id: string }>;
 };
 import { ExitCode } from '../lib/cliContract.js';
@@ -90,6 +101,33 @@ const renderText = (artifact: RemediationStatusArtifact): string => {
     for (const summary of artifact.preferred_repair_classes) {
       lines.push(`- ${summary.repair_class} (${summary.success_count} prior success${summary.success_count === 1 ? '' : 'es'})`);
       lines.push(`  Signatures: ${summary.failure_signatures.join(', ')}`);
+    }
+  }
+
+  lines.push('', 'Calibration telemetry');
+  lines.push(`- Dry-run/apply ratio: ${artifact.telemetry.dry_run_to_apply_ratio}`);
+  lines.push(`- blocked_low_confidence runs: ${artifact.telemetry.blocked_low_confidence_runs}`);
+  lines.push(`- Conservative-confidence advisory: ${artifact.telemetry.conservative_confidence_signal.confidence_may_be_conservative ? 'yes' : 'no'}`);
+  lines.push(`  ${artifact.telemetry.conservative_confidence_signal.reasoning}`);
+
+  if (artifact.telemetry.confidence_buckets.length > 0) {
+    lines.push('', 'Confidence buckets');
+    for (const bucket of artifact.telemetry.confidence_buckets) {
+      lines.push(`- ${bucket.key}: runs=${bucket.total_runs}, fixed=${bucket.fixed}, partially_fixed=${bucket.partially_fixed}, not_fixed=${bucket.not_fixed}, blocked=${bucket.blocked}, success_rate=${bucket.success_rate}`);
+    }
+  }
+
+  if (artifact.telemetry.failure_classes.length > 0) {
+    lines.push('', 'Failure-class success rates');
+    for (const summary of artifact.telemetry.failure_classes) {
+      lines.push(`- ${summary.failure_class}: runs=${summary.total_runs}, success_rate=${summary.success_rate}`);
+    }
+  }
+
+  if (artifact.telemetry.top_repeated_blocked_signatures.length > 0) {
+    lines.push('', 'Top blocked_low_confidence signatures');
+    for (const entry of artifact.telemetry.top_repeated_blocked_signatures) {
+      lines.push(`- ${entry.failure_signature}: blocked=${entry.blocked_count}, prior_successes=${entry.historical_success_count}`);
     }
   }
 
