@@ -327,11 +327,22 @@ Failure categories are explicit and machine-readable:
 - `execution_state_missing`
 - `governance_contract_failed`
 
-Human output answers three questions in order:
+Human output for `status proof` now compresses parallel-work integration into one operator brief and emits only:
 
-1. current state
-2. why
-3. what next
+1. decision / status
+2. affected surfaces
+3. blockers
+4. next action
+5. counts for `pending`, `blocked`, `plan_ready`, `guard_conflicted`, and `merge_ready`
+
+The brief reads from existing governed artifacts only:
+
+- `.playbook/lane-state.json`
+- `.playbook/worker-results.json`
+- `.playbook/docs-consolidation-plan.json`
+- `.playbook/policy-apply-result.json`
+
+It does **not** create a new state store. Full detail stays in JSON output and the underlying `.playbook/*` artifacts.
 
 Rule:
 
