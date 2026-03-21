@@ -30,6 +30,10 @@ export type TestAutofixRemediationHistoryEntry = {
   input: {
     path: string;
   };
+  mode?: 'dry_run' | 'apply';
+  retry_policy_decision?: string;
+  confidence_threshold?: number;
+  autofix_confidence?: number;
   failure_signatures: string[];
   triage_classifications: TestAutofixRemediationClassification[];
   admitted_findings: string[];

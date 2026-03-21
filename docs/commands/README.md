@@ -628,6 +628,8 @@ Architecture note:
 
 `pnpm playbook test-autofix --input <path> --json` now includes a repeat-aware remediation policy layer, deterministic `autofix_confidence` scoring, configurable confidence-threshold gating, and `--dry-run` support. Stable failure signatures are still the source of truth for reuse/block/escalation, while CI and PR surfaces only render the resulting artifacts instead of inventing workflow-local heuristics.
 
+`pnpm playbook remediation-status --json` now also exposes confidence-calibration telemetry derived from the existing remediation history artifact: deterministic confidence buckets, failure-class success rates, blocked-low-confidence counts, repeated blocked signatures, dry-run/apply ratios, repeat-policy block counts, and an advisory `confidence_may_be_conservative` signal when blocked-low-confidence runs resemble signatures or failure classes that historically succeeded. This read model remains observation-only; it is meant to validate threshold/weight tuning before relaxing safety gates, not to widen mutation authority or create a second policy engine.
+
 - Rule: trust-boundary docs must evolve at the same time as remediation command surfaces.
 - Rule: every canonical remediation command must expose one stable artifact contract and one authoritative operator doc.
 - Pattern: diagnosis -> planning -> execution should be documented as separate stages with different mutation authority.

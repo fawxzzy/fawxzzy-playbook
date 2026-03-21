@@ -57,6 +57,60 @@ export type RemediationStatusRecentFinalStatus = {
   failure_signatures: string[];
 };
 
+export type RemediationStatusConfidenceBucket = {
+  key: '0.00-0.49' | '0.50-0.69' | '0.70-0.84' | '0.85-0.95';
+  range: {
+    min: number;
+    max: number;
+  };
+  total_runs: number;
+  fixed: number;
+  partially_fixed: number;
+  not_fixed: number;
+  blocked: number;
+  success_rate: number;
+};
+
+export type RemediationStatusFailureClassSummary = {
+  failure_class: string;
+  total_runs: number;
+  fixed: number;
+  partially_fixed: number;
+  not_fixed: number;
+  blocked: number;
+  success_rate: number;
+};
+
+export type RemediationStatusBlockedSignatureSummary = {
+  failure_signature: string;
+  blocked_count: number;
+  latest_run_id: string;
+  latest_generatedAt: string;
+  historical_success_count: number;
+};
+
+export type RemediationStatusConservativeConfidenceSignal = {
+  confidence_may_be_conservative: boolean;
+  reasoning: string;
+  supporting_failure_signatures: string[];
+  supporting_failure_classes: string[];
+};
+
+export type RemediationStatusTelemetry = {
+  confidence_buckets: RemediationStatusConfidenceBucket[];
+  failure_classes: RemediationStatusFailureClassSummary[];
+  blocked_low_confidence_runs: number;
+  top_repeated_blocked_signatures: RemediationStatusBlockedSignatureSummary[];
+  dry_run_runs: number;
+  apply_runs: number;
+  dry_run_to_apply_ratio: string;
+  repeat_policy_block_counts: Array<{
+    decision: Extract<TestAutofixRetryPolicyDecision, 'blocked_repeat_failure' | 'review_required_repeat_failure'>;
+    count: number;
+  }>;
+  conservative_confidence_signal: RemediationStatusConservativeConfidenceSignal;
+};
+
 export type RemediationStatusArtifact = {
   schemaVersion: typeof REMEDIATION_STATUS_SCHEMA_VERSION;
   kind: typeof REMEDIATION_STATUS_ARTIFACT_KIND;
@@ -74,6 +128,7 @@ export type RemediationStatusArtifact = {
   repeat_policy_decisions: RemediationStatusPolicyDecisionSummary[];
   preferred_repair_classes: RemediationStatusPreferredRepairClassSummary[];
   recent_final_statuses: RemediationStatusRecentFinalStatus[];
+  telemetry: RemediationStatusTelemetry;
   remediation_history: TestAutofixRemediationHistoryEntry[];
   latest_result: TestAutofixArtifact;
 };

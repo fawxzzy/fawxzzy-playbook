@@ -48,6 +48,10 @@ type RemediationHistoryEntry = {
   run_id: string;
   generatedAt: string;
   input: { path: string };
+  mode?: TestAutofixMode;
+  retry_policy_decision?: TestAutofixRetryPolicyDecision;
+  confidence_threshold?: number;
+  autofix_confidence?: number;
   failure_signatures: string[];
   triage_classifications: RemediationHistoryClassification[];
   admitted_findings: string[];
@@ -356,6 +360,10 @@ const buildHistoryEntry = (params: {
     run_id: runId,
     generatedAt: new Date(0).toISOString(),
     input: { path: inputPath },
+    mode: artifact.mode,
+    retry_policy_decision: artifact.retry_policy_decision,
+    confidence_threshold: artifact.confidence_threshold,
+    autofix_confidence: artifact.autofix_confidence,
     failure_signatures: uniqueSorted(triage.findings.map((finding: TestTriageArtifact['findings'][number]) => finding.failure_signature)),
     triage_classifications: engine.buildTriageClassifications(triage.findings.map((finding: TestTriageArtifact['findings'][number]) => ({
       failure_signature: finding.failure_signature,
