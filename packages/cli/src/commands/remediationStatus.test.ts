@@ -88,16 +88,14 @@ describe('runRemediationStatus', () => {
     const exitCode = await runRemediationStatus(repo, { format: 'text', quiet: false });
     const output = String(spy.mock.calls.at(-1)?.[0]);
     expect(exitCode).toBe(ExitCode.Success);
-    expect(output).toContain('Blocked signatures');
-    expect(output).toContain('sig-a');
-    expect(output).toContain('Recent repeated failures');
-    expect(output).toContain('Calibration telemetry');
-    expect(output).toContain('Confidence buckets');
-    expect(output).toContain('Failure-class rollup');
-    expect(output).toContain('Repair-class rollup');
-    expect(output).toContain('Threshold counterfactuals');
-    expect(output).toContain('Dry-run vs apply delta');
-    expect(output).toContain('Manual review pressure');
+    expect(output).toContain('Remediation status');
+    expect(output).toContain('Decision: blocked_repeat_failure');
+    expect(output).toContain('Status: blocked on test-autofix-run-0003');
+    expect(output).toContain('Why: sig-a repeated 2 times; retry outlook is blocked.');
+    expect(output).toContain('Blockers: blocked: sig-a');
+    expect(output).toContain('Next action: Inspect remediation-status JSON/artifacts before retrying; the current signature is blocked.');
+    expect(output).toContain('Recent signatures:');
+    expect(output).toContain('- blocked sig-a');
   });
 
   it('degrades safely with partial history records in JSON mode', async () => {
