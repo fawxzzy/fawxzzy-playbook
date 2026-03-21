@@ -2344,10 +2344,10 @@ Execution state is persisted under `.playbook/runs/<run-id>.json` and is queryab
 - Added `playbook cycle` as the live thin runtime orchestrator over existing primitives (`verify -> route -> orchestrate -> execute -> telemetry -> improve`) with deterministic `.playbook/cycle-state.json` status artifacts.
 - Added deterministic `lane-state` derivation at `.playbook/lane-state.json` so planned lanes become explicit tracked lifecycle state (`blocked`, `ready`, `running`, `completed`, `merge_ready`) with conservative merge and verification posture before any autonomous execution concerns.
 - Added proposal-only lane lifecycle transition commands (`pnpm playbook lanes start <lane_id>`, `pnpm playbook lanes complete <lane_id>`) with strict dependency gating and conservative merge-ready recomputation.
-- Next planned safety slice: **Worker Fragment Consolidation for Shared Singleton Docs**, requiring first-class `worker-fragment` contracts / receipts, explicit protected singleton doc registries, and a final deterministic consolidation pass for canonical narrative docs before future managed subagents/hooks execution.
-- Rule — Shared singleton docs should be updated through worker-local fragments plus a deterministic consolidation pass, not direct concurrent edits from multiple workers.
-- Pattern — Workers own isolated implementation changes; a final consolidator owns canonical narrative artifacts such as changelogs, roadmap rollups, and shared summary docs.
-- Failure Mode — Parallelizable work is not automatically parallel-safe; allowing every worker to edit the same root-level docs creates merge hotspots, inconsistent summaries, and doc drift.
+- Implemented safety slice: **Worker Fragment Consolidation for Shared Singleton Docs** now ships as proposal-only `pnpm playbook docs consolidate --json`, which reads worker fragments plus the protected-surface registry and emits `.playbook/docs-consolidation.json` together with one compact lead-agent integration brief while leaving canonical doc mutation manual in v1.
+- Rule — Consolidation is the only write boundary for protected singleton narrative docs.
+- Pattern — Workers propose; consolidator integrates.
+- Failure Mode — Parallel docs work without consolidation becomes a merge-management problem, not a productivity gain.
 
 ### Adoption/readiness status surface (implemented)
 
