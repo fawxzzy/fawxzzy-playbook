@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { MemoryReplayCandidate, MemoryReplayCandidateProvenance, MemoryReplayResult } from '../schema/memoryReplay.js';
 import { resolvePatternKnowledgeStore } from '../patternStore.js';
 import type { MemoryKnowledgeArtifact, MemoryKnowledgeEntry, MemoryKnowledgeKind } from './knowledge.js';
+import { normalizeMemoryEvent } from './index.js';
 import type { MemoryEvent, MemoryIndex } from './types.js';
 
 const MEMORY_ROOT = ['.playbook', 'memory'] as const;
@@ -53,19 +54,7 @@ const listAllEventPaths = (projectRoot: string): string[] => {
 
 const readEventByRelativePath = (projectRoot: string, relativePath: string): MemoryEvent | null => {
   const payload = readJsonIfExists<unknown>(resolveEventPath(projectRoot, relativePath));
-  return isLegacyMemoryEvent(payload) ? payload : null;
-};
-
-const isLegacyMemoryEvent = (value: unknown): value is MemoryEvent => {
-  if (!value || typeof value !== 'object') return false;
-  const candidate = value as Record<string, unknown>;
-  return (
-    typeof candidate.eventInstanceId === 'string' &&
-    typeof candidate.createdAt === 'string' &&
-    typeof candidate.eventFingerprint === 'string' &&
-    Array.isArray(candidate.subjectModules) &&
-    Array.isArray(candidate.ruleIds)
-  );
+  return payload ? normalizeMemoryEvent(payload as Record<string, unknown>) : null;
 };
 
 const sortTimeline = (events: MemoryEvent[], order: 'asc' | 'desc'): MemoryEvent[] => {
@@ -114,8 +103,8 @@ export const lookupMemoryEventTimeline = (projectRoot: string, options: MemoryTi
   const timeline = relativePaths
     .map((relativePath) => readEventByRelativePath(projectRoot, relativePath))
     .filter((entry): entry is MemoryEvent => entry !== null)
-    .filter((entry) => (options.module ? entry.subjectModules.includes(options.module) : true))
-    .filter((entry) => (options.ruleId ? entry.ruleIds.includes(options.ruleId) : true))
+    .filter((entry) => (options.module ? entry.scope.modules.includes(options.module) : true))
+    .filter((entry) => (options.ruleId ? entry.scope.ruleIds.includes(options.ruleId) : true))
     .filter((entry) => (options.fingerprint ? entry.eventFingerprint === options.fingerprint : true));
 
   const sorted = sortTimeline(timeline, options.order ?? 'desc');
@@ -208,6 +197,7 @@ const buildTimelineLookup = (timeline: MemoryEvent[]): Map<string, MemoryEvent> 
   const table = new Map<string, MemoryEvent>();
   for (const event of timeline) {
     table.set(event.eventInstanceId, event);
+    table.set(event.eventId, event);
     const inferredId = path.basename(event.eventInstanceId, '.json');
     table.set(inferredId, event);
   }

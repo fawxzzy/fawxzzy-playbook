@@ -457,8 +457,7 @@ export const analyzePullRequest = (projectRoot: string, options?: { baseRef?: st
     captureMemoryEventSafe(projectRoot, {
       kind: 'failure_ingest',
       sources: [{ type: 'command', reference: 'analyze-pr' }],
-      subjectModules: [],
-      ruleIds: [],
+      scope: { modules: [], ruleIds: [] },
       riskSummary: {
         level: 'high',
         signals: ['analyze-pr-bootstrap-failure']
@@ -626,8 +625,7 @@ export const analyzePullRequest = (projectRoot: string, options?: { baseRef?: st
       { type: 'artifact', reference: '.playbook/memory/events' },
       { type: 'artifact', reference: '.playbook/analyze-pr.json' }
     ],
-    subjectModules: result.affectedModules,
-    ruleIds: result.rules.related,
+    scope: { modules: result.affectedModules, ruleIds: result.rules.related },
     riskSummary: {
       level: result.risk.level,
       signals: result.risk.signals

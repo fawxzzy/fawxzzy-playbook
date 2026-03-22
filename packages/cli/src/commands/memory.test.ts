@@ -34,7 +34,7 @@ describe('runMemory', () => {
     const { runMemory } = await import('./memory.js');
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
-    lookupMemoryEventTimeline.mockReturnValue([{ eventInstanceId: 'evt-1' }]);
+    lookupMemoryEventTimeline.mockReturnValue([{ eventId: 'evt-1' }]);
 
     const exitCode = await runMemory('/repo', ['events', '--limit', '1'], { format: 'json', quiet: false });
     expect(exitCode).toBe(ExitCode.Success);
@@ -53,7 +53,7 @@ describe('runMemory', () => {
     lookupMemoryCandidateKnowledge.mockReturnValue([
       { candidateId: 'cand-1', title: 'Candidate 1', provenance: [{ eventId: 'evt-1', sourcePath: 'events/evt-1.json', fingerprint: 'f' }] }
     ]);
-    expandMemoryProvenance.mockReturnValue([{ eventId: 'evt-1', sourcePath: 'events/evt-1.json', fingerprint: 'f', event: { eventInstanceId: 'evt-1' } }]);
+    expandMemoryProvenance.mockReturnValue([{ eventId: 'evt-1', sourcePath: 'events/evt-1.json', fingerprint: 'f', event: { eventId: 'evt-1' } }]);
 
     const exitCode = await runMemory('/repo', ['show', 'cand-1'], { format: 'json', quiet: false });
     expect(exitCode).toBe(ExitCode.Success);

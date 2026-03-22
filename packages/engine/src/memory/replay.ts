@@ -9,7 +9,8 @@ import type {
   MemoryReplayResult,
   MemoryReplaySalienceFactors
 } from '../schema/memoryReplay.js';
-import type { MemoryEvent } from './types.js';
+import { buildSessionReplayEvidence, normalizeMemoryEvent } from './index.js';
+import type { MemoryEvent, MemoryIndex, SessionReplayEvidence } from './types.js';
 
 const MEMORY_INDEX_RELATIVE_PATH = '.playbook/memory/index.json' as const;
 export const MEMORY_CANDIDATES_RELATIVE_PATH = '.playbook/memory/candidates.json' as const;
@@ -29,117 +30,52 @@ type ReplayEvent = {
   novelSuccessfulRemediationSignal: number;
 };
 
-type ReplayCluster = {
-  key: string;
-  events: ReplayEvent[];
-};
+type ReplayCluster = { key: string; events: ReplayEvent[] };
+
+type ReplayResultWithEvidence = MemoryReplayResult & { replayEvidence: SessionReplayEvidence };
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
-
 const readJson = <T>(filePath: string): T => JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
-
 const uniqueSorted = (values: string[]): string[] => [...new Set(values.filter((value) => value.length > 0))].sort((a, b) => a.localeCompare(b));
-
 const safeDate = (value: unknown): string => {
-  if (typeof value !== 'string') {
-    return new Date(0).toISOString();
-  }
+  if (typeof value !== 'string') return new Date(0).toISOString();
   const timestamp = Date.parse(value);
   return Number.isNaN(timestamp) ? new Date(0).toISOString() : new Date(timestamp).toISOString();
 };
 
-const toEventRefsFromLegacyIndex = (index: MemoryEventIndex): MemoryReplayEventReference[] => {
-  const refs = new Set<string>();
-  Object.values(index.byFingerprint ?? {}).forEach((entries) => {
-    entries.forEach((entry) => refs.add(entry));
-  });
-
-  return [...refs]
-    .sort((a, b) => a.localeCompare(b))
-    .map((relativePath) => ({
-      eventId: path.posix.basename(relativePath, '.json'),
-      relativePath: path.posix.join('.playbook', 'memory', relativePath)
-    }));
-};
-
-type MemoryEventIndex = {
-  byFingerprint?: Record<string, string[]>;
-};
-
 const ensureMemoryIndex = (projectRoot: string): MemoryReplayIndex => {
   const fullPath = path.join(projectRoot, MEMORY_INDEX_RELATIVE_PATH);
-  if (!fs.existsSync(fullPath)) {
-    throw new Error(`playbook memory replay: missing memory index at ${MEMORY_INDEX_RELATIVE_PATH}`);
-  }
-
-  const parsed = readJson<Partial<MemoryReplayIndex> & { entries?: MemoryReplayEventReference[] } & MemoryEventIndex>(fullPath);
-  const events = parsed.events ?? parsed.entries;
-  if (Array.isArray(events)) {
-    return {
-      schemaVersion: parsed.schemaVersion,
-      events
-    };
-  }
-
-  const legacyEvents = toEventRefsFromLegacyIndex(parsed);
-  if (legacyEvents.length > 0) {
-    return {
-      schemaVersion: parsed.schemaVersion,
-      events: legacyEvents
-    };
-  }
-
-  throw new Error(`playbook memory replay: invalid memory index format at ${MEMORY_INDEX_RELATIVE_PATH}`);
+  if (!fs.existsSync(fullPath)) throw new Error(`playbook memory replay: missing memory index at ${MEMORY_INDEX_RELATIVE_PATH}`);
+  const parsed = readJson<MemoryIndex>(fullPath);
+  if (!Array.isArray(parsed.events)) throw new Error(`playbook memory replay: invalid memory index format at ${MEMORY_INDEX_RELATIVE_PATH}`);
+  return {
+    schemaVersion: parsed.schemaVersion,
+    events: parsed.events.map((entry) => ({ eventId: entry.eventId, relativePath: entry.relativePath }))
+  };
 };
 
-const levelWeight: Record<ReplayEvent['severity'], number> = {
-  low: 1,
-  medium: 3,
-  high: 6,
-  unknown: 2
-};
-
+const levelWeight: Record<ReplayEvent['severity'], number> = { low: 1, medium: 3, high: 6, unknown: 2 };
 const pickSeverity = (event: MemoryEvent): ReplayEvent['severity'] => event.riskSummary.level;
+const hasTruthySignal = (inputs: MemoryEvent['salienceInputs'], keys: string[]): boolean => keys.some((key) => inputs[key] === true || inputs[key] === 'true');
+const getModules = (event: MemoryEvent): string[] => uniqueSorted(event.scope.modules);
+const getRuleIds = (event: MemoryEvent): string[] => uniqueSorted(event.scope.ruleIds);
 
-const hasTruthySignal = (inputs: MemoryEvent['salienceInputs'], keys: string[]): boolean =>
-  keys.some((key) => inputs[key] === true || inputs[key] === 'true');
-
-const toReplayEvent = (eventId: string, sourcePath: string, event: MemoryEvent): ReplayEvent => {
-  const modules = uniqueSorted(event.subjectModules);
-  const blastRadius = clamp(
-    Number(event.salienceInputs.blastRadius ?? event.salienceInputs.failureCount ?? modules.length ?? 1),
-    1,
-    10
-  );
-
-  const crossModuleSpread = clamp(
-    Number(event.salienceInputs.crossModuleSpread ?? event.salienceInputs.moduleSpread ?? modules.length ?? 1),
-    1,
-    10
-  );
-
-  const recurrence = clamp(
-    Number(event.salienceInputs.recurrence ?? event.salienceInputs.recurrenceCount ?? 1),
-    1,
-    10
-  );
-
+const toReplayEvent = (sourcePath: string, event: MemoryEvent): ReplayEvent => {
+  const modules = getModules(event);
+  const blastRadius = clamp(Number(event.salienceInputs.blastRadius ?? event.salienceInputs.failureCount ?? modules.length ?? 1), 1, 10);
+  const crossModuleSpread = clamp(Number(event.salienceInputs.crossModuleSpread ?? event.salienceInputs.moduleSpread ?? modules.length ?? 1), 1, 10);
+  const recurrence = clamp(Number(event.salienceInputs.recurrence ?? event.salienceInputs.recurrenceCount ?? 1), 1, 10);
   const unresolvedOwnership = hasTruthySignal(event.salienceInputs, ['ownershipGap', 'unresolvedOwnership']);
   const unresolvedDocs = hasTruthySignal(event.salienceInputs, ['docsGap', 'docsCoverageGap']);
-
-  const remediationSignal = hasTruthySignal(event.salienceInputs, ['novelSuccessfulRemediation', 'successfulRemediation'])
-    ? 1
-    : event.outcome.status === 'success'
-      ? 1
-      : 0;
+  const remediationSignal = hasTruthySignal(event.salienceInputs, ['novelSuccessfulRemediation', 'successfulRemediation']) ? 1 : event.outcome.status === 'success' ? 1 : 0;
 
   return {
-    eventId,
+    eventId: event.eventInstanceId,
     sourcePath,
     eventFingerprint: event.eventFingerprint,
     createdAt: safeDate(event.createdAt),
     subjectModules: modules,
-    ruleIds: uniqueSorted(event.ruleIds),
+    ruleIds: getRuleIds(event),
     severity: pickSeverity(event),
     recurrence,
     blastRadius,
@@ -154,135 +90,73 @@ const readReplayEvents = (projectRoot: string, index: MemoryReplayIndex): Replay
     .sort((a, b) => `${a.eventId}:${a.relativePath}`.localeCompare(`${b.eventId}:${b.relativePath}`))
     .map((entry) => {
       const fullEventPath = path.join(projectRoot, entry.relativePath);
-      if (!fs.existsSync(fullEventPath)) {
-        throw new Error(`playbook memory replay: missing event file ${entry.relativePath}`);
-      }
-      const parsed = readJson<MemoryEvent>(fullEventPath);
-      return toReplayEvent(entry.eventId, entry.relativePath, parsed);
+      if (!fs.existsSync(fullEventPath)) throw new Error(`playbook memory replay: missing event file ${entry.relativePath}`);
+      return toReplayEvent(entry.relativePath, normalizeMemoryEvent(readJson<Record<string, unknown>>(fullEventPath))); 
     });
 
 const clusterEvents = (events: ReplayEvent[]): ReplayCluster[] => {
   const buckets = new Map<string, ReplayEvent[]>();
   for (const event of events) {
-    const existing = buckets.get(event.eventFingerprint) ?? [];
-    existing.push(event);
-    buckets.set(event.eventFingerprint, existing);
+    buckets.set(event.eventFingerprint, [...(buckets.get(event.eventFingerprint) ?? []), event]);
   }
-
   return [...buckets.entries()]
-    .map(([key, bucket]) => ({
-      key,
-      events: [...bucket].sort((a, b) => `${a.eventId}:${a.sourcePath}`.localeCompare(`${b.eventId}:${b.sourcePath}`))
-    }))
+    .map(([key, bucket]) => ({ key, events: [...bucket].sort((a, b) => `${a.eventId}:${a.sourcePath}`.localeCompare(`${b.eventId}:${b.sourcePath}`)) }))
     .sort((a, b) => a.key.localeCompare(b.key));
 };
 
-const scoreCluster = (cluster: ReplayCluster): MemoryReplaySalienceFactors => {
-  const severity = Math.max(...cluster.events.map((event) => levelWeight[event.severity]));
-  const recurrenceCount = clamp(cluster.events.reduce((sum, event) => sum + event.recurrence, 0), 1, 10);
-  const blastRadius = clamp(Math.max(...cluster.events.map((event) => event.blastRadius)), 1, 10);
-  const crossModuleSpread = clamp(new Set(cluster.events.flatMap((event) => event.subjectModules)).size, 1, 10);
-  const ownershipDocsGap = clamp(cluster.events.reduce((sum, event) => sum + event.ownershipDocsGap, 0), 0, 10);
-  const novelSuccessfulRemediationSignal = cluster.events.some((event) => event.novelSuccessfulRemediationSignal > 0) ? 1 : 0;
+const scoreCluster = (cluster: ReplayCluster): MemoryReplaySalienceFactors => ({
+  severity: Math.max(...cluster.events.map((event) => levelWeight[event.severity])),
+  recurrenceCount: clamp(cluster.events.reduce((sum, event) => sum + event.recurrence, 0), 1, 10),
+  blastRadius: clamp(Math.max(...cluster.events.map((event) => event.blastRadius)), 1, 10),
+  crossModuleSpread: clamp(new Set(cluster.events.flatMap((event) => event.subjectModules)).size, 1, 10),
+  ownershipDocsGap: clamp(cluster.events.reduce((sum, event) => sum + event.ownershipDocsGap, 0), 0, 10),
+  novelSuccessfulRemediationSignal: cluster.events.some((event) => event.novelSuccessfulRemediationSignal > 0) ? 1 : 0
+});
 
-  return {
-    severity,
-    recurrenceCount,
-    blastRadius,
-    crossModuleSpread,
-    ownershipDocsGap,
-    novelSuccessfulRemediationSignal
-  };
-};
-
-const computeSalienceScore = (factors: MemoryReplaySalienceFactors): number => {
-  const raw =
-    factors.severity * 1.4 +
-    factors.recurrenceCount * 1.2 +
-    factors.blastRadius * 1.1 +
-    factors.crossModuleSpread * 1.0 +
-    factors.ownershipDocsGap * 0.8 +
-    factors.novelSuccessfulRemediationSignal * 1.3;
-
-  return Number(raw.toFixed(3));
-};
+const computeSalienceScore = (factors: MemoryReplaySalienceFactors): number => Number((
+  factors.severity * 1.4 +
+  factors.recurrenceCount * 1.2 +
+  factors.blastRadius * 1.1 +
+  factors.crossModuleSpread * 1.0 +
+  factors.ownershipDocsGap * 0.8 +
+  factors.novelSuccessfulRemediationSignal * 1.3
+).toFixed(3));
 
 const chooseCandidateKind = (factors: MemoryReplaySalienceFactors): MemoryCandidateKind => {
-  if (factors.ownershipDocsGap > 0) {
-    return 'open_question';
-  }
-  if (factors.novelSuccessfulRemediationSignal > 0) {
-    return 'pattern';
-  }
-  if (factors.severity >= 6 || factors.blastRadius >= 7) {
-    return 'failure_mode';
-  }
-  if (factors.recurrenceCount >= 4 && factors.crossModuleSpread <= 2) {
-    return 'invariant';
-  }
+  if (factors.ownershipDocsGap > 0) return 'open_question';
+  if (factors.novelSuccessfulRemediationSignal > 0) return 'pattern';
+  if (factors.severity >= 6 || factors.blastRadius >= 7) return 'failure_mode';
+  if (factors.recurrenceCount >= 4 && factors.crossModuleSpread <= 2) return 'invariant';
   return 'decision';
 };
 
 const dominantValue = <T extends string>(values: T[], fallback: T): T => {
-  if (values.length === 0) {
-    return fallback;
-  }
-
+  if (values.length === 0) return fallback;
   const counts = new Map<T, number>();
   values.forEach((value) => counts.set(value, (counts.get(value) ?? 0) + 1));
-
-  return [...counts.entries()]
-    .sort((a, b) => {
-      if (b[1] !== a[1]) {
-        return b[1] - a[1];
-      }
-      return String(a[0]).localeCompare(String(b[0]));
-    })[0]?.[0] ?? fallback;
+  return [...counts.entries()].sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0])))[0]?.[0] ?? fallback;
 };
 
 const readPriorCandidates = (projectRoot: string): MemoryReplayCandidate[] => {
   const outPath = path.join(projectRoot, MEMORY_CANDIDATES_RELATIVE_PATH);
-  if (!fs.existsSync(outPath)) {
-    return [];
-  }
-
+  if (!fs.existsSync(outPath)) return [];
   const prior = readJson<Partial<MemoryReplayResult>>(outPath);
   return Array.isArray(prior.candidates) ? prior.candidates : [];
 };
 
-const buildSupersession = (
-  cluster: ReplayCluster,
-  candidateId: string,
-  priorCandidates: MemoryReplayCandidate[]
-): MemoryReplayCandidate['supersession'] => {
-  const lineage = priorCandidates
-    .filter((candidate) => candidate.fingerprint === cluster.key)
-    .map((candidate) => candidate.candidateId);
-
-  const uniqueLineage = uniqueSorted(lineage);
-  const supersedesCandidateIds = uniqueLineage.filter((priorId) => priorId !== candidateId);
-
-  return {
-    evolutionOrdinal: supersedesCandidateIds.length + 1,
-    priorCandidateIds: supersedesCandidateIds,
-    supersedesCandidateIds
-  };
+const buildSupersession = (cluster: ReplayCluster, candidateId: string, priorCandidates: MemoryReplayCandidate[]): MemoryReplayCandidate['supersession'] => {
+  const lineage = priorCandidates.filter((candidate) => candidate.fingerprint === cluster.key).map((candidate) => candidate.candidateId);
+  const supersedesCandidateIds = uniqueSorted(lineage).filter((priorId) => priorId !== candidateId);
+  return { evolutionOrdinal: supersedesCandidateIds.length + 1, priorCandidateIds: supersedesCandidateIds, supersedesCandidateIds };
 };
 
 const toCandidate = (cluster: ReplayCluster, priorCandidates: MemoryReplayCandidate[]): MemoryReplayCandidate => {
   const salienceFactors = scoreCluster(cluster);
   const candidateId = createHash('sha256').update(cluster.key).digest('hex').slice(0, 16);
-
   const module = dominantValue(cluster.events.flatMap((event) => event.subjectModules), 'unknown-module');
   const ruleId = dominantValue(cluster.events.flatMap((event) => event.ruleIds), 'unknown-rule');
-
-  const lastSeenAt = cluster.events.reduce(
-    (latest, event) => (Date.parse(event.createdAt) > Date.parse(latest) ? event.createdAt : latest),
-    new Date(0).toISOString()
-  );
-
+  const lastSeenAt = cluster.events.reduce((latest, event) => (Date.parse(event.createdAt) > Date.parse(latest) ? event.createdAt : latest), new Date(0).toISOString());
   const kind = chooseCandidateKind(salienceFactors);
-
   return {
     candidateId,
     kind,
@@ -296,46 +170,41 @@ const toCandidate = (cluster: ReplayCluster, priorCandidates: MemoryReplayCandid
     ruleId,
     failureShape: cluster.key,
     eventCount: cluster.events.length,
-    provenance: cluster.events.map((event) => ({
-      eventId: event.eventId,
-      sourcePath: event.sourcePath,
-      fingerprint: event.eventFingerprint,
-      runId: null
-    })),
+    provenance: cluster.events.map((event) => ({ eventId: event.eventId, sourcePath: event.sourcePath, fingerprint: event.eventFingerprint, runId: null })),
     lastSeenAt,
     supersession: buildSupersession(cluster, candidateId, priorCandidates)
   };
 };
 
-const sortCandidates = (candidates: MemoryReplayCandidate[]): MemoryReplayCandidate[] =>
-  [...candidates].sort((left, right) => {
-    if (right.salienceScore !== left.salienceScore) {
-      return right.salienceScore - left.salienceScore;
-    }
-    return left.clusterKey.localeCompare(right.clusterKey);
-  });
+const sortCandidates = (candidates: MemoryReplayCandidate[]): MemoryReplayCandidate[] => [...candidates].sort((left, right) => (right.salienceScore - left.salienceScore) || left.clusterKey.localeCompare(right.clusterKey));
 
-export const replayMemoryToCandidates = (projectRoot: string): MemoryReplayResult => {
+export const replayMemoryToCandidates = (projectRoot: string): ReplayResultWithEvidence => {
   const index = ensureMemoryIndex(projectRoot);
   const events = readReplayEvents(projectRoot, index);
   const clusters = clusterEvents(events);
   const priorCandidates = readPriorCandidates(projectRoot);
-
   const candidates = sortCandidates(clusters.map((cluster) => toCandidate(cluster, priorCandidates)));
+  const replayEvidence = buildSessionReplayEvidence(events.map((event) => ({
+    eventId: event.eventId,
+    sourcePath: event.sourcePath,
+    fingerprint: event.eventFingerprint,
+    runId: null,
+    scope: { modules: event.subjectModules, ruleIds: event.ruleIds }
+  })));
 
-  const artifact: MemoryReplayResult = {
+  const artifact: ReplayResultWithEvidence = {
     schemaVersion: '1.0',
     command: 'memory-replay',
     sourceIndex: MEMORY_INDEX_RELATIVE_PATH,
     generatedAt: new Date(0).toISOString(),
     totalEvents: events.length,
     clustersEvaluated: clusters.length,
-    candidates
+    candidates,
+    replayEvidence
   };
 
   const outPath = path.join(projectRoot, MEMORY_CANDIDATES_RELATIVE_PATH);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, `${JSON.stringify(artifact, null, 2)}\n`, 'utf8');
-
   return artifact;
 };

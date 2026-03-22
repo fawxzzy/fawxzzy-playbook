@@ -50,6 +50,30 @@ export type MemoryReplayCandidate = {
   supersession: MemoryReplayCandidateSupersession;
 };
 
+export type SessionReplayEvidenceArtifact = {
+  schemaVersion: '1.0';
+  kind: 'playbook-session-replay-evidence';
+  generatedAt: string;
+  memoryIndex: {
+    path: '.playbook/memory/index.json';
+    eventCount: number;
+  };
+  replayInputs: Array<{
+    eventId: string;
+    sourcePath: string;
+    fingerprint: string;
+    runId: string | null;
+    scope: {
+      modules: string[];
+      ruleIds: string[];
+    };
+  }>;
+  authority: {
+    mutation: 'read-only';
+    promotion: 'review-required';
+  };
+};
+
 export type MemoryReplayResult = {
   schemaVersion: '1.0';
   command: 'memory-replay';
@@ -58,4 +82,5 @@ export type MemoryReplayResult = {
   totalEvents: number;
   clustersEvaluated: number;
   candidates: MemoryReplayCandidate[];
+  replayEvidence?: SessionReplayEvidenceArtifact;
 };

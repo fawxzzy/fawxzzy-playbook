@@ -21,6 +21,7 @@ type RegisteredSchema = {
 const memoryArtifactSchemas: RegisteredSchema[] = [
   { id: 'repository-memory-event', version: '1.0', path: '.playbook/memory/events/*.json' },
   { id: 'repository-memory-index', version: '1.0', path: '.playbook/memory/index.json' },
+  { id: 'session-replay-evidence', version: '1.0', path: '.playbook/memory/candidates.json#replayEvidence' },
   { id: 'memory-event', version: '1.0.0', path: '.playbook/memory/events/runtime/*.json' },
   { id: 'candidate-knowledge-record', version: '1.0.0', path: '.playbook/memory/knowledge/candidates/*.json' },
   { id: 'promoted-knowledge-record', version: '1.0.0', path: '.playbook/memory/knowledge/promoted/*.json' },
@@ -54,7 +55,10 @@ const additiveCommandOutputSchemas: RegisteredSchema[] = [
   { id: 'repository-events', version: '1.0', path: 'packages/contracts/src/repository-events.schema.json' },
   { id: 'cycle-state', version: '1.0', path: 'packages/contracts/src/cycle-state.schema.json' },
   { id: 'cycle-history', version: '1.0', path: 'packages/contracts/src/cycle-history.schema.json' },
+  { id: 'memory-index', version: '1.0', path: 'packages/contracts/src/memory-index.schema.json' },
+  { id: 'memory-event', version: '1.0', path: 'packages/contracts/src/memory-event.schema.json' },
   { id: 'session-evidence-envelope', version: '1.0', path: 'packages/contracts/src/session-evidence-envelope.schema.json' },
+  { id: 'session-replay-evidence', version: '1.0', path: 'packages/contracts/src/session-replay-evidence.schema.json' },
   { id: 'pr-review', version: '1.0', path: 'packages/contracts/src/pr-review.schema.json' },
   { id: 'story', version: '1.0', path: 'packages/contracts/src/story.schema.json' },
   { id: 'stories', version: '1.0', path: 'packages/contracts/src/stories.schema.json' },

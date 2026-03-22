@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/memory-index.schema.json",
+  "title": "PlaybookTemporalMemoryIndex",
+  "description": "Deterministic scope-first index for temporal memory artifacts. Structural repository graph artifacts remain separate at .playbook/repo-index.json and .playbook/repo-graph.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "generatedAt", "events"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "kind": { "const": "playbook-temporal-memory-index" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["eventId", "relativePath", "scope"],
+        "properties": {
+          "eventId": { "type": "string", "minLength": 1 },
+          "relativePath": { "type": "string", "pattern": "^\\.playbook/memory/events/.+\\.json$" },
+          "scope": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["modules", "ruleIds"],
+            "properties": {
+              "modules": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+              "ruleIds": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+            }
+          },
+          "fingerprint": { "type": "string", "minLength": 1 },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "memoryKind": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "byModule": {
+      "type": "object",
+      "propertyNames": { "minLength": 1 },
+      "additionalProperties": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+    },
+    "byRule": {
+      "type": "object",
+      "propertyNames": { "minLength": 1 },
+      "additionalProperties": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+    },
+    "byFingerprint": {
+      "type": "object",
+      "propertyNames": { "minLength": 1 },
+      "additionalProperties": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+    }
+  }
+}

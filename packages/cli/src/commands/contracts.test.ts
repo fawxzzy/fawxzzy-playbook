@@ -15,6 +15,7 @@ describe('runContracts', () => {
     expect(Array.isArray(schemas.commandOutputs)).toBe(true);
     expect((schemas.memoryArtifacts as Array<{ id: string }>).map((entry) => entry.id)).toContain('stories-backlog');
     expect((schemas.memoryArtifacts as Array<{ id: string }>).map((entry) => entry.id)).toContain('test-autofix-remediation-history');
+    expect((schemas.memoryArtifacts as Array<{ id: string }>).map((entry) => entry.id)).toContain('session-replay-evidence');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('query.memoryKnowledge');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('knowledge');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('pattern-graph');
@@ -34,8 +35,11 @@ describe('runContracts', () => {
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('repository-events');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('cycle-state');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('cycle-history');
+    expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('memory-index');
+    expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('memory-event');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('policy-apply-result');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('session-evidence-envelope');
+    expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('session-replay-evidence');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('pr-review');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('story');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('stories');
@@ -53,6 +57,7 @@ describe('runContracts', () => {
       memoryArtifacts: [
         { id: 'repository-memory-event', version: '1.0', path: '.playbook/memory/events/*.json' },
         { id: 'repository-memory-index', version: '1.0', path: '.playbook/memory/index.json' },
+        { id: 'session-replay-evidence', version: '1.0', path: '.playbook/memory/candidates.json#replayEvidence' },
         { id: 'memory-event', version: '1.0.0', path: '.playbook/memory/events/runtime/*.json' },
         { id: 'candidate-knowledge-record', version: '1.0.0', path: '.playbook/memory/knowledge/candidates/*.json' },
         { id: 'promoted-knowledge-record', version: '1.0.0', path: '.playbook/memory/knowledge/promoted/*.json' },
@@ -86,7 +91,10 @@ describe('runContracts', () => {
         { id: 'repository-events', version: '1.0', path: 'packages/contracts/src/repository-events.schema.json' },
         { id: 'cycle-state', version: '1.0', path: 'packages/contracts/src/cycle-state.schema.json' },
         { id: 'cycle-history', version: '1.0', path: 'packages/contracts/src/cycle-history.schema.json' },
+        { id: 'memory-index', version: '1.0', path: 'packages/contracts/src/memory-index.schema.json' },
+        { id: 'memory-event', version: '1.0', path: 'packages/contracts/src/memory-event.schema.json' },
         { id: 'session-evidence-envelope', version: '1.0', path: 'packages/contracts/src/session-evidence-envelope.schema.json' },
+        { id: 'session-replay-evidence', version: '1.0', path: 'packages/contracts/src/session-replay-evidence.schema.json' },
         { id: 'pr-review', version: '1.0', path: 'packages/contracts/src/pr-review.schema.json' },
         { id: 'story', version: '1.0', path: 'packages/contracts/src/story.schema.json' },
         { id: 'stories', version: '1.0', path: 'packages/contracts/src/stories.schema.json' },
