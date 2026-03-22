@@ -319,6 +319,7 @@ pnpm playbook memory show <id> --json
 Command boundary note:
 
 - `memory` = lifecycle/review/mutation surfaces over raw memory artifacts (events, candidates, promoted records).
+- Temporal memory artifacts are scope-first under `.playbook/memory/*` (`index.json`, `events/*.json`, and replay evidence embedded in `.playbook/memory/candidates.json#replayEvidence`); structural repository intelligence remains separate in `.playbook/repo-index.json` and `.playbook/repo-graph.json`.
 - `knowledge` = normalized, read-only inspection/query surface for governed knowledge retrieval and provenance.
 
 `pnpm playbook knowledge` is the read-only inspection surface for normalized knowledge records.

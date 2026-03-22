@@ -81,6 +81,13 @@ Rule: Systems are adopted as documentation contracts before becoming enforced to
 Failure Mode: Introducing workflow tooling before teams have consistent conceptual usage leads to abandonment.
 
 
+## Platform phase kickoff: structural graph vs temporal memory boundaries
+
+- Structural repository intelligence stays canonical in `.playbook/repo-index.json` and `.playbook/repo-graph.json`; these artifacts describe repository shape, not operational history.
+- Temporal memory is now formalized under `.playbook/memory/*` with first-class contracts for the memory index, append-only event records, and session/replay evidence used for deterministic candidate generation.
+- Loaders and writers must stay deterministic and scope-first so replay, inspection, and promotion review can reason over module/rule-scoped history without mutating graph artifacts.
+- This phase does **not** widen mutation authority or doctrine promotion: replay evidence remains read-only and promotion remains explicit review-required behavior.
+
 Recent implementation note: `pnpm playbook test-autofix --input <path> --json` now closes the bounded test-remediation loop using the existing seams only: diagnosis through `test-triage`, planning through `test-fix-plan`, reviewed mutation through `apply --from-plan`, and narrow-first verification through the rerun commands already emitted by triage. The result is recorded as a first-class `test-autofix` artifact with deterministic stop conditions and final-status classification, while risky findings remain review-required and never become executable automatically. It now also appends first-class remediation history under `.playbook/test-autofix-history.json`, making diagnosis -> planning -> execution -> verification -> history the minimal trustworthy remediation loop for future repeat detection and bounded retry policy. Stable failure signatures and recorded outcomes now form the evidence layer that self-repair must consult before it is allowed to make better future repair decisions.
 Recent implementation note: `pnpm playbook test-fix-plan --from-triage <artifact> --json` now turns first-class `test-triage` diagnosis artifacts into stable bounded remediation artifacts, keeping low-risk auto-fix planning explicit and rejecting risky findings as review-only exclusions instead of hidden mutation behavior. The trust-model wording is now explicit across docs: `test-triage` is diagnosis, `test-fix-plan` is bounded repair planning, and `apply --from-plan` is reviewed execution. Risky findings remain review-required and do not cross into executable tasks automatically. `apply --from-plan` consumes that artifact through the existing reviewed-plan execution boundary rather than creating a parallel mutation executor.
 

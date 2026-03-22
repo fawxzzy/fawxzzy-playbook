@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/memory-event.schema.json",
+  "title": "PlaybookTemporalMemoryEvent",
+  "description": "Append-only temporal memory event contract for deterministic replay and scope-first lookup. This contract is distinct from structural repository graph artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "eventId",
+    "eventFingerprint",
+    "createdAt",
+    "repoRevision",
+    "scope",
+    "sources",
+    "riskSummary",
+    "outcome",
+    "salienceInputs"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "kind": { "enum": ["verify_run", "plan_run", "apply_run", "pr_analysis", "failure_ingest"] },
+    "eventId": { "type": "string", "minLength": 1 },
+    "eventFingerprint": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "repoRevision": { "type": "string", "minLength": 1 },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modules", "ruleIds"],
+      "properties": {
+        "modules": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "ruleIds": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "reference"],
+        "properties": {
+          "type": { "type": "string", "minLength": 1 },
+          "reference": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "riskSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "signals"],
+      "properties": {
+        "level": { "enum": ["low", "medium", "high", "unknown"] },
+        "score": { "type": "number" },
+        "signals": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "summary"],
+      "properties": {
+        "status": { "enum": ["success", "failure", "partial", "skipped"] },
+        "summary": { "type": "string", "minLength": 1 },
+        "metrics": {
+          "type": "object",
+          "propertyNames": { "minLength": 1 },
+          "additionalProperties": { "type": "number" }
+        }
+      }
+    },
+    "salienceInputs": {
+      "type": "object",
+      "propertyNames": { "minLength": 1 },
+      "additionalProperties": {
+        "anyOf": [
+          { "type": "string" },
+          { "type": "number" },
+          { "type": "boolean" },
+          { "type": "null" },
+          { "type": "array", "items": { "type": "string" } },
+          { "type": "array", "items": { "type": "number" } },
+          { "type": "array", "items": { "type": "boolean" } }
+        ]
+      }
+    }
+  }
+}
