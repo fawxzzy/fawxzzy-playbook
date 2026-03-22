@@ -615,16 +615,29 @@ export const verifyReleaseGovernance = (repoRoot: string, options: { baseRef: st
   }
 
   const missingVersionPackages = plan.packages.filter((pkg) => pkg.recommendedBump !== 'none' && bumpRank[pkg.recommendedBump] > bumpRank[actualBumpByPackage.get(pkg.name) ?? 'none']);
-  if (missingVersionPackages.length > 0) {
+  const contractExpansionFiles = plan.diff.changedFiles.filter((file) => file.reasons.includes('stable contract expansion changed'));
+  const packageVersionPackages = uniqueSorted(
+    [...actualBumpByPackage.entries()]
+      .filter(([, bump]) => bump !== 'none')
+      .map(([packageName]) => packageName)
+  );
+
+  if (missingVersionPackages.length > 0 || (contractExpansionFiles.length > 0 && packageVersionPackages.length === 0)) {
+    const packageEvidence = missingVersionPackages.map((pkg) => `${pkg.name}:${pkg.currentVersion}:${pkg.recommendedBump}`);
+    const evidencePackages = packageEvidence.length > 0 ? packageEvidence.join(',') : 'none';
+    const evidenceReasons = uniqueSorted([
+      ...missingVersionPackages.flatMap((pkg) => pkg.reasons),
+      ...contractExpansionFiles.flatMap((file) => file.reasons)
+    ]);
+
     failures.push({
       id: 'release.requiredVersionBump.missing',
       message: 'Release-relevant changes require a corresponding package version update before merge.',
-      evidence: `base_ref=${options.baseRef}; packages=${missingVersionPackages.map((pkg) => `${pkg.name}:${pkg.currentVersion}:${pkg.recommendedBump}`).join(',')}; reasons=${uniqueSorted(missingVersionPackages.flatMap((pkg) => pkg.reasons)).join(',')}`,
+      evidence: `base_ref=${options.baseRef}; packages=${evidencePackages}; contract_files=${contractExpansionFiles.map((file) => file.path).join(',') || 'none'}; observed_version_bumps=${packageVersionPackages.join(',') || 'none'}; reasons=${evidenceReasons.join(',')}`,
       fix: 'Run `pnpm playbook release plan --json --out .playbook/release-plan.json`, review the artifact, then apply the approved release tasks.'
     });
   }
 
-  const contractExpansionFiles = plan.diff.changedFiles.filter((file) => file.reasons.includes('stable contract expansion changed'));
   if (contractExpansionFiles.length > 0) {
     const packageVersionFilesChanged = plan.tasks
       .filter((task) => task.task_kind === 'release-package-version' && typeof task.file === 'string')

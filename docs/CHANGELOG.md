@@ -20,6 +20,11 @@
 # Changelog
 
 ## Unreleased
+- WHAT: Restored the canonical `release.requiredVersionBump.missing` finding for public contract expansion when no package version-governance update accompanies the change, while keeping the more specific contract-expansion release-plan failure alongside it when applicable. WHY: Stable governance finding ids are machine contracts and must not disappear just because the human-readable branch logic became more specific.
+- Rule: Stable governance finding IDs are machine contracts; do not rename or drop them casually.
+- Pattern: Separate canonical finding IDs from human-readable messages so wording and branching can evolve without contract drift.
+- Failure Mode: Replacing a specific governance finding with a broader or adjacent one makes tests pass “some failure” while silently breaking automation keyed to the canonical id.
+
 - WHAT: Refined PR contract-surface review so ephemeral runtime telemetry under `.playbook/memory/events/**` no longer counts as persisted contract evidence for `analyze-pr` / `review-pr`, while stable automation-facing `.playbook` artifacts remain reviewable. WHY: Deterministic review commands must not consume their own runtime emissions and invent second-run-only findings.
 - Rule: Review surfaces must exclude self-generated runtime telemetry from contract-surface evidence.
 - Pattern: Classify stable automation artifacts separately from ephemeral execution artifacts before emitting review findings.
