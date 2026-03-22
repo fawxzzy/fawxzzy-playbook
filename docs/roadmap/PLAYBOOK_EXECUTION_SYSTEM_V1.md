@@ -109,7 +109,7 @@ Next hardening step:
 - add deterministic merge/conflict guards on protected singleton surfaces
 - make that reviewed merge boundary prerequisite infrastructure before future managed subagents / hooks orchestration expands beyond proposal-only consolidation
 - define guardrails preventing direct concurrent edits to protected singleton docs
-- connect the slice to the future path `worker partitioning / overlap detection -> worker-local fragments / receipts -> proposal-only docs consolidate -> reviewed consolidation execution / merge-guard -> managed subagents / hooks`
+- connect the slice to the future path `worker partitioning / overlap detection -> worker-local fragments / receipts -> workers submit -> proposal-only docs consolidate -> docs consolidate-plan -> drift-locked apply guards -> verify/CI protected-doc merge-guard enforcement -> managed subagents / hooks`
 
 Rule: Shared singleton docs should be updated through worker-local fragments plus a reviewed deterministic consolidation boundary, not direct concurrent edits from multiple workers.
 Rule: Implemented state and next-state must never overlap in roadmap language.
