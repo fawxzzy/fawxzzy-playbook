@@ -14,7 +14,7 @@
 # Changelog
 
 ## Unreleased
-- WHAT: Restored backward-compatible temporal memory capture by treating missing or legacy memory scope inputs as empty scope during normalization/fingerprinting and by rehydrating legacy event provenance (`eventInstanceId`, `subjectModules`, `ruleIds`) in inspection/runtime memory readers. WHY: Canonical artifact builders must tolerate older/minimal call shapes until the contract is intentionally version-bumped, because ask/explain enrichment and lifecycle flows sit downstream of memory capture.
+- WHAT: Restored one shared backward-compatible temporal memory event normalizer across write/read/replay surfaces by guaranteeing top-level `eventInstanceId`, defaulting missing legacy/new scope inputs to `{ modules: [], ruleIds: [] }`, and rehydrating legacy provenance fields (`eventInstanceId`, `subjectModules`, `ruleIds`) before inspection, provenance expansion, replay, and explain/ask enrichment. WHY: Persisted artifact shapes that feed multiple downstream readers need one canonical normalization layer so schema evolution does not create half-working enrichment paths or delayed replay crashes.
 
 - WHAT: Extended workset/lane/execution orchestration state with compact protected-doc consolidation status so merge readiness now stays false until protected singleton doc consolidation is either not applicable or fully applied, while text surfaces only emit short human summaries plus the next command and `.playbook` artifacts retain raw details. WHY: Prevents lanes with unresolved singleton-doc work from appearing merge-ready before the reviewed consolidation boundary is actually resolved.
 - Rule: Merge readiness must account for unresolved protected singleton doc consolidation.

@@ -46,10 +46,58 @@ const writeDeterministicJson = (filePath: string, payload: unknown): void => {
   fs.writeFileSync(filePath, deterministicStringify(payload), 'utf8');
 };
 
-const normalizeScope = (scope: MemoryEventInput['scope'] | MemoryScope | null | undefined, fallback?: Pick<MemoryEventInput, 'subjectModules' | 'ruleIds'>): MemoryScope => ({
-  modules: uniqueSorted(Array.isArray(scope?.modules) ? scope.modules : (fallback?.subjectModules ?? [])),
-  ruleIds: uniqueSorted(Array.isArray(scope?.ruleIds) ? scope.ruleIds : (fallback?.ruleIds ?? []))
+const toStringArray = (value: unknown): string[] => Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
+
+export const normalizeScope = (scope: MemoryEventInput['scope'] | MemoryScope | null | undefined, fallback?: Pick<MemoryEventInput, 'subjectModules' | 'ruleIds'> | Record<string, unknown>): MemoryScope => ({
+  modules: uniqueSorted(Array.isArray(scope?.modules) ? scope.modules : toStringArray(fallback?.subjectModules)),
+  ruleIds: uniqueSorted(Array.isArray(scope?.ruleIds) ? scope.ruleIds : toStringArray(fallback?.ruleIds))
 });
+
+const normalizeSources = (value: unknown): MemoryEvent['sources'] =>
+  Array.isArray(value)
+    ? value
+        .filter((entry): entry is { type: string; reference: string } => Boolean(entry) && typeof entry === 'object' && typeof (entry as { type?: unknown }).type === 'string' && typeof (entry as { reference?: unknown }).reference === 'string')
+        .sort((left, right) => `${left.type}:${left.reference}`.localeCompare(`${right.type}:${right.reference}`))
+    : [];
+
+export const normalizeMemoryEvent = (value: MemoryEvent | (Partial<MemoryEvent> & Record<string, unknown>)): MemoryEvent => {
+  const candidate = (value ?? {}) as Record<string, unknown>;
+  const eventInstanceId =
+    (typeof candidate.eventInstanceId === 'string' && candidate.eventInstanceId.trim().length > 0
+      ? candidate.eventInstanceId.trim()
+      : typeof candidate.eventId === 'string' && candidate.eventId.trim().length > 0
+        ? candidate.eventId.trim()
+        : `memory-event-${randomUUID()}`);
+  const scope = normalizeScope(candidate.scope as MemoryScope | Partial<MemoryScope> | null | undefined, candidate);
+  const riskSummaryRecord = candidate.riskSummary && typeof candidate.riskSummary === 'object' ? candidate.riskSummary as Record<string, unknown> : {};
+  const outcomeRecord = candidate.outcome && typeof candidate.outcome === 'object' ? candidate.outcome as Record<string, unknown> : {};
+  const metrics = outcomeRecord.metrics && typeof outcomeRecord.metrics === 'object' ? canonicalize(outcomeRecord.metrics) as Record<string, number> : undefined;
+
+  return {
+    schemaVersion: MEMORY_SCHEMA_VERSION,
+    kind: (typeof candidate.kind === 'string' ? candidate.kind : 'failure_ingest') as MemoryEvent['kind'],
+    eventId: eventInstanceId,
+    eventInstanceId,
+    eventFingerprint: typeof candidate.eventFingerprint === 'string' ? candidate.eventFingerprint : '',
+    createdAt: typeof candidate.createdAt === 'string' ? candidate.createdAt : new Date(0).toISOString(),
+    repoRevision: typeof candidate.repoRevision === 'string' ? candidate.repoRevision : 'unknown',
+    scope,
+    subjectModules: scope.modules,
+    ruleIds: scope.ruleIds,
+    sources: normalizeSources(candidate.sources),
+    riskSummary: {
+      level: (typeof riskSummaryRecord.level === 'string' ? riskSummaryRecord.level : 'unknown') as MemoryEvent['riskSummary']['level'],
+      ...(typeof riskSummaryRecord.score === 'number' ? { score: riskSummaryRecord.score } : {}),
+      signals: uniqueSorted(toStringArray(riskSummaryRecord.signals))
+    },
+    outcome: {
+      status: (typeof outcomeRecord.status === 'string' ? outcomeRecord.status : 'skipped') as MemoryEvent['outcome']['status'],
+      summary: typeof outcomeRecord.summary === 'string' ? outcomeRecord.summary : (typeof candidate.summary === 'string' ? candidate.summary : 'legacy memory event'),
+      ...(metrics ? { metrics } : {})
+    },
+    salienceInputs: candidate.salienceInputs && typeof candidate.salienceInputs === 'object' ? canonicalize(candidate.salienceInputs) as MemoryEvent['salienceInputs'] : {}
+  };
+};
 
 const emptyIndex = (): MemoryIndex => ({
   schemaVersion: MEMORY_SCHEMA_VERSION,
@@ -82,7 +130,7 @@ const readIndex = (repoRoot: string): MemoryIndex => {
 const toEventFingerprint = (input: MemoryEventInput): string =>
   stableHash({
     kind: input.kind,
-    sources: [...input.sources].sort((left, right) => `${left.type}:${left.reference}`.localeCompare(`${right.type}:${right.reference}`)),
+    sources: normalizeSources(input.sources),
     scope: normalizeScope(input.scope, input),
     riskSummary: {
       level: input.riskSummary.level,
@@ -97,37 +145,23 @@ const toEventFingerprint = (input: MemoryEventInput): string =>
     salienceInputs: canonicalize(input.salienceInputs)
   });
 
-const buildEvent = (repoRoot: string, input: MemoryEventInput): MemoryEvent => {
-  const createdAt = new Date().toISOString();
-  const eventFingerprint = toEventFingerprint(input);
-  const scope = normalizeScope(input.scope, input);
-
-  return {
+const buildEvent = (repoRoot: string, input: MemoryEventInput): MemoryEvent =>
+  normalizeMemoryEvent({
+    ...input,
     schemaVersion: MEMORY_SCHEMA_VERSION,
-    kind: input.kind,
-    eventId: `${input.kind}-${randomUUID()}`,
-    eventFingerprint,
-    createdAt,
+    eventInstanceId: `${input.kind}-${randomUUID()}`,
+    eventFingerprint: toEventFingerprint(input),
+    createdAt: new Date().toISOString(),
     repoRevision: input.repoRevision ?? resolveRepoRevision(repoRoot),
-    scope,
-    sources: [...input.sources].sort((left, right) => `${left.type}:${left.reference}`.localeCompare(`${right.type}:${right.reference}`)),
-    riskSummary: {
-      level: input.riskSummary.level,
-      ...(typeof input.riskSummary.score === 'number' ? { score: input.riskSummary.score } : {}),
-      signals: uniqueSorted(input.riskSummary.signals)
-    },
-    outcome: {
-      status: input.outcome.status,
-      summary: input.outcome.summary,
-      ...(input.outcome.metrics ? { metrics: canonicalize(input.outcome.metrics) as Record<string, number> } : {})
-    },
-    salienceInputs: canonicalize(input.salienceInputs) as MemoryEvent['salienceInputs']
-  };
-};
+    scope: normalizeScope(input.scope, input),
+    subjectModules: normalizeScope(input.scope, input).modules,
+    ruleIds: normalizeScope(input.scope, input).ruleIds,
+    sources: normalizeSources(input.sources)
+  });
 
 const toIndexEntry = (event: MemoryEvent): MemoryIndexEntry => ({
-  eventId: event.eventId,
-  relativePath: `.playbook/memory/events/${event.eventId}.json`,
+  eventId: event.eventInstanceId,
+  relativePath: `.playbook/memory/events/${event.eventInstanceId}.json`,
   scope: event.scope,
   fingerprint: event.eventFingerprint,
   createdAt: event.createdAt,
@@ -177,7 +211,7 @@ const updateMemoryIndex = (repoRoot: string, event: MemoryEvent): void => {
 
 export const captureMemoryEvent = (repoRoot: string, input: MemoryEventInput): MemoryEvent => {
   const event = buildEvent(repoRoot, input);
-  writeDeterministicJson(path.join(repoRoot, ...EVENTS_DIR, `${event.eventId}.json`), event);
+  writeDeterministicJson(path.join(repoRoot, ...EVENTS_DIR, `${event.eventInstanceId}.json`), event);
   updateMemoryIndex(repoRoot, event);
   return event;
 };

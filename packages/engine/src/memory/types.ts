@@ -30,10 +30,13 @@ export type MemoryEvent = {
   schemaVersion: typeof MEMORY_SCHEMA_VERSION;
   kind: MemoryEventKind;
   eventId: string;
+  eventInstanceId: string;
   eventFingerprint: string;
   createdAt: string;
   repoRevision: string;
   scope: MemoryScope;
+  subjectModules: string[];
+  ruleIds: string[];
   sources: MemoryEventSource[];
   riskSummary: MemoryRiskSummary;
   outcome: MemoryOutcome;
@@ -46,7 +49,7 @@ export type LegacyMemoryEventInput = {
   scope?: MemoryScope | Partial<MemoryScope> | null;
 };
 
-export type MemoryEventInput = Omit<MemoryEvent, 'schemaVersion' | 'eventId' | 'eventFingerprint' | 'createdAt' | 'repoRevision' | 'scope'> &
+export type MemoryEventInput = Omit<MemoryEvent, 'schemaVersion' | 'eventId' | 'eventInstanceId' | 'eventFingerprint' | 'createdAt' | 'repoRevision' | 'scope' | 'subjectModules' | 'ruleIds'> &
   LegacyMemoryEventInput & {
     repoRevision?: string;
   };

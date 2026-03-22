@@ -9,7 +9,7 @@ import type {
   MemoryReplayResult,
   MemoryReplaySalienceFactors
 } from '../schema/memoryReplay.js';
-import { buildSessionReplayEvidence } from './index.js';
+import { buildSessionReplayEvidence, normalizeMemoryEvent } from './index.js';
 import type { MemoryEvent, MemoryIndex, SessionReplayEvidence } from './types.js';
 
 const MEMORY_INDEX_RELATIVE_PATH = '.playbook/memory/index.json' as const;
@@ -60,7 +60,7 @@ const hasTruthySignal = (inputs: MemoryEvent['salienceInputs'], keys: string[]):
 const getModules = (event: MemoryEvent): string[] => uniqueSorted(event.scope.modules);
 const getRuleIds = (event: MemoryEvent): string[] => uniqueSorted(event.scope.ruleIds);
 
-const toReplayEvent = (eventId: string, sourcePath: string, event: MemoryEvent): ReplayEvent => {
+const toReplayEvent = (sourcePath: string, event: MemoryEvent): ReplayEvent => {
   const modules = getModules(event);
   const blastRadius = clamp(Number(event.salienceInputs.blastRadius ?? event.salienceInputs.failureCount ?? modules.length ?? 1), 1, 10);
   const crossModuleSpread = clamp(Number(event.salienceInputs.crossModuleSpread ?? event.salienceInputs.moduleSpread ?? modules.length ?? 1), 1, 10);
@@ -70,7 +70,7 @@ const toReplayEvent = (eventId: string, sourcePath: string, event: MemoryEvent):
   const remediationSignal = hasTruthySignal(event.salienceInputs, ['novelSuccessfulRemediation', 'successfulRemediation']) ? 1 : event.outcome.status === 'success' ? 1 : 0;
 
   return {
-    eventId,
+    eventId: event.eventInstanceId,
     sourcePath,
     eventFingerprint: event.eventFingerprint,
     createdAt: safeDate(event.createdAt),
@@ -91,7 +91,7 @@ const readReplayEvents = (projectRoot: string, index: MemoryReplayIndex): Replay
     .map((entry) => {
       const fullEventPath = path.join(projectRoot, entry.relativePath);
       if (!fs.existsSync(fullEventPath)) throw new Error(`playbook memory replay: missing event file ${entry.relativePath}`);
-      return toReplayEvent(entry.eventId, entry.relativePath, readJson<MemoryEvent>(fullEventPath));
+      return toReplayEvent(entry.relativePath, normalizeMemoryEvent(readJson<Record<string, unknown>>(fullEventPath))); 
     });
 
 const clusterEvents = (events: ReplayEvent[]): ReplayCluster[] => {
