@@ -559,16 +559,9 @@ export const runStatus = async (cwd: string, options: StatusOptions): Promise<nu
           title: 'Status proof',
           decision: proofResult.parallel_work.decision,
           status: proofResult.parallel_work.status,
-          why: proofResult.proof.summary.why,
           affectedSurfaces: proofResult.parallel_work.affected_surfaces,
           blockers: proofResult.parallel_work.blockers,
           nextAction: proofResult.parallel_work.next_action,
-          artifactRefs: [
-            proofResult.parallel_work.artifacts.lane_state.path,
-            proofResult.parallel_work.artifacts.worker_results.path,
-            proofResult.parallel_work.artifacts.docs_consolidation_plan.path,
-            proofResult.parallel_work.artifacts.guarded_apply.path
-          ],
           extraSections: [{
             label: 'Counts',
             items: [

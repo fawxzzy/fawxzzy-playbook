@@ -335,6 +335,8 @@ Human output for `status proof` now compresses parallel-work integration into on
 4. next action
 5. counts for `pending`, `blocked`, `plan_ready`, `guard_conflicted`, and `merge_ready`
 
+The text brief intentionally omits the prior proof `why` narrative and artifact reference list so the operator view stays shorter than raw lane-state details.
+
 The brief reads from existing governed artifacts only:
 
 - `.playbook/lane-state.json`

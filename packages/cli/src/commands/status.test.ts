@@ -729,11 +729,13 @@ describe('runStatus', () => {
     const output = String(logSpy.mock.calls[0]?.[0]);
     expect(output).toContain('Decision: parallel_guard_conflicted');
     expect(output).toContain('Status: guarded apply conflicted');
+    expect(output).not.toContain('Why:');
     expect(output).toContain('Affected surfaces: 1 pending lane(s); 1 blocked lane(s); 1 docs plan-ready lane(s); 1 guarded-apply conflict(s); 1 merge-ready lane(s)');
     expect(output).toContain('Blockers: blocked lane: lane-b; guard conflict: proposal-9');
     expect(output).toContain('Next action: Inspect .playbook/policy-apply-result.json blocked/failed entries, resolve guard conflicts, then rerun `pnpm playbook apply --json`.');
     expect(output).toContain('- pending=1');
     expect(output).toContain('- blocked=1');
+    expect(output).not.toContain('Artifacts:');
     expect(output.length).toBeLessThan(rawLaneState.length);
 
     logSpy.mockRestore();
