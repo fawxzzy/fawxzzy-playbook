@@ -24,10 +24,16 @@ describe('runInit', () => {
       expect(exitCode).toBe(0);
       const versionPolicy = JSON.parse(fs.readFileSync(path.join(repoRoot, '.playbook', 'version-policy.json'), 'utf8')) as {
         enabled: boolean;
-        groups: Array<{ packages: string[] }>;
+        groups: Array<{ name: string; strategy: string; packages: string[] }>;
       };
       expect(versionPolicy.enabled).toBe(true);
-      expect(versionPolicy.groups).toEqual([{ packages: ['packages/pkg-a', 'packages/pkg-b'] }]);
+      expect(versionPolicy.groups).toEqual([
+        {
+          name: 'default',
+          strategy: 'lockstep',
+          packages: ['packages/pkg-a', 'packages/pkg-b']
+        }
+      ]);
     } finally {
       fs.rmSync(repoRoot, { recursive: true, force: true });
     }

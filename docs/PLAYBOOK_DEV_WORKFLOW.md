@@ -119,7 +119,7 @@ Baseline scaffold outputs include:
 - `playbook.config.json`
 - `.playbook/version-policy.json`
 
-For publishable Node/pnpm repositories, init should detect the root/workspace package layout and seed one default opt-out-capable lockstep version group so release governance starts from installable policy rather than repo-by-repo setup drift.
+For publishable Node/pnpm repositories, init should detect the root/workspace package layout and seed one explicit opt-out-capable `default` lockstep version group so release governance starts from installable policy rather than repo-by-repo setup drift.
 
 Rule: Installable workflow policy belongs in templates, not tribal setup steps.
 Pattern: Seed policy once, then let verify/release use it everywhere.
