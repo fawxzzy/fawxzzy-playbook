@@ -162,6 +162,10 @@ const readFileText = (repoRoot: string, relativePath: string): string => {
   return fs.readFileSync(absolutePath, 'utf8');
 };
 
+const isStableContractExpansionPath = (normalizedPath: string): boolean =>
+  normalizedPath === '.playbook/version-policy.json'
+  || (normalizedPath.startsWith('packages/contracts/src/') && normalizedPath.endsWith('.schema.json'));
+
 const classifyFileChange = (file: { path: string; status: string }, repoRoot: string, policy: VersionPolicy): ChangedFileEvidence => {
   const filePath = file.path;
   const reasons: string[] = [];
@@ -193,8 +197,8 @@ const classifyFileChange = (file: { path: string; status: string }, repoRoot: st
     return { path: normalized, status: file.status, bump: 'minor', reasons };
   }
 
-  if (normalized.startsWith('packages/contracts/src/') || normalized === '.playbook/version-policy.json') {
-    reasons.push('stable contract/schema surface changed');
+  if (isStableContractExpansionPath(normalized)) {
+    reasons.push('stable contract expansion changed');
     return { path: normalized, status: file.status, bump: 'minor', reasons };
   }
 
@@ -273,6 +277,9 @@ export const buildReleasePlanFromInputs = (
     .sort((left, right) => left.name.localeCompare(right.name));
 
   let recommendedBump: ReleaseBump = 'none';
+  for (const file of changedFiles) {
+    recommendedBump = compareBumps(recommendedBump, file.bump);
+  }
   for (const group of versionGroups) {
     recommendedBump = compareBumps(recommendedBump, group.recommendedBump);
   }

@@ -56,7 +56,17 @@ describe('buildReleasePlanFromInputs', () => {
 
     const plan = buildPlan(repoRoot, [{ path: 'packages/contracts/src/new-contract.schema.json', status: 'A' }]);
     expect(plan.summary.recommendedBump).toBe('minor');
-    expect(plan.diff.changedFiles[0]?.reasons).toContain('stable contract/schema surface changed');
+    expect(plan.diff.changedFiles[0]?.reasons).toContain('stable contract expansion changed');
+  });
+
+  it('does not inflate internal runtime artifacts', () => {
+    const repoRoot = createFixtureRepo();
+    fs.mkdirSync(path.join(repoRoot, '.playbook', 'memory', 'events'), { recursive: true });
+    fs.writeFileSync(path.join(repoRoot, '.playbook', 'memory', 'events', 'event.json'), '{\n  "schemaVersion": "1.0"\n}\n');
+
+    const plan = buildPlan(repoRoot, [{ path: '.playbook/memory/events/event.json', status: 'A' }]);
+    expect(plan.summary.recommendedBump).toBe('none');
+    expect(plan.diff.changedFiles[0]?.reasons).toContain('non-shipping repository change');
   });
 
   it('treats docs-only changes as none', () => {
