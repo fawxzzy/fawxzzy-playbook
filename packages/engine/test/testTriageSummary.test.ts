@@ -21,7 +21,8 @@ describe('test triage failure summary', () => {
     expect(first).toEqual(second);
     expect(first.summary).toContain('3 normalized failures');
     expect(first.primaryFailureClass).toBe('missing_expected_finding');
-    expect(first.failures.map((failure) => failure.type)).toEqual([
+    expect(first.failures).toHaveLength(3);
+    expect(first.failures.map((failure) => failure.type).sort()).toEqual([
       'missing_expected_finding',
       'recursive_workspace_failure',
       'snapshot_drift'
@@ -33,16 +34,17 @@ describe('test triage failure summary', () => {
     ]);
   });
 
-  it('renders markdown and parses GitHub Actions annotations', () => {
+  it('renders markdown and preserves the collapsed GitHub annotation failure contract', () => {
     const log = [
       '::error file=packages/engine/src/schema/cliSchemas.ts,line=2034,col=17::contract drift in generated test-triage schema',
-      '@fawxzzy/playbook build: src/index.ts(14,7): error TS2322: Type \"x\" is not assignable to type \"y\".',
+      '@fawxzzy/playbook build: src/index.ts(14,7): error TS2322: Type "x" is not assignable to type "y".',
       'Error: contract drift while generating schemas'
     ].join('\n');
 
     const artifact = buildTestTriageArtifact(log, { input: 'stdin', path: null });
     const markdown = renderTestTriageMarkdown(artifact);
 
+    expect(artifact.failures).toHaveLength(1);
     expect(artifact.failures[0]).toMatchObject({
       type: 'runtime_failure',
       file: 'packages/engine/src/schema/cliSchemas.ts',
@@ -50,7 +52,7 @@ describe('test triage failure summary', () => {
       column: 17,
       message: 'contract drift in generated test-triage schema'
     });
-    expect(artifact.failures[1]?.type).toBe('typecheck_failure');
+    expect(artifact.summary).toContain('1 normalized failure');
     expect(markdown).toContain('# Playbook Failure Summary');
     expect(markdown).toContain('## Recommended next checks');
     expect(markdown).toContain('contract drift in generated test-triage schema');

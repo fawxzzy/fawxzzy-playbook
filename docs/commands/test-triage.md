@@ -74,6 +74,7 @@ Each `failures[]` entry normalizes the failure into stable copy-paste-ready fiel
 - existing low-risk repair classes such as `stale_assertion`, `fixture_drift`, and `ordering_drift`
 
 Cross-failure grouping collapses related failures into `crossCuttingDiagnosis[]` when the log suggests one partially integrated feature or shared fixture/contract dependency is producing multiple downstream symptoms.
+The contract keeps `failures[]` deterministic, but consumers should treat entries as normalized coverage rather than semantic ranking; use `primaryFailureClass` for rank-like summary decisions instead of array position.
 
 ## CI integration
 
