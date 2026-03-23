@@ -1,4 +1,8 @@
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_START -->
+- WHAT: Fixed the Playbook CI checkout/release-planning path by making the reusable and installable Playbook CI workflows request full git history (`fetch-depth: 0`) and by stopping the canonical CI release-plan step from redirecting planner output to `/dev/null`. WHY: Any release/version planning step that computes diffs must provision its own git history or base ref in CI, and hidden planner stderr makes shallow-checkout failures unnecessarily hard to diagnose.
+- Rule: Any release/version planning step that computes diffs must provision its own git history or base ref in CI.
+- Pattern: Fetch comparison history before diff-based governance, and keep planner output visible while debugging CI.
+- Failure Mode: Shallow feature-branch-only checkouts can make release planning fail even when install/build/contracts all succeed.
 - WHAT: Added installable release-governance scaffolding to repo templates by shipping `.github/workflows/release-prep.yml` and `docs/CHANGELOG.md` with the managed `PLAYBOOK:CHANGELOG_RELEASE_NOTES` seam, taught `pnpm playbook init` to seed those files alongside `.playbook/version-policy.json` only for eligible publishable pnpm/node repos, and taught `pnpm playbook upgrade --apply` migrations to retrofit any missing workflow/changelog scaffolding without overwriting existing custom workflow or policy content. WHY: Portable release governance is only real when the trusted/manual reviewed executor path ships with the policy and changelog seam instead of remaining repo-specific setup lore.
 - Rule: Installable workflow policy is incomplete until the trusted/manual mutation path is installable too.
 - Pattern: Seed policy, seed reviewed executor, keep normal CI plan-only.
