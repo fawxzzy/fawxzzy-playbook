@@ -191,9 +191,7 @@ runs:
         pnpm playbook test-triage --input .playbook/ci-failure.log > .playbook/failure-summary.md
         if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
           cat .playbook/failure-summary.md >> "$GITHUB_STEP_SUMMARY"
-          printf '
-
-' >> "$GITHUB_STEP_SUMMARY"
+          printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
         fi
 
     - name: Evaluate CI remediation policy gates
