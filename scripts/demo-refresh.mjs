@@ -8,7 +8,8 @@ import {
   cloneDemoRepository,
   installNodeDependencies,
   localCliEntrypoint,
-  run
+  run,
+  runPlaybookCli
 } from './demo-repo-utils.mjs';
 import { writeCommandTruthContract } from './managed-docs-lib.mjs';
 
@@ -252,9 +253,40 @@ const runRefreshCommand = ({ demoDir, refreshCommand }) => {
   throw new Error(`Command failed (${refreshCommand.command} ${refreshCommand.args.join(' ')}):\n${details}`);
 };
 
+const validateDemoDoctorContracts = (demoDir) => {
+  const docsAudit = runPlaybookCli({ cwd: demoDir, commandArgs: ['docs', 'audit', '--json'], expectSuccess: false });
+  const output = docsAudit.stdout?.trim();
+
+  if (!output) {
+    const stderr = docsAudit.stderr?.trim();
+    throw new Error(
+      `Demo refresh preflight could not validate docs/contracts/command-truth.json in the temp demo repo.\n${stderr || 'docs audit produced no JSON output.'}`
+    );
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(output);
+  } catch (error) {
+    throw new Error(
+      `Demo refresh preflight received invalid docs audit JSON while validating docs/contracts/command-truth.json.\n${String(error)}`
+    );
+  }
+
+  const findings = Array.isArray(parsed.findings) ? parsed.findings : [];
+  const commandTruthFinding = findings.find((finding) => finding?.ruleId === 'docs.command-truth.missing');
+  if (commandTruthFinding) {
+    const message = typeof commandTruthFinding.message === 'string' ? commandTruthFinding.message : 'Command truth contract is missing or invalid.';
+    throw new Error(
+      `Demo refresh preflight failed: required managed artifact docs/contracts/command-truth.json is not valid in the temp demo repo context.\n${message}`
+    );
+  }
+};
+
 const syncDemoDoctorContracts = async (demoDir) => {
   await writeCommandTruthContract(demoDir);
-  console.log('Synced required managed docs/contracts before demo refresh: docs/contracts/command-truth.json');
+  validateDemoDoctorContracts(demoDir);
+  console.log('Validated required managed docs/contracts in temp demo repo before demo refresh: docs/contracts/command-truth.json');
 };
 
 const configureGitIdentity = (demoDir) => {

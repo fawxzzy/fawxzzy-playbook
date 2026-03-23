@@ -156,7 +156,7 @@ test('demo refresh syncs command-truth before running doctor in the demo repo', 
   ]);
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Synced required managed docs\/contracts before demo refresh/);
+  assert.match(result.stdout, /Validated required managed docs\/contracts in temp demo repo before demo refresh/);
   assert.match(result.stdout, /Using refresh command: npm run demo:refresh/);
   assert.match(result.stdout, /Detected changes:/);
   assert.match(result.stdout, /docs\/contracts\/command-truth\.json/);
