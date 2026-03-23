@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { MemoryReplayCandidate, MemoryReplayCandidateProvenance, MemoryReplayResult } from '../schema/memoryReplay.js';
 import { resolvePatternKnowledgeStore } from '../patternStore.js';
 import type { MemoryKnowledgeArtifact, MemoryKnowledgeEntry, MemoryKnowledgeKind } from './knowledge.js';
+import { buildMemoryCompactionReviewArtifact, type MemoryCompactionReviewEntry } from './compactionReview.js';
 import { normalizeMemoryEvent } from './index.js';
 import type { MemoryEvent, MemoryIndex } from './types.js';
 
@@ -224,4 +225,21 @@ export const expandMemoryProvenance = (
       event: eventFromSource ?? eventFromId
     };
   });
+};
+
+
+export type MemoryCompactionLookupOptions = {
+  decision?: 'discard' | 'attach' | 'merge' | 'new_candidate';
+  kind?: MemoryReplayCandidate['kind'];
+};
+
+export const lookupMemoryCompactionReview = (
+  projectRoot: string,
+  options: MemoryCompactionLookupOptions = {}
+): MemoryCompactionReviewEntry[] => {
+  const artifact = buildMemoryCompactionReviewArtifact(projectRoot);
+  return artifact.entries.filter((entry) =>
+    (options.decision ? entry.decision.decision === options.decision : true)
+    && (options.kind ? entry.kind === options.kind : true)
+  );
 };

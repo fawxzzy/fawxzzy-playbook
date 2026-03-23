@@ -41,6 +41,19 @@ List promoted knowledge artifacts from `.playbook/memory/knowledge/*.json`.
 
 Consolidation lives alongside this surface as `.playbook/memory/consolidation-candidates.json`: it summarizes replay candidates, preserves event/replay provenance, and keeps promotion explicit with `reviewRequired: true` instead of auto-promoting doctrine.
 
+### `memory compaction`
+
+Materialize and review `.playbook/memory/compaction-review.json`, a read-only review artifact that exposes deterministic compaction bucket decisions across replay, consolidation, and promotion depth.
+
+Bucket decisions are first-class and filterable with `--decision`:
+
+- `discard`
+- `attach`
+- `merge`
+- `new_candidate`
+
+Each entry includes canonical `reasonCodes`, replay/consolidation/event provenance, matched promoted knowledge provenance when present, and explicit review-only promotion metadata (`explicitOnly: true`, `reviewRequired: true`). This surface does **not** widen mutation authority and does **not** auto-promote doctrine.
+
 ### `memory show <id>`
 
 Show one memory candidate or promoted knowledge entry by id.
@@ -78,6 +91,8 @@ pnpm playbook memory query --event-type lane_transition --run-id run-123 --json
 pnpm playbook memory query --view recent-routes --limit 5 --json
 pnpm playbook memory candidates --json
 pnpm playbook memory knowledge --json
+pnpm playbook memory compaction --json
+pnpm playbook memory compaction --decision attach --json
 pnpm playbook memory show <id> --json
 pnpm playbook memory promote <candidate-id> --json
 pnpm playbook memory retire <knowledge-id> --json

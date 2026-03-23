@@ -9,6 +9,8 @@ const listWorkerAssignmentsForRun = vi.fn();
 const listImprovementSignalsForArtifact = vi.fn();
 const lookupMemoryCandidateKnowledge = vi.fn();
 const lookupPromotedMemoryKnowledge = vi.fn();
+const lookupMemoryCompactionReview = vi.fn();
+const reviewMemoryCompaction = vi.fn();
 const expandMemoryProvenance = vi.fn();
 const loadCandidateKnowledgeById = vi.fn();
 const promoteMemoryCandidate = vi.fn();
@@ -23,6 +25,8 @@ vi.mock('@zachariahredfield/playbook-engine', () => ({
   listImprovementSignalsForArtifact,
   lookupMemoryCandidateKnowledge,
   lookupPromotedMemoryKnowledge,
+  lookupMemoryCompactionReview,
+  reviewMemoryCompaction,
   expandMemoryProvenance,
   loadCandidateKnowledgeById,
   promoteMemoryCandidate,
@@ -112,6 +116,26 @@ describe('runMemory', () => {
     );
     expect(improvementsExit).toBe(ExitCode.Success);
 
+    logSpy.mockRestore();
+  });
+
+
+  it('supports compaction subcommand and emits json output', async () => {
+    const { runMemory } = await import('./memory.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    reviewMemoryCompaction.mockReturnValue({ summary: { totalEntries: 1, discard: 0, attach: 1, merge: 0, newCandidate: 0, explicitPromotionRequired: 1 } });
+    lookupMemoryCompactionReview.mockReturnValue([{ reviewId: 'review-1', decision: { decision: 'attach' } }]);
+
+    const exitCode = await runMemory('/repo', ['compaction', '--decision', 'attach'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(reviewMemoryCompaction).toHaveBeenCalledWith('/repo');
+    expect(lookupMemoryCompactionReview).toHaveBeenCalledWith('/repo', { decision: 'attach', kind: undefined });
+
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.command).toBe('memory-compaction-review');
+    expect(payload.artifactPath).toBe('.playbook/memory/compaction-review.json');
+    expect(payload.entries).toHaveLength(1);
     logSpy.mockRestore();
   });
 
