@@ -1,4 +1,12 @@
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_START -->
+## 0.1.9 - 2026-03-23
+- Recommended bump: patch
+- @fawxzzy/playbook: 0.1.8 -> 0.1.9 (playbook-installable-workspace)
+- @fawxzzy/playbook-cli: 0.1.8 -> 0.1.9 (playbook-installable-workspace)
+- @zachariahredfield/playbook-core: 0.1.8 -> 0.1.9 (playbook-installable-workspace)
+- @zachariahredfield/playbook-engine: 0.1.8 -> 0.1.9 (playbook-installable-workspace)
+- @zachariahredfield/playbook-node: 0.1.8 -> 0.1.9 (playbook-installable-workspace)
+
 - WHAT: Rewired the legacy `.github/workflows/playbook.yml` entrypoint to invoke the shared Playbook CI composite action instead of running a standalone `node packages/cli/dist/main.js verify --ci` path. WHY: Workflow/runtime skew can preserve stale release-governance behavior even after the composite action is fixed, so every CI entrypoint must share the same release-plan + verify-json implementation.
 - Rule: When CI behavior changes, validate against the exact workflow path GitHub executed and keep all entrypoints on the same composite action implementation.
 - Pattern: One composite action owns release-plan materialization and verify wiring; workflows should delegate to it instead of re-encoding old gates.
