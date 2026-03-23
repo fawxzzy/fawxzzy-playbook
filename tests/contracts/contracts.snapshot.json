@@ -123,6 +123,11 @@
         "path": ".playbook/memory/consolidation-candidates.json"
       },
       {
+        "id": "memory-compaction-review",
+        "version": "1.0",
+        "path": ".playbook/memory/compaction-review.json"
+      },
+      {
         "id": "memory-event",
         "version": "1.0.0",
         "path": ".playbook/memory/events/runtime/*.json"
@@ -298,6 +303,11 @@
         "id": "consolidation-candidates",
         "version": "1.0",
         "path": "packages/contracts/src/consolidation-candidates.schema.json"
+      },
+      {
+        "id": "memory-compaction-review",
+        "version": "1.0",
+        "path": "packages/contracts/src/memory-compaction-review.schema.json"
       },
       {
         "id": "pr-review",
