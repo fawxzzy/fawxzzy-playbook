@@ -21,6 +21,7 @@ type ConsolidationReplayReference = {
 };
 
 export type ConsolidationCandidate = {
+  replayLineage: MemoryReplayCandidate['supersession'];
   consolidationCandidateId: string;
   kind: MemoryReplayCandidate['kind'];
   title: string;
@@ -136,6 +137,7 @@ const toCandidate = (candidate: MemoryReplayCandidate, promotedKnowledge: Memory
       replayCandidates: [{ candidateId: candidate.candidateId, fingerprint: candidate.fingerprint, clusterKey: candidate.clusterKey }],
       events: [...candidate.provenance].sort((a, b) => `${a.eventId}:${a.sourcePath}`.localeCompare(`${b.eventId}:${b.sourcePath}`))
     },
+    replayLineage: candidate.supersession,
     promotion: {
       eligible: matchedKnowledgeIds.length === 0 && candidate.kind !== 'open_question',
       matchedKnowledgeIds,

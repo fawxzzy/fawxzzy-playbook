@@ -160,6 +160,20 @@ export { replayMemoryToCandidates, buildReplayCandidatesArtifact, MEMORY_CANDIDA
 export type { ReplayCandidatesArtifact } from './memory/replay.js';
 export { consolidateReplayCandidates, buildConsolidationCandidatesArtifact, writeConsolidationCandidatesArtifact, CONSOLIDATION_CANDIDATES_RELATIVE_PATH } from './consolidation/candidates.js';
 export type { ConsolidationCandidatesArtifact, ConsolidationCandidate } from './consolidation/candidates.js';
+export {
+  buildMemoryCompactionReviewArtifact,
+  writeMemoryCompactionReviewArtifact,
+  reviewMemoryCompaction,
+  MEMORY_COMPACTION_REVIEW_RELATIVE_PATH
+} from './memory/compactionReview.js';
+export type {
+  MemoryCompactionBucketDecision,
+  MemoryCompactionReasonCode,
+  MemoryCompactionDecisionRecord,
+  MemoryCompactionReviewEntry,
+  MemoryCompactionReviewArtifact
+} from './memory/compactionReview.js';
+export { lookupMemoryCompactionReview } from './memory/inspection.js';
 export { listCandidateKnowledge, loadCandidateKnowledgeById, promoteMemoryCandidate, retirePromotedKnowledge, supersedePromotedKnowledge, pruneMemoryKnowledge } from './memory/knowledge.js';
 export type { MemoryKnowledgeKind, MemoryKnowledgeEntry, MemoryKnowledgeArtifact, MemoryPromotionResult, MemoryRetireResult, MemorySupersedeResult, MemoryPruneResult } from './memory/knowledge.js';
 export type { MemoryCandidateKind, MemoryReplayResult, MemoryReplayCandidate, MemoryReplayCandidateProvenance, MemoryReplaySalienceFactors, MemoryReplayIndex, MemoryReplayEventReference } from './schema/memoryReplay.js';

@@ -17,7 +17,7 @@ type MemoryOptions = {
   quiet: boolean;
 };
 
-type MemorySubcommand = 'events' | 'query' | 'candidates' | 'knowledge' | 'show' | 'promote' | 'retire';
+type MemorySubcommand = 'events' | 'query' | 'candidates' | 'knowledge' | 'compaction' | 'show' | 'promote' | 'retire';
 
 const printMemoryHelp = (): void => {
   console.log(`Usage: playbook memory <subcommand> [options]
@@ -29,6 +29,7 @@ Subcommands:
   query                            Query normalized repository memory events
   candidates                       List replayed memory candidates
   knowledge                        List promoted memory knowledge
+  compaction                       Review deterministic compaction decisions
   show <id>                        Show a candidate or knowledge record by id
   promote <candidate-id>           Promote one candidate into knowledge
   retire <knowledge-id>            Retire one promoted knowledge record
@@ -49,6 +50,7 @@ Options:
   --include-stale              Include stale candidates in memory candidates
   --include-superseded         Include superseded knowledge in memory knowledge
   --reason <text>              Retirement reason override for memory retire
+  --decision <name>            Filter compaction review by decision bucket
   --json                       Print machine-readable JSON output
   --help                       Show help`);
 };
@@ -103,7 +105,7 @@ const parseSubcommand = (args: string[]): MemorySubcommand | null => {
     return null;
   }
 
-  if (['events', 'query', 'candidates', 'knowledge', 'show', 'promote', 'retire'].includes(subcommand)) {
+  if (['events', 'query', 'candidates', 'knowledge', 'compaction', 'show', 'promote', 'retire'].includes(subcommand)) {
     return subcommand as MemorySubcommand;
   }
 
@@ -146,7 +148,7 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
   }
 
   if (!subcommand) {
-    emitMemoryError(options, requestedSubcommand, 'playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, show, promote, or retire.');
+    emitMemoryError(options, requestedSubcommand, 'playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, compaction, show, promote, or retire.');
     return ExitCode.Failure;
   }
 
@@ -275,6 +277,24 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
       return ExitCode.Success;
     }
 
+
+    if (subcommand === 'compaction') {
+      const artifact = (playbookEngine as any).reviewMemoryCompaction(cwd);
+      const payload = {
+        schemaVersion: '1.0',
+        command: 'memory-compaction-review',
+        artifactPath: '.playbook/memory/compaction-review.json',
+        summary: artifact.summary,
+        entries: (playbookEngine as any).lookupMemoryCompactionReview(cwd, {
+          decision: (readOptionValue(args, '--decision') as 'discard' | 'attach' | 'merge' | 'new_candidate' | null) ?? undefined,
+          kind: (readOptionValue(args, '--kind') as 'decision' | 'pattern' | 'failure_mode' | 'invariant' | 'open_question' | null) ?? undefined
+        })
+      };
+
+      emitMemoryResult(cwd, options, 'memory compaction', payload, `Found ${payload.entries.length} compaction review entries.`);
+      return ExitCode.Success;
+    }
+
     if (subcommand === 'show') {
       const id = resolveSubcommandArgument(args);
       if (!id) {
@@ -344,7 +364,7 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
       emitMemoryResult(cwd, options, 'memory retire', payload, `Retired knowledge ${knowledgeId}.`);
       return ExitCode.Success;
     }
-    throw new Error('playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, show, promote, or retire.');
+    throw new Error('playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, compaction, show, promote, or retire.');
 
   } catch (error) {
     emitMemoryError(options, subcommand, error);

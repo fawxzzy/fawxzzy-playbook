@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/memory-compaction-review.schema.json",
+  "title": "PlaybookMemoryCompactionReview",
+  "description": "Read-only deterministic memory compaction review surface that makes discard/attach/merge/new-candidate decisions explicit without changing promotion authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "command", "generatedAt", "reviewOnly", "authority", "sourceArtifacts", "summary", "entries"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "kind": { "const": "playbook-memory-compaction-review" },
+    "command": { "const": "memory-compaction-review" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "reviewOnly": { "const": true },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mutation", "promotion"],
+      "properties": {
+        "mutation": { "const": "read-only" },
+        "promotion": { "const": "review-required" }
+      }
+    },
+    "sourceArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["consolidationCandidates", "promotedKnowledge"],
+      "properties": {
+        "consolidationCandidates": { "const": ".playbook/memory/consolidation-candidates.json" },
+        "promotedKnowledge": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["totalEntries", "discard", "attach", "merge", "newCandidate", "explicitPromotionRequired"],
+      "properties": {
+        "totalEntries": { "type": "integer", "minimum": 0 },
+        "discard": { "type": "integer", "minimum": 0 },
+        "attach": { "type": "integer", "minimum": 0 },
+        "merge": { "type": "integer", "minimum": 0 },
+        "newCandidate": { "type": "integer", "minimum": 0 },
+        "explicitPromotionRequired": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["reviewId", "consolidationCandidateId", "replayCandidateId", "kind", "title", "module", "ruleId", "fingerprint", "decision", "promotion", "salience", "provenance"],
+        "properties": {
+          "reviewId": { "type": "string", "minLength": 1 },
+          "consolidationCandidateId": { "type": "string", "minLength": 1 },
+          "replayCandidateId": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["decision", "pattern", "failure_mode", "invariant", "open_question"] },
+          "title": { "type": "string", "minLength": 1 },
+          "module": { "type": "string", "minLength": 1 },
+          "ruleId": { "type": "string", "minLength": 1 },
+          "fingerprint": { "type": "string", "minLength": 1 },
+          "decision": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["decision", "reasonCodes", "rationale"],
+            "properties": {
+              "decision": { "enum": ["discard", "attach", "merge", "new_candidate"] },
+              "reasonCodes": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "promotion_ineligible_open_question",
+                    "promotion_ineligible_review_only",
+                    "knowledge_fingerprint_match",
+                    "knowledge_lineage_attach",
+                    "replay_lineage_merge",
+                    "consolidated_replay_merge",
+                    "novel_candidate_required"
+                  ]
+                }
+              },
+              "rationale": { "type": "string", "minLength": 1 }
+            }
+          },
+          "promotion": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["explicitOnly", "eligible", "reviewRequired", "matchedKnowledgeIds"],
+            "properties": {
+              "explicitOnly": { "const": true },
+              "eligible": { "type": "boolean" },
+              "reviewRequired": { "const": true },
+              "matchedKnowledgeIds": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+            }
+          },
+          "salience": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["score", "factors", "eventCount"],
+            "properties": {
+              "score": { "type": "number" },
+              "factors": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["severity", "recurrenceCount", "blastRadius", "crossModuleSpread", "ownershipDocsGap", "novelSuccessfulRemediationSignal"],
+                "properties": {
+                  "severity": { "type": "number" },
+                  "recurrenceCount": { "type": "number" },
+                  "blastRadius": { "type": "number" },
+                  "crossModuleSpread": { "type": "number" },
+                  "ownershipDocsGap": { "type": "number" },
+                  "novelSuccessfulRemediationSignal": { "type": "number" }
+                }
+              },
+              "eventCount": { "type": "integer", "minimum": 0 }
+            }
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["replayCandidates", "events", "promotedKnowledge"],
+            "properties": {
+              "replayCandidates": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["candidateId", "fingerprint", "clusterKey"],
+                  "properties": {
+                    "candidateId": { "type": "string", "minLength": 1 },
+                    "fingerprint": { "type": "string", "minLength": 1 },
+                    "clusterKey": { "type": "string", "minLength": 1 }
+                  }
+                }
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["eventId", "sourcePath", "fingerprint", "runId"],
+                  "properties": {
+                    "eventId": { "type": "string", "minLength": 1 },
+                    "sourcePath": { "type": "string", "minLength": 1 },
+                    "fingerprint": { "type": "string", "minLength": 1 },
+                    "runId": { "type": ["string", "null"] }
+                  }
+                }
+              },
+              "promotedKnowledge": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["knowledgeId", "kind", "status", "fingerprint", "sourceCandidateIds", "sourceEventFingerprints"],
+                  "properties": {
+                    "knowledgeId": { "type": "string", "minLength": 1 },
+                    "kind": { "type": "string", "minLength": 1 },
+                    "status": { "type": "string", "minLength": 1 },
+                    "fingerprint": { "type": "string", "minLength": 1 },
+                    "sourceCandidateIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+                    "sourceEventFingerprints": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
