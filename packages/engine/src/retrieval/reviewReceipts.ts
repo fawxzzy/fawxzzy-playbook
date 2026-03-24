@@ -122,6 +122,14 @@ const sortReceipts = (receipts: KnowledgeReviewReceiptEntry[]): KnowledgeReviewR
     left.receiptId.localeCompare(right.receiptId)
   );
 
+const mergeReceipts = (receipts: KnowledgeReviewReceiptEntry[]): KnowledgeReviewReceiptEntry[] => {
+  const byReceiptId = new Map<string, KnowledgeReviewReceiptEntry>();
+  for (const receipt of sortReceipts(receipts)) {
+    byReceiptId.set(receipt.receiptId, receipt);
+  }
+  return sortReceipts([...byReceiptId.values()]);
+};
+
 export const createEmptyKnowledgeReviewReceiptsArtifact = (generatedAt: string = new Date().toISOString()): KnowledgeReviewReceiptsArtifact => ({
   schemaVersion: KNOWLEDGE_REVIEW_RECEIPTS_SCHEMA_VERSION,
   kind: 'playbook-knowledge-review-receipts',
@@ -175,12 +183,18 @@ export const writeKnowledgeReviewReceiptsArtifact = (repoRoot: string, artifact:
 export const writeKnowledgeReviewReceipt = (repoRoot: string, input: WriteKnowledgeReviewReceiptInput): KnowledgeReviewReceiptsArtifact => {
   const existing = readKnowledgeReviewReceiptsArtifact(repoRoot);
   const decidedAt = asIso(input.decidedAt, new Date().toISOString());
+  const targetId = typeof input.targetId === 'string' && input.targetId.length > 0 ? input.targetId : undefined;
+  const targetPath = typeof input.path === 'string' && input.path.length > 0 ? input.path : undefined;
+
+  if (!targetId && !targetPath) {
+    throw new Error('playbook retrieval review-receipts: receipt requires targetId or path');
+  }
 
   const normalizedWithoutId: Omit<KnowledgeReviewReceiptEntry, 'receiptId'> = {
     queueEntryId: input.queueEntryId,
     targetKind: input.targetKind,
-    ...(input.targetId ? { targetId: input.targetId } : {}),
-    ...(input.path ? { path: input.path } : {}),
+    ...(targetId ? { targetId } : {}),
+    ...(targetPath ? { path: targetPath } : {}),
     sourceSurface: input.sourceSurface,
     reasonCode: input.reasonCode,
     decision: input.decision,
@@ -197,7 +211,7 @@ export const writeKnowledgeReviewReceipt = (repoRoot: string, input: WriteKnowle
   const nextArtifact: KnowledgeReviewReceiptsArtifact = {
     ...existing,
     generatedAt: asIso(decidedAt, decidedAt),
-    receipts: sortReceipts([...existing.receipts, nextReceipt])
+    receipts: mergeReceipts([...existing.receipts, nextReceipt])
   };
 
   writeKnowledgeReviewReceiptsArtifact(repoRoot, nextArtifact);
