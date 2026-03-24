@@ -37,7 +37,9 @@ const reviewQueueFixture = () => ({
       evidenceRefs: ['.playbook/memory/knowledge/patterns.json'],
       recommendedAction: 'reaffirm',
       reviewPriority: 'high',
-      generatedAt: '2026-03-24T00:00:00.000Z'
+      generatedAt: '2026-03-24T00:00:00.000Z',
+      nextReviewAt: '2026-03-24T00:00:00.000Z',
+      overdue: true
     },
     {
       queueEntryId: 'q-doc-1',
@@ -48,7 +50,10 @@ const reviewQueueFixture = () => ({
       evidenceRefs: ['docs/PLAYBOOK_DEV_WORKFLOW.md'],
       recommendedAction: 'revise',
       reviewPriority: 'medium',
-      generatedAt: '2026-03-24T00:00:00.000Z'
+      generatedAt: '2026-03-24T00:00:00.000Z',
+      deferredUntil: '2026-04-01T00:00:00.000Z',
+      nextReviewAt: '2026-04-01T00:00:00.000Z',
+      overdue: false
     },
     {
       queueEntryId: 'q-rule-1',
@@ -59,7 +64,9 @@ const reviewQueueFixture = () => ({
       evidenceRefs: ['docs/commands/README.md'],
       recommendedAction: 'reaffirm',
       reviewPriority: 'low',
-      generatedAt: '2026-03-24T00:00:00.000Z'
+      generatedAt: '2026-03-24T00:00:00.000Z',
+      nextReviewAt: '2026-03-24T00:00:00.000Z',
+      overdue: true
     },
     {
       queueEntryId: 'q-pattern-1',
@@ -70,7 +77,9 @@ const reviewQueueFixture = () => ({
       evidenceRefs: ['docs/PLAYBOOK_DEV_WORKFLOW.md'],
       recommendedAction: 'supersede',
       reviewPriority: 'medium',
-      generatedAt: '2026-03-24T00:00:00.000Z'
+      generatedAt: '2026-03-24T00:00:00.000Z',
+      nextReviewAt: '2026-03-26T00:00:00.000Z',
+      overdue: false
     }
   ]
 });
@@ -119,11 +128,12 @@ describe('knowledge review', () => {
     expect(payload.artifactPath).toBe('.playbook/review-queue.json');
     expect(payload.summary).toMatchObject({
       total: 4,
-      returned: 4,
-      byAction: { reaffirm: 2, revise: 1, supersede: 1 },
-      byKind: { knowledge: 1, doc: 1, rule: 1, pattern: 1 }
+      returned: 3,
+      byAction: { reaffirm: 2, revise: 0, supersede: 1 },
+      byKind: { knowledge: 1, doc: 0, rule: 1, pattern: 1 },
+      cadence: { dueNow: 3, overdue: 2, deferred: 0 }
     });
-    expect(payload.entries).toHaveLength(4);
+    expect(payload.entries).toHaveLength(3);
     logSpy.mockRestore();
   });
 
@@ -151,6 +161,19 @@ describe('knowledge review', () => {
     payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.summary.returned).toBe(1);
     expect(payload.entries[0].targetKind).toBe('pattern');
+
+    logSpy.mockClear();
+    exitCode = await runKnowledge('/repo', ['review', '--due', 'overdue'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Success);
+    payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.summary.returned).toBe(2);
+    expect(payload.entries.every((entry: { overdue?: boolean }) => entry.overdue === true)).toBe(true);
+
+    logSpy.mockClear();
+    exitCode = await runKnowledge('/repo', ['review', '--due', 'all'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Success);
+    payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.summary.returned).toBe(4);
 
     logSpy.mockRestore();
   });
@@ -211,9 +234,10 @@ describe('knowledge review', () => {
     expect(exitCode).toBe(ExitCode.Success);
 
     const rendered = String(logSpy.mock.calls[0]?.[0]);
-    expect(rendered).toContain('Status: 4 review item(s) pending');
-    expect(rendered).toContain('Affected targets: knowledge:stale-runtime-guard, docs/PLAYBOOK_DEV_WORKFLOW.md');
-    expect(rendered).toContain('Blockers / reason: stale-active-knowledge');
+    expect(rendered).toContain('Status: 3 review item(s) pending');
+    expect(rendered).toContain('Due now: 3');
+    expect(rendered).toContain('Overdue: 2');
+    expect(rendered).toContain('Deferred: 0');
     expect(rendered).toContain('Next action: reaffirm knowledge:stale-runtime-guard');
     logSpy.mockRestore();
   });
@@ -240,9 +264,14 @@ describe('knowledge review', () => {
     const { runKnowledge } = await import('../knowledge.js');
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    const exitCode = await runKnowledge('/repo', ['review', '--action', 'invalid'], { format: 'text', quiet: false });
+    let exitCode = await runKnowledge('/repo', ['review', '--action', 'invalid'], { format: 'text', quiet: false });
     expect(exitCode).toBe(ExitCode.Failure);
     expect(String(errorSpy.mock.calls[0]?.[0])).toContain('invalid --action value "invalid"');
+
+    errorSpy.mockClear();
+    exitCode = await runKnowledge('/repo', ['review', '--due', 'later'], { format: 'text', quiet: false });
+    expect(exitCode).toBe(ExitCode.Failure);
+    expect(String(errorSpy.mock.calls[0]?.[0])).toContain('invalid --due value "later"');
     errorSpy.mockRestore();
   });
 

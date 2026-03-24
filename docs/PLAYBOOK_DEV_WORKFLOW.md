@@ -65,8 +65,10 @@ Optional sync surface: run `pnpm pr:sync-metadata` to project `.playbook/pr-meta
 
 For retrieval review outcome changes, verify both queue and receipt seams stay deterministic:
 
+Cadence fields are retrieval-review scheduling metadata only; they do not mutate doctrine.
+
 ```bash
-pnpm playbook knowledge review --json
+pnpm playbook knowledge review --due overdue --json
 pnpm playbook knowledge review record --from <queue-entry-id> --decision defer --json
 ```
 
