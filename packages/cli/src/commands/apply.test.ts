@@ -182,6 +182,7 @@ describe('runApply', () => {
 
   it('renders deterministic text output', async () => {
     const { runApply } = await import('./apply.js');
+    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-text-output-'));
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     generatePlanContract.mockReturnValue({ verify: { ok: false, summary: { failures: 1, warnings: 0 } }, tasks: [{ id: 'task-1', ruleId: 'PB001', file: 'docs/ARCHITECTURE.md', action: 'update docs', autoFix: true }] });
@@ -192,7 +193,7 @@ describe('runApply', () => {
       summary: { applied: 1, skipped: 0, unsupported: 0, failed: 0 }
     });
 
-    const exitCode = await runApply('/repo', { format: 'text', ci: false, quiet: false });
+    const exitCode = await runApply(repoDir, { format: 'text', ci: false, quiet: false });
 
     expect(exitCode).toBe(ExitCode.Success);
     const output = logSpy.mock.calls.map((call) => String(call[0])).join('\n');
@@ -201,6 +202,7 @@ describe('runApply', () => {
     expect(output).toContain('task-1 PB001 applied docs/ARCHITECTURE.md');
 
     logSpy.mockRestore();
+    fs.rmSync(repoDir, { recursive: true, force: true });
   });
 
   it('emits stable json output', async () => {
