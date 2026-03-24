@@ -205,6 +205,7 @@ describe('runApply', () => {
 
   it('emits stable json output', async () => {
     const { runApply } = await import('./apply.js');
+    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-canonical-'));
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     generatePlanContract.mockReturnValue({ verify: { ok: false, summary: { failures: 1, warnings: 0 } }, tasks: [{ id: 'task-3', ruleId: 'PB003', file: 'docs/PLAYBOOK_CHECKLIST.md', action: 'add verify step', autoFix: false }] });
@@ -215,7 +216,7 @@ describe('runApply', () => {
       summary: { applied: 0, skipped: 1, unsupported: 0, failed: 0 }
     });
 
-    const exitCode = await runApply('/repo', { format: 'json', ci: false, quiet: false });
+    const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: false });
 
     expect(exitCode).toBe(ExitCode.Success);
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
@@ -229,8 +230,19 @@ describe('runApply', () => {
       results: [{ id: 'task-3', ruleId: 'PB003', file: 'docs/PLAYBOOK_CHECKLIST.md', action: 'add verify step', autoFix: false, status: 'skipped' }],
       summary: { applied: 0, skipped: 1, unsupported: 0, failed: 0 }
     });
+    const applyArtifact = JSON.parse(fs.readFileSync(path.join(repoDir, '.playbook', 'policy-apply-result.json'), 'utf8'));
+    expect(applyArtifact).toEqual({
+      schemaVersion: '1.0',
+      kind: 'policy-apply-result',
+      executed: [],
+      skipped_requires_review: [{ proposal_id: 'task-3', decision: 'requires_review', reason: 'PB003 skipped' }],
+      skipped_blocked: [],
+      failed_execution: [],
+      summary: { executed: 0, skipped_requires_review: 1, skipped_blocked: 0, failed_execution: 0, total: 1 }
+    });
 
     logSpy.mockRestore();
+    fs.rmSync(repoDir, { recursive: true, force: true });
   });
 
 
@@ -860,11 +872,12 @@ describe('runApply remediation status preconditions', () => {
 
   it('returns explicit no-op when remediation status is not_needed', async () => {
     const { runApply } = await import('./apply.js');
+    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-noop-canonical-'));
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     generatePlanContract.mockReturnValue({ verify: { ok: true, summary: { failures: 0, warnings: 0 } }, tasks: [] });
 
-    const exitCode = await runApply('/repo', { format: 'json', ci: false, quiet: false });
+    const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: false });
 
     expect(exitCode).toBe(ExitCode.Success);
     expect(applyExecutionPlan).not.toHaveBeenCalled();
@@ -872,8 +885,19 @@ describe('runApply remediation status preconditions', () => {
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.remediation.status).toBe('not_needed');
     expect(payload.message).toBe('No verify failures were detected.');
+    const applyArtifact = JSON.parse(fs.readFileSync(path.join(repoDir, '.playbook', 'policy-apply-result.json'), 'utf8'));
+    expect(applyArtifact).toEqual({
+      schemaVersion: '1.0',
+      kind: 'policy-apply-result',
+      executed: [],
+      skipped_requires_review: [],
+      skipped_blocked: [],
+      failed_execution: [],
+      summary: { executed: 0, skipped_requires_review: 0, skipped_blocked: 0, failed_execution: 0, total: 0 }
+    });
 
     logSpy.mockRestore();
+    fs.rmSync(repoDir, { recursive: true, force: true });
   });
 
   it('prints command help without evaluating remediation state', async () => {

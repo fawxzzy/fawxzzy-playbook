@@ -82,6 +82,7 @@ describe('runPlan', () => {
 
   it('emits stable json output for automation', async () => {
     const { runPlan } = await import('./plan.js');
+    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-plan-canonical-'));
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     generatePlanContract.mockReturnValue({
@@ -89,7 +90,7 @@ describe('runPlan', () => {
       tasks: [{ id: 'task-3', ruleId: 'plugin.custom', file: null, action: 'fix plugin contract', autoFix: true }]
     });
 
-    const exitCode = await runPlan('/repo', { format: 'json', ci: false, quiet: false });
+    const exitCode = await runPlan(repoDir, { format: 'json', ci: false, quiet: false });
 
     expect(exitCode).toBe(ExitCode.Success);
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
@@ -102,8 +103,11 @@ describe('runPlan', () => {
       remediation: { status: 'ready', totalSteps: 1, unresolvedFailures: 0 },
       tasks: [{ id: 'task-3', ruleId: 'plugin.custom', file: null, action: 'fix plugin contract', autoFix: true }]
     });
+    const canonicalArtifact = JSON.parse(fs.readFileSync(path.join(repoDir, '.playbook', 'plan.json'), 'utf8'));
+    expect(canonicalArtifact).toEqual(payload);
 
     logSpy.mockRestore();
+    fs.rmSync(repoDir, { recursive: true, force: true });
   });
 
   it('reports explicit unavailable remediation state when failures have no tasks', async () => {
