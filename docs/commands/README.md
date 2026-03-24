@@ -22,7 +22,7 @@ Roadmap and planning docs may describe sequencing intent, but they are not comma
 - `pnpm playbook docs consolidate --json` is the proposal-only integration seam for protected singleton narrative docs: workers emit fragments, the consolidator emits one compact brief plus `.playbook/docs-consolidation.json`, and no doc mutation happens automatically in v1. Reviewed writes remain target-locked and execute only through `pnpm playbook apply --from-plan .playbook/docs-consolidation-plan.json`.
 - `pnpm playbook workers submit --from <path> --json` is the canonical worker-receipt seam: worker execution outputs must enter Playbook through explicit result artifacts, not inferred file diffs.
 - `pnpm playbook verify --json` now fails closed for protected singleton-doc governance when existing governed artifacts show unresolved consolidation, reviewed-plan gaps, consolidation conflicts, or guarded-apply drift on reviewed singleton-doc targets. `pnpm playbook verify --policy --json` inherits the same gate through the default `protected-doc.governance` policy rule.
-- `pnpm playbook test-triage --input .playbook/ci-failure.log` is the canonical CI/test failure summarization surface: it preserves raw logs while emitting deterministic `.playbook/failure-summary.json` / `.playbook/failure-summary.md` artifacts and a copy-paste-ready markdown brief for GitHub step summaries.
+- `pnpm playbook test-triage --input .playbook/ci-failure.log` is the canonical CI/test failure summarization surface: it preserves raw logs while emitting deterministic `.playbook/test-triage.json` / `.playbook/failure-summary.md` artifacts and a copy-paste-ready markdown brief for GitHub step summaries.
 - `pnpm playbook release plan --json --out .playbook/release-plan.json` is now auto-materialized in normal Playbook CI whenever release governance is present or the repository is eligible for it; CI immediately follows with `pnpm playbook verify --phase preflight --json --out .playbook/verify-preflight.json`, fails before `pnpm test` when canonical release/version evidence is already blocking, then still runs the later full `.playbook/verify.json` gate on aligned branches.
 - Rule: Diff-based release governance should fail before expensive test execution when canonical preflight evidence is already sufficient.
 - Pattern: Release plan -> preflight verify -> tests -> full verify.
@@ -358,11 +358,13 @@ Command boundary note:
 - `knowledge inspect <id>` reads one record.
 - `knowledge provenance <id>` resolves direct evidence and related records.
 - `knowledge stale` returns stale, retired, and superseded records.
-- `knowledge review` materializes and reads `.playbook/review-queue.json` via a compact review surface with deterministic `--action` and `--kind` filters.
+- `knowledge review` materializes and reads `.playbook/review-queue.json` via a compact review surface with deterministic `--action`, `--kind`, and cadence-aware `--due now|overdue|all` filtering while surfacing `nextReviewAt`, `overdue`, and `deferredUntil` in additive JSON output.
 - `knowledge review record` records durable review outcomes in `.playbook/knowledge-review-receipts.json` using an explicit queue-entry linkage (`--from <queueEntryId>`) and decision (`--decision <reaffirm|revise|supersede|defer>`), without mutating doctrine or auto-promoting changes.
 - Rule: Review surfaces recall governed knowledge without mutating it.
 - Pattern: Prefer existing review families before inventing new top-level command families.
+- Pattern: Queue + receipt + cadence = governed retrieval review.
 - Failure Mode: Launching retrieval review as a separate command silo fragments operator workflow and weakens command authority.
+- Failure Mode: A review system that cannot say when something should return encourages ad hoc maintenance.
 
 ## Internal knowledge compaction status (no public command surface yet)
 
@@ -538,6 +540,9 @@ When JSON artifacts are captured through script wrappers and shell redirection, 
 
 Failure Mode â€” Human-Readable Wrapper Leakage
 Operator-friendly wrapper output is acceptable on stdout, but it must never leak into persisted JSON artifacts that are intended for later programmatic reads.
+
+Rule â€” CI Summary Artifacts Are Pure JSON Contracts
+Artifacts consumed by CI summary/reporting (for example `.playbook/verify.json`, `.playbook/release-plan.json`, `.playbook/test-triage.json`, `.playbook/remediation-status.json`) must be written through dedicated JSON-only paths such as `--out` or direct file writes, never via redirected wrapper stdout.
 
 Human-facing text surfaces should prefer compact briefs that answer decision/status, affected surfaces, blockers, and next action, while `.playbook/*` artifacts and `--json` preserve machine detail for automation.
 

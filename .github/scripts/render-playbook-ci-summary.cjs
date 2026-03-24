@@ -6,7 +6,17 @@ const PROTECTED_DOC_RULE_PREFIX = 'protected-doc.';
 
 function readJsonIfExists(filePath) {
   if (!filePath || !fs.existsSync(filePath)) return null;
-  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  const raw = fs.readFileSync(filePath, 'utf8');
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    const firstLine = raw.split(/\r?\n/, 1)[0] ?? '';
+    const preview = firstLine.length > 160 ? `${firstLine.slice(0, 157)}...` : firstLine;
+    const parseMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Invalid JSON artifact at ${filePath}. Summary artifacts must be pure JSON with no wrapper stdout contamination. Parse error: ${parseMessage}. First line: ${JSON.stringify(preview)}`
+    );
+  }
 }
 
 function unique(values) {
@@ -125,7 +135,7 @@ function buildRemediationSummary(policy, failureSummary, remediationStatus) {
     preferredRepairClass,
     nextAction: Array.isArray(policy?.reasons) && policy.reasons.length > 0
       ? policy.reasons[0]
-      : (latestRun.next_action ?? 'Review `.playbook/failure-summary.json` and `.playbook/remediation-status.json` for deterministic remediation guidance.'),
+      : (latestRun.next_action ?? 'Review `.playbook/test-triage.json` and `.playbook/remediation-status.json` for deterministic remediation guidance.'),
   };
 }
 
@@ -194,7 +204,7 @@ function parseArgs(argv) {
     verifyPreflight: '.playbook/verify-preflight.json',
     releasePlan: '.playbook/release-plan.json',
     remediationPolicy: '.playbook/ci-remediation-policy.json',
-    failureSummary: '.playbook/failure-summary.json',
+    failureSummary: '.playbook/test-triage.json',
     remediationStatus: '.playbook/remediation-status.json',
     out: '.playbook/ci-summary.md',
     commentOut: '.playbook/ci-summary-comment.md',

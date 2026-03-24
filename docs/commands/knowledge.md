@@ -79,13 +79,23 @@ Filters:
 
 - `--action reaffirm|revise|supersede`
 - `--kind knowledge|doc|rule|pattern`
+- `--due now|overdue|all` (default `all`)
+
+Cadence fields surfaced in JSON (`entries[*]` when present and additive summaries):
+
+- `nextReviewAt`
+- `overdue`
+- `deferredUntil`
 
 Text output remains compact and operator-facing:
 
 - status
-- affected targets
-- blockers / reason
+- due now
+- overdue
+- deferred
 - next action
+
+Cadence is review scheduling only; it does not mutate doctrine.
 
 JSON output preserves full detail and deterministic queue metadata for automation consumers.
 
@@ -139,7 +149,8 @@ pnpm playbook knowledge portability --view transfer-plans --json
 pnpm playbook knowledge portability --view readiness --json
 pnpm playbook knowledge portability --view blocked-transfers --json
 pnpm playbook knowledge review --json
-pnpm playbook knowledge review --action reaffirm --kind knowledge
+pnpm playbook knowledge review --due overdue --json
+pnpm playbook knowledge review --action reaffirm --kind knowledge --due all
 pnpm playbook knowledge review --kind doc
 pnpm playbook knowledge review record --from <queue-entry-id> --decision defer --json
 ```
@@ -158,5 +169,9 @@ pnpm playbook knowledge review record --from <queue-entry-id> --decision defer -
 - Failure Mode: Storage-path drift makes governance legible in code but confusing to operators.
 - Rule: Retrieval review is incomplete until the review decision is recorded as a durable artifact.
 - Rule: Retrieval review needs both receipts and cadence, or reaffirmed knowledge will either disappear forever or reappear as noise.
+- Rule: Cadence metadata schedules retrieval review only and must not mutate doctrine.
+- Rule: Existing review surfaces should absorb cadence before inventing new workflow silos.
 - Pattern: Recall -> reinterpret -> receipt -> scheduled recall.
+- Pattern: Queue + receipt + cadence = governed retrieval review.
 - Failure Mode: Review queues without cadence become either spammy or silently stale.
+- Failure Mode: A review system that cannot say when something should return encourages ad hoc maintenance.

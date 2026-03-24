@@ -17,6 +17,7 @@ type ReviewAction = 'reaffirm' | 'revise' | 'supersede';
 type ReviewKind = 'knowledge' | 'doc' | 'rule' | 'pattern';
 type ReviewDecision = KnowledgeReviewDecision;
 type RecordableReviewKind = 'knowledge' | 'doc';
+type DueFilter = 'now' | 'overdue' | 'all';
 
 type KnowledgeReviewListPayload = {
   schemaVersion: '1.0';
@@ -28,12 +29,18 @@ type KnowledgeReviewListPayload = {
   filters: {
     action?: ReviewAction;
     kind?: ReviewKind;
+    due?: DueFilter;
   };
   summary: {
     total: number;
     returned: number;
     byAction: Record<ReviewAction, number>;
     byKind: Record<ReviewKind, number>;
+    cadence: {
+      dueNow: number;
+      overdue: number;
+      deferred: number;
+    };
   };
   entries: ReviewQueueEntry[];
 };
@@ -63,6 +70,7 @@ export type KnowledgeReviewPayload = KnowledgeReviewListPayload | KnowledgeRevie
 const reviewActions: readonly ReviewAction[] = ['reaffirm', 'revise', 'supersede'] as const;
 const reviewKinds: readonly ReviewKind[] = ['knowledge', 'doc', 'rule', 'pattern'] as const;
 const reviewDecisions: readonly ReviewDecision[] = ['reaffirm', 'revise', 'supersede', 'defer'] as const;
+const dueFilters: readonly DueFilter[] = ['now', 'overdue', 'all'] as const;
 
 const parseActionFilter = (raw: string | null): ReviewAction | undefined => {
   if (raw === null) {
@@ -82,6 +90,16 @@ const parseKindFilter = (raw: string | null): ReviewKind | undefined => {
     return raw as ReviewKind;
   }
   throw new Error(`playbook knowledge review: invalid --kind value "${raw}"; expected knowledge, doc, rule, or pattern`);
+};
+
+const parseDueFilter = (raw: string | null): DueFilter => {
+  if (raw === null) {
+    return 'all';
+  }
+  if ((dueFilters as readonly string[]).includes(raw)) {
+    return raw as DueFilter;
+  }
+  throw new Error(`playbook knowledge review: invalid --due value "${raw}"; expected now, overdue, or all`);
 };
 
 const parseRecordDecision = (raw: string | null): ReviewDecision => {
@@ -122,9 +140,30 @@ const materializeReviewQueue = (cwd: string): ReviewQueueArtifact => {
   return readReviewQueueArtifact(cwd);
 };
 
+const isOverdueEntry = (entry: ReviewQueueEntry): boolean => entry.overdue === true;
+
+const isDeferredEntry = (entry: ReviewQueueEntry): boolean => typeof entry.deferredUntil === 'string' && entry.deferredUntil.length > 0;
+
+const matchesDueFilter = (entry: ReviewQueueEntry, dueFilter: DueFilter): boolean => {
+  if (dueFilter === 'all') {
+    return true;
+  }
+  if (dueFilter === 'overdue') {
+    return isOverdueEntry(entry);
+  }
+  return !isDeferredEntry(entry) || isOverdueEntry(entry);
+};
+
+const summarizeCadence = (entries: ReviewQueueEntry[]): { dueNow: number; overdue: number; deferred: number } => ({
+  dueNow: entries.filter((entry) => !isDeferredEntry(entry) || isOverdueEntry(entry)).length,
+  overdue: entries.filter((entry) => isOverdueEntry(entry)).length,
+  deferred: entries.filter((entry) => isDeferredEntry(entry) && !isOverdueEntry(entry)).length
+});
+
 const runKnowledgeReviewList = (cwd: string, args: string[]): KnowledgeReviewListPayload => {
   const actionFilter = parseActionFilter(readOptionValue(args, '--action'));
   const kindFilter = parseKindFilter(readOptionValue(args, '--kind'));
+  const dueFilter = parseDueFilter(readOptionValue(args, '--due'));
 
   const reviewQueue = materializeReviewQueue(cwd);
 
@@ -134,6 +173,9 @@ const runKnowledgeReviewList = (cwd: string, args: string[]): KnowledgeReviewLis
       return false;
     }
     if (kindFilter && entryKind !== kindFilter) {
+      return false;
+    }
+    if (!matchesDueFilter(entry, dueFilter)) {
       return false;
     }
     return true;
@@ -155,13 +197,15 @@ const runKnowledgeReviewList = (cwd: string, args: string[]): KnowledgeReviewLis
     authority: 'read-only',
     filters: {
       ...(actionFilter ? { action: actionFilter } : {}),
-      ...(kindFilter ? { kind: kindFilter } : {})
+      ...(kindFilter ? { kind: kindFilter } : {}),
+      due: dueFilter
     },
     summary: {
       total: reviewQueue.entries.length,
       returned: entries.length,
       byAction,
-      byKind
+      byKind,
+      cadence: summarizeCadence(entries)
     },
     entries
   };
