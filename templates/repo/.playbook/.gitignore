@@ -1,0 +1,12 @@
+# Playbook managed ignore policy for governed repositories.
+#
+# Keep canonical governance artifacts in git and ignore runtime/generated churn.
+*
+*/
+!.gitignore
+!managed-surfaces.json
+!repo-index.json
+!repo-graph.json
+!plan.json
+!policy-apply-result.json
+!version-policy.json
