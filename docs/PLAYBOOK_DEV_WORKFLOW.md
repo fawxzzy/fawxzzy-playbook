@@ -69,13 +69,17 @@ Cadence fields are retrieval-review scheduling metadata only; they do not mutate
 
 - Rule: Recall should be driven by both cadence and fresh evidence, not by time alone.
 - Rule: Existing review surfaces should absorb evidence-triggered recall before inventing new workflow silos.
+- Rule: Existing review surfaces should expose follow-up handoffs before inventing a new command family.
 - Pattern: Queue + receipt + cadence + evidence = governed retrieval review.
+- Pattern: One review family should cover queue, receipt, and next-step handoff.
 - Failure Mode: A cadence-only system misses important new evidence; an evidence-only system becomes noisy and forgets routine maintenance.
 - Failure Mode: Review systems that ignore fresh evidence become formally tidy but operationally stale.
+- Failure Mode: Review outcomes become dead-end records instead of governed work handoffs.
 
 ```bash
 pnpm playbook knowledge review --due overdue --json
 pnpm playbook knowledge review --trigger evidence --json
+pnpm playbook knowledge review handoffs --decision revise --kind doc --json
 pnpm playbook knowledge review record --from <queue-entry-id> --decision defer --json
 ```
 

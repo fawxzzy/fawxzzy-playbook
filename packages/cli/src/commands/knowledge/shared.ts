@@ -28,6 +28,7 @@ Subcommands:
   stale                           Show stale, retired, and superseded records
   portability                     Inspect cross-repo portability scoring evidence
   review                          Materialize and inspect retrieval review queue entries
+  review handoffs                 Materialize and inspect review follow-up handoffs
   review record                   Record a durable retrieval review receipt
 
 Options:
@@ -44,8 +45,8 @@ Options:
   --kind <kind>                Review filter (knowledge|doc|rule|pattern)
   --due <scope>               Review cadence filter (now|overdue|all; default all)
   --trigger <scope>           Review trigger filter (cadence|evidence|all; default all)
+  --decision <decision>       Review handoff/record decision filter (handoffs: revise|supersede; record: reaffirm|revise|supersede|defer)
   --from <queueEntryId>        Review record source queue entry id
-  --decision <decision>        Review record decision (reaffirm|revise|supersede|defer)
   --reason-code <id>           Optional review record reason-code override
   --evidence-ref <value>       Optional evidence reference (repeatable)
   --followup-ref <value>       Optional follow-up artifact reference (repeatable)

@@ -110,6 +110,30 @@ Review recording remains receipt-only; it does not auto-promote or auto-supersed
 
 JSON output and `.playbook/review-queue.json` preserve full deterministic trigger/cadence detail for automation consumers.
 
+### `knowledge review handoffs`
+
+Materialize and inspect proposal-only follow-up handoffs from retrieval review outcomes using `.playbook/review-handoffs.json`.
+
+Filters:
+
+- `--decision revise|supersede`
+- `--kind knowledge|doc|rule|pattern`
+
+Text output stays brief-thin:
+
+- status
+- affected targets
+- recommended follow-up
+- next action
+
+Behavior guarantees:
+
+- proposal-only handoff visibility
+- no auto-promotion
+- no auto-supersession
+- no second mutation executor
+- full detail retained in JSON output and `.playbook/review-handoffs.json`
+
 
 ### `knowledge review record`
 
@@ -164,6 +188,8 @@ pnpm playbook knowledge review --due overdue --json
 pnpm playbook knowledge review --trigger evidence --json
 pnpm playbook knowledge review --action reaffirm --kind knowledge --due all
 pnpm playbook knowledge review --kind doc
+pnpm playbook knowledge review handoffs --json
+pnpm playbook knowledge review handoffs --decision revise --kind doc --json
 pnpm playbook knowledge review record --from <queue-entry-id> --decision defer --json
 ```
 
@@ -185,7 +211,10 @@ pnpm playbook knowledge review record --from <queue-entry-id> --decision defer -
 - Rule: Existing review surfaces should absorb cadence before inventing new workflow silos.
 - Pattern: Recall -> reinterpret -> receipt -> scheduled recall.
 - Rule: Existing review surfaces should absorb evidence-triggered recall before inventing new workflow silos.
+- Rule: Existing review surfaces should expose follow-up handoffs before inventing a new command family.
 - Pattern: Queue + receipt + cadence + evidence = governed retrieval review.
+- Pattern: One review family should cover queue, receipt, and next-step handoff.
 - Failure Mode: Review queues without cadence become either spammy or silently stale.
 - Failure Mode: A review system that cannot say when something should return encourages ad hoc maintenance.
 - Failure Mode: Review systems that ignore fresh evidence become formally tidy but operationally stale.
+- Failure Mode: Review outcomes become dead-end records instead of governed work handoffs.

@@ -4,6 +4,8 @@ import { ExitCode } from '../../lib/cliContract.js';
 const buildReviewQueue = vi.fn();
 const writeReviewQueueArtifact = vi.fn();
 const writeKnowledgeReviewReceipt = vi.fn();
+const buildReviewHandoffsArtifact = vi.fn();
+const writeReviewHandoffsArtifact = vi.fn();
 const existsSync = vi.fn();
 const readFileSync = vi.fn();
 
@@ -11,8 +13,11 @@ vi.mock('@zachariahredfield/playbook-engine', () => ({
   buildReviewQueue,
   writeReviewQueueArtifact,
   writeKnowledgeReviewReceipt,
+  buildReviewHandoffsArtifact,
+  writeReviewHandoffsArtifact,
   REVIEW_QUEUE_RELATIVE_PATH: '.playbook/review-queue.json',
-  KNOWLEDGE_REVIEW_RECEIPTS_RELATIVE_PATH: '.playbook/knowledge-review-receipts.json'
+  KNOWLEDGE_REVIEW_RECEIPTS_RELATIVE_PATH: '.playbook/knowledge-review-receipts.json',
+  REVIEW_HANDOFFS_RELATIVE_PATH: '.playbook/review-handoffs.json'
 }));
 
 vi.mock('node:fs', () => ({
@@ -120,11 +125,48 @@ const receiptsFixture = () => ({
   ]
 });
 
+const handoffsFixture = () => ({
+  schemaVersion: '1.0',
+  kind: 'playbook-review-handoffs',
+  proposalOnly: true as const,
+  authority: 'read-only' as const,
+  generatedAt: '2026-03-24T12:30:00.000Z',
+  handoffs: [
+    {
+      handoffId: 'handoff-001',
+      queueEntryId: 'q-doc-1',
+      receiptId: 'receipt-201',
+      targetKind: 'doc',
+      path: 'docs/PLAYBOOK_DEV_WORKFLOW.md',
+      decision: 'revise',
+      recommendedFollowupType: 'revise-target',
+      recommendedFollowupRef: 'path:docs/PLAYBOOK_DEV_WORKFLOW.md',
+      evidenceRefs: ['docs/PLAYBOOK_DEV_WORKFLOW.md', 'review-receipt:receipt-201'],
+      nextActionText: 'Record explicit revision follow-up for path:docs/PLAYBOOK_DEV_WORKFLOW.md through existing promotion, story, or docs workflows.'
+    },
+    {
+      handoffId: 'handoff-002',
+      queueEntryId: 'q-pattern-1',
+      receiptId: 'receipt-301',
+      targetKind: 'pattern',
+      targetId: 'pattern:existing-review-family-first',
+      decision: 'supersede',
+      recommendedFollowupType: 'supersede-target',
+      recommendedFollowupRef: 'pattern:pattern:existing-review-family-first',
+      evidenceRefs: ['docs/PLAYBOOK_DEV_WORKFLOW.md', 'review-receipt:receipt-301'],
+      nextActionText: 'Record explicit supersession follow-up for pattern:pattern:existing-review-family-first through existing promote or supersede flows.'
+    }
+  ],
+  deferred: []
+});
+
 describe('knowledge review', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     buildReviewQueue.mockReturnValue(reviewQueueFixture());
     writeReviewQueueArtifact.mockReturnValue('/repo/.playbook/review-queue.json');
+    buildReviewHandoffsArtifact.mockReturnValue(handoffsFixture());
+    writeReviewHandoffsArtifact.mockReturnValue('/repo/.playbook/review-handoffs.json');
     existsSync.mockReturnValue(true);
     readFileSync.mockReturnValue(JSON.stringify(reviewQueueFixture()));
     writeKnowledgeReviewReceipt.mockReturnValue(receiptsFixture());
@@ -313,6 +355,65 @@ describe('knowledge review', () => {
     expect(exitCode).toBe(ExitCode.Failure);
     expect(String(errorSpy.mock.calls[0]?.[0])).toContain('missing required --from');
 
+    errorSpy.mockRestore();
+  });
+
+  it('materializes and filters review handoffs with deterministic json output', async () => {
+    const { runKnowledge } = await import('../knowledge.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    readFileSync.mockReturnValue(JSON.stringify(handoffsFixture()));
+
+    let exitCode = await runKnowledge('/repo', ['review', 'handoffs', '--json'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(buildReviewHandoffsArtifact).toHaveBeenCalledWith('/repo');
+    expect(writeReviewHandoffsArtifact).toHaveBeenCalledWith('/repo', expect.objectContaining({ kind: 'playbook-review-handoffs' }));
+    expect(writeKnowledgeReviewReceipt).not.toHaveBeenCalled();
+
+    let payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.command).toBe('knowledge-review-handoffs');
+    expect(payload.summary).toMatchObject({
+      total: 2,
+      returned: 2,
+      byDecision: { revise: 1, supersede: 1 },
+      byKind: { knowledge: 0, doc: 1, rule: 0, pattern: 1 }
+    });
+
+    logSpy.mockClear();
+    exitCode = await runKnowledge('/repo', ['review', 'handoffs', '--decision', 'supersede', '--kind', 'pattern', '--json'], {
+      format: 'json',
+      quiet: false
+    });
+    expect(exitCode).toBe(ExitCode.Success);
+    payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.summary.returned).toBe(1);
+    expect(payload.handoffs[0].decision).toBe('supersede');
+    expect(payload.handoffs[0].targetKind).toBe('pattern');
+
+    logSpy.mockRestore();
+  });
+
+  it('renders compact handoff text output', async () => {
+    const { runKnowledge } = await import('../knowledge.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    readFileSync.mockReturnValue(JSON.stringify(handoffsFixture()));
+
+    const exitCode = await runKnowledge('/repo', ['review', 'handoffs'], { format: 'text', quiet: false });
+    expect(exitCode).toBe(ExitCode.Success);
+    const rendered = String(logSpy.mock.calls[0]?.[0]);
+    expect(rendered).toContain('Status: 2 review handoff(s) pending');
+    expect(rendered).toContain('Affected targets: docs/PLAYBOOK_DEV_WORKFLOW.md, pattern:existing-review-family-first');
+    expect(rendered).toContain('Recommended follow-up: revise-target (path:docs/PLAYBOOK_DEV_WORKFLOW.md)');
+    expect(rendered).toContain('Next action: Record explicit revision follow-up');
+    logSpy.mockRestore();
+  });
+
+  it('fails with deterministic validation for unsupported handoff decisions', async () => {
+    const { runKnowledge } = await import('../knowledge.js');
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const exitCode = await runKnowledge('/repo', ['review', 'handoffs', '--decision', 'defer'], { format: 'text', quiet: false });
+    expect(exitCode).toBe(ExitCode.Failure);
+    expect(String(errorSpy.mock.calls[0]?.[0])).toContain('invalid --decision value "defer"; expected revise or supersede');
     errorSpy.mockRestore();
   });
 });
