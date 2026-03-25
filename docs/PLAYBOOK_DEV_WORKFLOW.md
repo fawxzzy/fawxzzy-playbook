@@ -206,6 +206,24 @@ Rule: Documentation updates must preserve the difference between observed fact, 
 Pattern: Revise meaning without rewriting provenance.
 Failure Mode: High-value docs that blend fact and interpretation silently mutate doctrine.
 
+## Constraint-driven architecture decision protocol
+
+For high-value architecture choices, use `docs/architecture/PLAYBOOK_CONSTRAINT_DRIVEN_ARCHITECTURE_RUBRIC.md` and record decisions with `templates/repo/docs/architecture/PLAYBOOK_ARCHITECTURE_DECISION_TEMPLATE.md` (installable via CLI template sync).
+
+Required sections are intentionally compact:
+
+- `## Constraints`
+- `## Cost Surfaces`
+- `## Options Considered`
+- `## Chosen Shape`
+- `## Why This Fits`
+- `## Tradeoffs / Failure Modes`
+- `## Review Triggers`
+
+Rule: Record architecture from governing constraints first, not from preferred shapes.
+Pattern: Constraint -> optimization -> emergent structure.
+Failure Mode: Teams cargo-cult attractive architectures without documenting the constraints that made them fit.
+
 ## Operator postmortem reconsolidation loop
 
 Use the new structured postmortem template as the first operational realization of `Recall -> reinterpret -> promote -> restabilize`. Keep this flow artifact-first and review-gated; it does not introduce a new command family or any automatic promotion path.

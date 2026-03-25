@@ -306,6 +306,8 @@ Practical initiatives to stage from this doctrine:
 
 1. **Constraint-driven architecture rubric**
    - Add a lightweight architecture decision rubric that records governing constraints, competing cost surfaces, expected interface pressure, and why a chosen structure fits that environment.
+   - Canonical protocol: `docs/architecture/PLAYBOOK_CONSTRAINT_DRIVEN_ARCHITECTURE_RUBRIC.md`.
+   - Canonical decision template: `templates/repo/docs/architecture/PLAYBOOK_ARCHITECTURE_DECISION_TEMPLATE.md` (synced into CLI install templates).
 2. **Postmortem reconsolidation loop**
    - Make the structured postmortem template the first operational realization of `Recall -> reinterpret -> promote -> restabilize`.
    - Require postmortems to distinguish observed facts, interpreted causes, changed mental models, and the explicit promotion candidates that should or should not advance.
