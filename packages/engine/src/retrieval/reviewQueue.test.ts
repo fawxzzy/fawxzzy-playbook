@@ -252,7 +252,7 @@ describe('buildReviewQueue', () => {
         triggerStrength: 72,
         triggerEvidenceRefs: [
           '.playbook/memory/lifecycle-candidates.json',
-          'condition:.playbook/memory/lifecycle-candidates.json changes with new lifecycle evidence',
+          'condition:`.playbook/memory/lifecycle-candidates.json` changes with new lifecycle evidence',
           'trigger:assumption_evidence_updated'
         ],
         reasonCode: 'architecture-decision-review-trigger',
