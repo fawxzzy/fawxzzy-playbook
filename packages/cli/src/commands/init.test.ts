@@ -22,6 +22,13 @@ describe('runInit', () => {
       const exitCode = runInit(repoRoot, { format: 'json', quiet: false, ci: false, force: false, help: false });
 
       expect(exitCode).toBe(0);
+      const playbookGitignore = fs.readFileSync(path.join(repoRoot, '.playbook', '.gitignore'), 'utf8');
+      expect(playbookGitignore).toContain('!managed-surfaces.json');
+      expect(playbookGitignore).toContain('!repo-index.json');
+      expect(playbookGitignore).toContain('!repo-graph.json');
+      expect(playbookGitignore).toContain('!plan.json');
+      expect(playbookGitignore).toContain('!policy-apply-result.json');
+      expect(playbookGitignore).toContain('!version-policy.json');
       const versionPolicy = JSON.parse(fs.readFileSync(path.join(repoRoot, '.playbook', 'version-policy.json'), 'utf8')) as {
         enabled: boolean;
         groups: Array<{ name: string; strategy: string; packages: string[] }>;
@@ -51,6 +58,13 @@ describe('runInit', () => {
       const exitCode = runInit(repoRoot, { format: 'json', quiet: false, ci: false, force: false, help: false });
 
       expect(exitCode).toBe(0);
+      const playbookGitignore = fs.readFileSync(path.join(repoRoot, '.playbook', '.gitignore'), 'utf8');
+      expect(playbookGitignore).toContain('!managed-surfaces.json');
+      expect(playbookGitignore).toContain('!repo-index.json');
+      expect(playbookGitignore).toContain('!repo-graph.json');
+      expect(playbookGitignore).toContain('!plan.json');
+      expect(playbookGitignore).toContain('!policy-apply-result.json');
+      expect(playbookGitignore).toContain('!version-policy.json');
       expect(fs.existsSync(path.join(repoRoot, '.playbook', 'version-policy.json'))).toBe(false);
       expect(fs.existsSync(path.join(repoRoot, '.github', 'workflows', 'release-prep.yml'))).toBe(false);
       expect(fs.existsSync(path.join(repoRoot, 'docs', 'CHANGELOG.md'))).toBe(false);
