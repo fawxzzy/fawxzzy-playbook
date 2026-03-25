@@ -103,6 +103,46 @@ Developer workflows should be executable commands rather than only written docum
 - WHY it changed: Keeps foundation-phase delivery focused while documenting the intended machine-readable repository index direction without prematurely implementing it.
 
 
+
+## 2026-03-25
+
+### Parking-state note
+
+## Status
+
+Sevenfold Plus is now accepted as a **provisional ontology and design doctrine** for symbolic worldbuilding, narrative framing, gameplay ideation, and engine architecture.
+
+Current canonical topology:
+- **0** = substrate / source / pre-form state
+- **1–7** = differentiated archetypal domains
+- **8** = synthesis / reconciliation / octave return
+- **9** = persistence / legacy / consequence / living history
+
+Current constraints:
+- **Canon**, **esoteric/reference**, and **dev-mnemonic** layers must remain separate.
+- Dev mnemonics are internal scaffolding only and must not appear in player-facing canon.
+- 8 should generate reconciled or hybrid outputs, not a generic “bonus realm.”
+- 9 should generate persistence, consequence, inheritance, or civilization outputs, not generic transcendence.
+
+Current maturity:
+- This ontology is approved for **design guidance and content shaping**.
+- This ontology is **not yet a fully enforced contract** for generators, automation, or runtime systems.
+- Validation, exemplars, and contract tests are intentionally deferred until the system becomes automation-critical.
+
+Interpretation rule:
+Treat Sevenfold Plus as **stable doctrine, provisional enforcement**.
+
+Short docs-summary version:
+
+- Added Sevenfold Plus as stable symbolic doctrine with provisional enforcement status.
+- Locked canonical topology: 0 substrate, 1–7 differentiation, 8 synthesis, 9 persistence.
+- Preserved strict separation between canon, esoteric/reference, and dev-mnemonic layers.
+- Deferred validator, exemplar pack, and generator contract enforcement until automation-critical adoption.
+
+One-line version:
+
+Sevenfold Plus is canonically defined as doctrine, but not yet enforced as a strict generator/runtime contract.
+
 ## 2026-03-06
 
 - WHAT changed: Reworked the official composite action at `.github/action.yml` to run from checked-out repository source by activating pnpm from `packageManager`, installing with `pnpm install --frozen-lockfile`, building the workspace, and invoking `node packages/cli/dist/main.js` for `verify`, `plan`, and `apply` modes.
