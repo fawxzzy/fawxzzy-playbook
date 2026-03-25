@@ -198,39 +198,68 @@ const parseLifecycleCandidatesArtifact = (repoRoot: string): Partial<LifecycleCa
 };
 
 type ArchitectureDecisionTriggerMetadata = {
+  triggerId: string;
+  condition: string;
+  requiredReviewAction: string;
   reasonCode: string;
   signalPath: string;
   evidenceRefs: string[];
+  recommendedAction: ReviewRecommendedAction;
   strength?: number;
 };
 
-const REVIEW_TRIGGER_METADATA_BLOCK_PATTERN =
-  /##\s+Review Triggers[\s\S]*?```json\s*([\s\S]*?)```/im;
+const REVIEW_TRIGGERS_SECTION_PATTERN =
+  /##\s+Review Triggers\s*([\s\S]*?)(?=\n##\s+|\n---\s*$|$)/im;
+const REVIEW_TRIGGER_LINE_PATTERN = /^\s*-\s*\[([a-z0-9_]+)\]\s+when\s+(.+?)\s*->\s*(.+?)\s*$/i;
+const RELATIVE_PATH_TOKEN_PATTERN = /`([^`]+)`|(\.playbook\/[^\s,;]+|docs\/[^\s,;]+)/gi;
 
-const asArchitectureDecisionTrigger = (value: unknown): ArchitectureDecisionTriggerMetadata | null => {
-  if (!isRecord(value) || typeof value.reasonCode !== 'string' || typeof value.signalPath !== 'string') {
+const normalizeRecommendedAction = (value: string): ReviewRecommendedAction => {
+  const normalized = value.toLowerCase();
+  if (normalized.includes('supersede')) {
+    return 'supersede';
+  }
+  if (normalized.includes('revise')) {
+    return 'revise';
+  }
+  return 'reaffirm';
+};
+
+const extractSignalPathFromCondition = (condition: string): string | null => {
+  for (const match of condition.matchAll(RELATIVE_PATH_TOKEN_PATTERN)) {
+    const candidate = (match[1] ?? match[2] ?? '').trim();
+    if (!candidate.startsWith('/') && (candidate.startsWith('.playbook/') || candidate.startsWith('docs/'))) {
+      return candidate;
+    }
+  }
+  return null;
+};
+
+const parseArchitectureDecisionTriggerLine = (line: string): ArchitectureDecisionTriggerMetadata | null => {
+  const parsed = line.match(REVIEW_TRIGGER_LINE_PATTERN);
+  if (!parsed) {
     return null;
   }
 
-  const reasonCode = value.reasonCode.trim();
-  const signalPath = value.signalPath.trim();
-  if (reasonCode.length === 0 || signalPath.length === 0) {
+  const triggerId = parsed[1]?.trim() ?? '';
+  const condition = parsed[2]?.trim() ?? '';
+  const requiredReviewAction = parsed[3]?.trim() ?? '';
+  if (triggerId.length === 0 || condition.length === 0 || requiredReviewAction.length === 0) {
     return null;
   }
 
-  const evidenceRefs = Array.isArray(value.evidenceRefs)
-    ? value.evidenceRefs
-        .filter((entry): entry is string => typeof entry === 'string')
-        .map((entry) => entry.trim())
-        .filter((entry) => entry.length > 0)
-    : [];
+  const signalPath = extractSignalPathFromCondition(condition);
+  if (!signalPath) {
+    return null;
+  }
 
-  const strength = typeof value.strength === 'number' ? value.strength : undefined;
   return {
-    reasonCode,
+    triggerId,
+    condition,
+    requiredReviewAction,
+    reasonCode: triggerId,
     signalPath,
-    evidenceRefs: evidenceRefs.length > 0 ? evidenceRefs : [signalPath],
-    strength
+    evidenceRefs: [signalPath, `trigger:${triggerId}`, `condition:${condition}`],
+    recommendedAction: normalizeRecommendedAction(requiredReviewAction)
   };
 };
 
@@ -252,21 +281,14 @@ const parseArchitectureDecisionTriggers = (
   for (const decisionPath of decisionDocs) {
     const fullPath = path.join(repoRoot, decisionPath);
     const content = fs.readFileSync(fullPath, 'utf8');
-    const metadataMatch = content.match(REVIEW_TRIGGER_METADATA_BLOCK_PATTERN);
-    if (!metadataMatch || typeof metadataMatch[1] !== 'string') {
+    const sectionMatch = content.match(REVIEW_TRIGGERS_SECTION_PATTERN);
+    const sectionBody = sectionMatch?.[1];
+    if (typeof sectionBody !== 'string') {
       continue;
     }
 
-    let parsedMetadata: unknown;
-    try {
-      parsedMetadata = JSON.parse(metadataMatch[1]);
-    } catch {
-      continue;
-    }
-
-    const metadataEntries = Array.isArray(parsedMetadata) ? parsedMetadata : [];
-    for (const metadataEntry of metadataEntries) {
-      const trigger = asArchitectureDecisionTrigger(metadataEntry);
+    for (const line of sectionBody.split('\n')) {
+      const trigger = parseArchitectureDecisionTriggerLine(line);
       if (!trigger) {
         continue;
       }
@@ -706,7 +728,7 @@ export const buildReviewQueue = (repoRoot: string, options: BuildReviewQueueOpti
       triggerReasonCode: trigger.reasonCode,
       triggerEvidenceRefs,
       triggerStrength,
-      recommendedAction: 'reaffirm',
+      recommendedAction: trigger.recommendedAction,
       reviewPriority: priorityFromTriggerStrength(triggerStrength),
       generatedAt
     }));

@@ -41,7 +41,7 @@
 Use one trigger per line with this compact shape:
 
 - `- [trigger_id] when <observable condition> -> <required review action>`
-- `- [trigger_id] when <observable condition> -> <required review action>`
+- `[assumption_evidence_updated] when .playbook/memory/lifecycle-candidates.json changes with new lifecycle evidence -> run architecture decision review`
 
 Notes:
 - Keep `trigger_id` stable and snake_case for deterministic extraction.
@@ -56,3 +56,6 @@ Failure Mode: Teams cargo-cult attractive architectures without documenting the 
 Rule: Review-trigger sections should be structured enough for deterministic extraction.
 Pattern: Human-readable, machine-extractable trigger design.
 Failure Mode: “Review triggers” written as narrative prose never become usable operational signals.
+Rule: One canonical trigger contract per governed review surface.
+Pattern: Keep template/docs/parser aligned on `- [trigger_id] when <observable condition> -> <required review action>`.
+Failure Mode: Template/docs/parser disagreement makes architecture-triggered recall feel nondeterministic even when each piece is locally reasonable.

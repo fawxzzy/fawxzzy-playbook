@@ -225,19 +225,7 @@ describe('buildReviewQueue', () => {
 
 ## Review Triggers
 
-\`\`\`json
-[
-  {
-    "reasonCode": "assumption-evidence-updated",
-    "signalPath": ".playbook/memory/lifecycle-candidates.json",
-    "evidenceRefs": [
-      "docs/architecture/decisions/decision-a.md",
-      ".playbook/memory/lifecycle-candidates.json"
-    ],
-    "strength": 77
-  }
-]
-\`\`\`
+- [assumption_evidence_updated] when \`.playbook/memory/lifecycle-candidates.json\` changes with new lifecycle evidence -> run architecture decision review and revise decision record
 `,
       oldDate
     );
@@ -260,13 +248,15 @@ describe('buildReviewQueue', () => {
         path: 'docs/architecture/decisions/decision-a.md',
         triggerType: 'evidence',
         triggerSource: 'architecture-decision',
-        triggerReasonCode: 'assumption-evidence-updated',
-        triggerStrength: 77,
+        triggerReasonCode: 'assumption_evidence_updated',
+        triggerStrength: 72,
         triggerEvidenceRefs: [
           '.playbook/memory/lifecycle-candidates.json',
-          'docs/architecture/decisions/decision-a.md'
+          'condition:`.playbook/memory/lifecycle-candidates.json` changes with new lifecycle evidence',
+          'trigger:assumption_evidence_updated'
         ],
-        reasonCode: 'architecture-decision-review-trigger'
+        reasonCode: 'architecture-decision-review-trigger',
+        recommendedAction: 'revise'
       })
     );
   });
@@ -280,18 +270,7 @@ describe('buildReviewQueue', () => {
 
 ## Review Triggers
 
-\`\`\`json
-[
-  {
-    "reasonCode": "assumption-evidence-updated",
-    "signalPath": ".playbook/memory/lifecycle-candidates.json",
-    "evidenceRefs": [
-      "docs/architecture/decisions/decision-b.md",
-      ".playbook/memory/lifecycle-candidates.json"
-    ]
-  }
-]
-\`\`\`
+- [assumption_evidence_updated] when \`.playbook/memory/lifecycle-candidates.json\` changes with new lifecycle evidence -> run architecture decision review
 `,
       new Date('2026-03-01T00:00:00.000Z')
     );
@@ -302,6 +281,35 @@ describe('buildReviewQueue', () => {
     });
 
     expect(queue.entries.some((entry) => entry.path === 'docs/architecture/decisions/decision-b.md')).toBe(false);
+  });
+
+  it('ignores malformed architecture decision review trigger lines', () => {
+    const repoRoot = createTempRepo();
+    writeText(
+      repoRoot,
+      'docs/architecture/decisions/decision-malformed.md',
+      `# Architecture Decision: Malformed
+
+## Review Triggers
+
+- [bad_trigger] if \`.playbook/memory/lifecycle-candidates.json\` changes then run architecture decision review
+`,
+      new Date('2026-03-01T00:00:00.000Z')
+    );
+
+    writeJson(repoRoot, '.playbook/memory/lifecycle-candidates.json', {
+      schemaVersion: '1.0',
+      kind: 'playbook-lifecycle-candidates',
+      generatedAt: '2026-03-24T00:00:00.000Z',
+      candidates: []
+    });
+
+    const queue = buildReviewQueue(repoRoot, {
+      generatedAt: '2026-03-24T00:00:00.000Z',
+      docReviewWindowDays: 999
+    });
+
+    expect(queue.entries.some((entry) => entry.path === 'docs/architecture/decisions/decision-malformed.md')).toBe(false);
   });
 
   it('remains proposal-only with read-only authority', () => {
