@@ -83,6 +83,9 @@ Example:
 Rule: Review-trigger sections should be structured enough for deterministic extraction.
 Pattern: Human-readable, machine-extractable trigger design.
 Failure Mode: “Review triggers” written as narrative prose never become usable operational signals.
+Rule: One canonical trigger contract per governed review surface.
+Pattern: Keep template/docs/parser aligned on `- [trigger_id] when <observable condition> -> <required review action>`.
+Failure Mode: Template/docs/parser disagreement makes architecture-triggered recall feel nondeterministic even when each piece is locally reasonable.
 
 ## Template
 
