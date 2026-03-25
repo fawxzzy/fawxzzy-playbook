@@ -78,6 +78,15 @@ declare module "@zachariahredfield/playbook-engine" {
   export type ReviewQueueEntry = any;
   export type ReviewQueueArtifact = any;
   export type BuildReviewQueueOptions = any;
+  export const REVIEW_HANDOFFS_SCHEMA_VERSION: any;
+  export const REVIEW_HANDOFFS_RELATIVE_PATH: '.playbook/review-handoffs.json';
+  export const buildReviewHandoffsArtifact: (...args: any[]) => any;
+  export const writeReviewHandoffsArtifact: (...args: any[]) => any;
+  export type ReviewHandoffDecision = any;
+  export type ReviewHandoffFollowupType = any;
+  export type ReviewHandoffEntry = any;
+  export type ReviewDeferredMetadata = any;
+  export type ReviewHandoffsArtifact = any;
   export const KNOWLEDGE_REVIEW_RECEIPTS_SCHEMA_VERSION: any;
   export const KNOWLEDGE_REVIEW_RECEIPTS_RELATIVE_PATH: '.playbook/knowledge-review-receipts.json';
   export const readKnowledgeReviewReceiptsArtifact: (...args: any[]) => any;

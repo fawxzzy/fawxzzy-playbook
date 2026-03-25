@@ -2,11 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   KNOWLEDGE_REVIEW_RECEIPTS_RELATIVE_PATH,
+  REVIEW_HANDOFFS_RELATIVE_PATH,
   REVIEW_QUEUE_RELATIVE_PATH,
   buildReviewQueue,
+  buildReviewHandoffsArtifact,
   writeKnowledgeReviewReceipt,
+  writeReviewHandoffsArtifact,
   writeReviewQueueArtifact,
   type KnowledgeReviewDecision,
+  type ReviewHandoffDecision,
+  type ReviewHandoffEntry,
+  type ReviewHandoffsArtifact,
   type KnowledgeReviewReceiptEntry,
   type ReviewQueueArtifact,
   type ReviewQueueEntry
@@ -19,6 +25,7 @@ type ReviewDecision = KnowledgeReviewDecision;
 type RecordableReviewKind = 'knowledge' | 'doc';
 type DueFilter = 'now' | 'overdue' | 'all';
 type TriggerFilter = 'cadence' | 'evidence' | 'all';
+type HandoffDecisionFilter = ReviewHandoffDecision;
 
 type KnowledgeReviewListPayload = {
   schemaVersion: '1.0';
@@ -73,7 +80,28 @@ type KnowledgeReviewRecordPayload = {
   receipt: KnowledgeReviewReceiptEntry;
 };
 
-export type KnowledgeReviewPayload = KnowledgeReviewListPayload | KnowledgeReviewRecordPayload;
+type KnowledgeReviewHandoffsPayload = {
+  schemaVersion: '1.0';
+  command: 'knowledge-review-handoffs';
+  artifactPath: typeof REVIEW_HANDOFFS_RELATIVE_PATH;
+  generatedAt: string;
+  reviewOnly: true;
+  authority: 'read-only';
+  proposalOnly: true;
+  filters: {
+    decision?: HandoffDecisionFilter;
+    kind?: ReviewKind;
+  };
+  summary: {
+    total: number;
+    returned: number;
+    byDecision: Record<ReviewHandoffDecision, number>;
+    byKind: Record<ReviewKind, number>;
+  };
+  handoffs: ReviewHandoffEntry[];
+};
+
+export type KnowledgeReviewPayload = KnowledgeReviewListPayload | KnowledgeReviewRecordPayload | KnowledgeReviewHandoffsPayload;
 
 const reviewActions: readonly ReviewAction[] = ['reaffirm', 'revise', 'supersede'] as const;
 const reviewKinds: readonly ReviewKind[] = ['knowledge', 'doc', 'rule', 'pattern'] as const;
@@ -134,6 +162,16 @@ const parseRecordDecision = (raw: string | null): ReviewDecision => {
   throw new Error(`playbook knowledge review record: invalid --decision value "${raw}"; expected reaffirm, revise, supersede, or defer`);
 };
 
+const parseHandoffDecisionFilter = (raw: string | null): HandoffDecisionFilter | undefined => {
+  if (raw === null) {
+    return undefined;
+  }
+  if (raw === 'revise' || raw === 'supersede') {
+    return raw;
+  }
+  throw new Error(`playbook knowledge review handoffs: invalid --decision value "${raw}"; expected revise or supersede`);
+};
+
 const readReviewQueueArtifact = (cwd: string): ReviewQueueArtifact => {
   const fullPath = path.join(cwd, REVIEW_QUEUE_RELATIVE_PATH);
   if (!fs.existsSync(fullPath)) {
@@ -151,6 +189,13 @@ const asReviewKind = (entry: ReviewQueueEntry): ReviewKind => {
   return 'knowledge';
 };
 
+const asReviewKindValue = (targetKind: unknown): ReviewKind => {
+  if (targetKind === 'knowledge' || targetKind === 'doc' || targetKind === 'rule' || targetKind === 'pattern') {
+    return targetKind;
+  }
+  return 'knowledge';
+};
+
 const zeroActionSummary = (): Record<ReviewAction, number> => ({ reaffirm: 0, revise: 0, supersede: 0 });
 const zeroKindSummary = (): Record<ReviewKind, number> => ({ knowledge: 0, doc: 0, rule: 0, pattern: 0 });
 
@@ -158,6 +203,16 @@ const materializeReviewQueue = (cwd: string): ReviewQueueArtifact => {
   const materialized = buildReviewQueue(cwd);
   writeReviewQueueArtifact(cwd, materialized);
   return readReviewQueueArtifact(cwd);
+};
+
+const materializeReviewHandoffs = (cwd: string): ReviewHandoffsArtifact => {
+  const materialized = buildReviewHandoffsArtifact(cwd);
+  writeReviewHandoffsArtifact(cwd, materialized);
+  const fullPath = path.join(cwd, REVIEW_HANDOFFS_RELATIVE_PATH);
+  if (!fs.existsSync(fullPath)) {
+    throw new Error(`playbook knowledge review handoffs: missing artifact at ${REVIEW_HANDOFFS_RELATIVE_PATH}`);
+  }
+  return JSON.parse(fs.readFileSync(fullPath, 'utf8')) as ReviewHandoffsArtifact;
 };
 
 const isOverdueEntry = (entry: ReviewQueueEntry): boolean => entry.overdue === true;
@@ -268,6 +323,50 @@ const runKnowledgeReviewList = (cwd: string, args: string[]): KnowledgeReviewLis
   };
 };
 
+const runKnowledgeReviewHandoffs = (cwd: string, args: string[]): KnowledgeReviewHandoffsPayload => {
+  const decisionFilter = parseHandoffDecisionFilter(readOptionValue(args, '--decision'));
+  const kindFilter = parseKindFilter(readOptionValue(args, '--kind'));
+  const artifact = materializeReviewHandoffs(cwd);
+
+  const handoffs = artifact.handoffs.filter((handoff: ReviewHandoffEntry) => {
+    if (decisionFilter && handoff.decision !== decisionFilter) {
+      return false;
+    }
+    if (kindFilter && asReviewKindValue(handoff.targetKind) !== kindFilter) {
+      return false;
+    }
+    return true;
+  });
+
+  const byDecision: Record<ReviewHandoffDecision, number> = { revise: 0, supersede: 0 };
+  const byKind = zeroKindSummary();
+  for (const handoff of handoffs) {
+    byDecision[handoff.decision] += 1;
+    byKind[asReviewKindValue(handoff.targetKind)] += 1;
+  }
+
+  return {
+    schemaVersion: '1.0',
+    command: 'knowledge-review-handoffs',
+    artifactPath: REVIEW_HANDOFFS_RELATIVE_PATH,
+    generatedAt: artifact.generatedAt,
+    reviewOnly: true,
+    authority: 'read-only',
+    proposalOnly: true,
+    filters: {
+      ...(decisionFilter ? { decision: decisionFilter } : {}),
+      ...(kindFilter ? { kind: kindFilter } : {})
+    },
+    summary: {
+      total: artifact.handoffs.length,
+      returned: handoffs.length,
+      byDecision,
+      byKind
+    },
+    handoffs
+  };
+};
+
 const asRecordableTargetKind = (targetKind: ReviewQueueEntry['targetKind']): RecordableReviewKind => {
   if (targetKind === 'knowledge' || targetKind === 'doc') {
     return targetKind;
@@ -373,6 +472,9 @@ export const runKnowledgeReview = (cwd: string, args: string[]): KnowledgeReview
   const reviewSubcommand = resolveSubcommandArgument(args);
   if (reviewSubcommand === 'record') {
     return runKnowledgeReviewRecord(cwd, args);
+  }
+  if (reviewSubcommand === 'handoffs') {
+    return runKnowledgeReviewHandoffs(cwd, args);
   }
 
   return runKnowledgeReviewList(cwd, args);
