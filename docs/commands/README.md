@@ -380,10 +380,10 @@ Command boundary note:
 - Failure Mode: Review handoffs become a dead-end list instead of a governed bridge to action.
 - Failure Mode: A review system that cannot say when something should return encourages ad hoc maintenance.
 
-## Internal knowledge compaction status (no public command surface yet)
+## Memory compaction review surface (`pnpm playbook memory compaction`)
 
-- Compaction currently exists as internal deterministic engine behavior, not as a discoverable top-level CLI command.
-- The current internal slice includes canonicalization, deterministic bucketing (`discard | attach | merge | add`), and deterministic review artifacts layered on top of bucket decisions.
+- Compaction review is implemented as a public `memory` subcommand surface (`pnpm playbook memory compaction`) that materializes deterministic `.playbook/memory/compaction-review.json` artifacts for operator inspection.
+- The current implemented slice includes canonicalization, deterministic bucketing (`discard | attach | merge | new_candidate`), and deterministic review artifacts layered on top of bucket decisions.
 - Review artifacts use canonical reason codes as the machine contract; human-readable rationale is derived deterministically from those codes.
 - Promotion workflows and long-lived pattern storage remain future roadmap work.
 
