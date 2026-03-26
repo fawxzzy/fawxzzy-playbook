@@ -58,6 +58,29 @@ Bucket decisions are first-class and filterable with `--decision`:
 
 Each entry includes canonical `reasonCodes`, replay/consolidation/event provenance, matched promoted knowledge provenance when present, and explicit review-only promotion metadata (`explicitOnly: true`, `reviewRequired: true`). This surface does **not** widen mutation authority and does **not** auto-promote doctrine.
 
+### `memory pressure`
+
+Inspect read-only memory pressure artifacts from:
+
+- `.playbook/memory-pressure.json`
+- `.playbook/memory-pressure-plan.json`
+
+This command is inspection-only and does **not** add mutation paths.
+
+Text output stays thin (`band@score` + action count). JSON keeps full detail and includes:
+
+- score
+- band
+- hysteresis thresholds
+- usage totals
+- retention class summary
+- ordered recommended actions from the current (or filtered) plan band
+
+Lightweight filters:
+
+- `--band normal|warm|pressure|critical`
+- `--action dedupe|compact|summarize|evict`
+
 ### `memory show <id>`
 
 Show one memory candidate or promoted knowledge entry by id.
@@ -105,7 +128,7 @@ Policy boundary notes:
 
 ## Memory pressure inspection (read-only)
 
-`pnpm playbook status` now includes additive memory-pressure inspection fields and points to the read-only artifacts `.playbook/memory-pressure.json` and `.playbook/memory-pressure-plan.json`.
+`pnpm playbook status` includes additive memory-pressure inspection fields and points to the read-only artifacts `.playbook/memory-pressure.json` and `.playbook/memory-pressure-plan.json`.
 
 Inspection payload includes:
 
@@ -141,6 +164,8 @@ pnpm playbook memory candidates --json
 pnpm playbook memory knowledge --json
 pnpm playbook memory compaction --json
 pnpm playbook memory compaction --decision attach --json
+pnpm playbook memory pressure --json
+pnpm playbook memory pressure --band pressure --action compact --json
 pnpm playbook memory show <id> --json
 pnpm playbook memory promote <candidate-id> --json
 pnpm playbook memory retire <knowledge-id> --json

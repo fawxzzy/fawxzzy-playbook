@@ -1,4 +1,6 @@
 import * as playbookEngine from '@zachariahredfield/playbook-engine';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   expandMemoryProvenance,
   loadCandidateKnowledgeById,
@@ -17,7 +19,9 @@ type MemoryOptions = {
   quiet: boolean;
 };
 
-type MemorySubcommand = 'events' | 'query' | 'candidates' | 'knowledge' | 'compaction' | 'show' | 'promote' | 'retire';
+type MemorySubcommand = 'events' | 'query' | 'candidates' | 'knowledge' | 'compaction' | 'pressure' | 'show' | 'promote' | 'retire';
+type MemoryPressureBand = 'normal' | 'warm' | 'pressure' | 'critical';
+type MemoryPressureActionFilter = 'dedupe' | 'compact' | 'summarize' | 'evict';
 
 const printMemoryHelp = (): void => {
   console.log(`Usage: playbook memory <subcommand> [options]
@@ -30,6 +34,7 @@ Subcommands:
   candidates                       List replayed memory candidates
   knowledge                        List promoted memory knowledge
   compaction                       Review deterministic compaction decisions
+  pressure                         Inspect read-only memory pressure status + plan
   show <id>                        Show a candidate or knowledge record by id
   promote <candidate-id>           Promote one candidate into knowledge
   retire <knowledge-id>            Retire one promoted knowledge record
@@ -51,6 +56,8 @@ Options:
   --include-superseded         Include superseded knowledge in memory knowledge
   --reason <text>              Retirement reason override for memory retire
   --decision <name>            Filter compaction review by decision bucket
+  --band <name>                Filter memory pressure by band (normal|warm|pressure|critical)
+  --action <name>              Filter memory pressure plan actions (dedupe|compact|summarize|evict)
   --json                       Print machine-readable JSON output
   --help                       Show help`);
 };
@@ -105,11 +112,27 @@ const parseSubcommand = (args: string[]): MemorySubcommand | null => {
     return null;
   }
 
-  if (['events', 'query', 'candidates', 'knowledge', 'compaction', 'show', 'promote', 'retire'].includes(subcommand)) {
+  if (['events', 'query', 'candidates', 'knowledge', 'compaction', 'pressure', 'show', 'promote', 'retire'].includes(subcommand)) {
     return subcommand as MemorySubcommand;
   }
 
   return null;
+};
+
+const parseMemoryPressureBandOption = (raw: string | null): MemoryPressureBand | undefined => {
+  if (raw === null) return undefined;
+  if (raw === 'normal' || raw === 'warm' || raw === 'pressure' || raw === 'critical') {
+    return raw;
+  }
+  throw new Error(`playbook memory pressure: invalid --band value "${raw}"; expected normal, warm, pressure, or critical`);
+};
+
+const parseMemoryPressureActionOption = (raw: string | null): MemoryPressureActionFilter | undefined => {
+  if (raw === null) return undefined;
+  if (raw === 'dedupe' || raw === 'compact' || raw === 'summarize' || raw === 'evict') {
+    return raw;
+  }
+  throw new Error(`playbook memory pressure: invalid --action value "${raw}"; expected dedupe, compact, summarize, or evict`);
 };
 
 const emitMemoryResult = (
@@ -148,7 +171,7 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
   }
 
   if (!subcommand) {
-    emitMemoryError(options, requestedSubcommand, 'playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, compaction, show, promote, or retire.');
+    emitMemoryError(options, requestedSubcommand, 'playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, compaction, pressure, show, promote, or retire.');
     return ExitCode.Failure;
   }
 
@@ -295,6 +318,83 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
       return ExitCode.Success;
     }
 
+    if (subcommand === 'pressure') {
+      const bandFilter = parseMemoryPressureBandOption(readOptionValue(args, '--band'));
+      const actionFilter = parseMemoryPressureActionOption(readOptionValue(args, '--action'));
+      const statusPath = path.join(cwd, '.playbook/memory-pressure.json');
+      const planPath = path.join(cwd, '.playbook/memory-pressure-plan.json');
+      if (!fs.existsSync(statusPath)) {
+        throw new Error('playbook memory pressure: missing required artifact .playbook/memory-pressure.json');
+      }
+      if (!fs.existsSync(planPath)) {
+        throw new Error('playbook memory pressure: missing required artifact .playbook/memory-pressure-plan.json');
+      }
+
+      const statusArtifact = JSON.parse(fs.readFileSync(statusPath, 'utf8')) as {
+        score?: { normalized?: number };
+        band?: MemoryPressureBand;
+        policy?: { watermarks?: { warm?: number; pressure?: number; critical?: number }; hysteresis?: number };
+        usage?: { usedBytes?: number; fileCount?: number; eventCount?: number };
+        classes?: { canonical?: unknown[]; compactable?: unknown[]; disposable?: unknown[] };
+      };
+      const planArtifact = JSON.parse(fs.readFileSync(planPath, 'utf8')) as {
+        recommendedByBand?: Partial<Record<Exclude<MemoryPressureBand, 'normal'>, Array<{ action?: MemoryPressureActionFilter; reason?: string; targets?: string[]; requiresSummary?: boolean }>>>;
+      };
+
+      const band = statusArtifact.band ?? 'normal';
+      const selectedBand = bandFilter ?? band;
+      const recommendedFromPlan =
+        selectedBand === 'normal'
+          ? []
+          : planArtifact.recommendedByBand?.[selectedBand as Exclude<MemoryPressureBand, 'normal'>] ?? [];
+      const filteredRecommendedActions = actionFilter
+        ? recommendedFromPlan.filter((entry) => entry.action === actionFilter)
+        : recommendedFromPlan;
+
+      const payload = {
+        schemaVersion: '1.0',
+        command: 'memory-pressure',
+        artifacts: {
+          status: '.playbook/memory-pressure.json',
+          plan: '.playbook/memory-pressure-plan.json'
+        },
+        filters: {
+          ...(bandFilter ? { band: bandFilter } : {}),
+          ...(actionFilter ? { action: actionFilter } : {})
+        },
+        score: statusArtifact.score?.normalized ?? 0,
+        band,
+        hysteresis_thresholds: {
+          warm: statusArtifact.policy?.watermarks?.warm ?? 0,
+          pressure: statusArtifact.policy?.watermarks?.pressure ?? 0,
+          critical: statusArtifact.policy?.watermarks?.critical ?? 0,
+          hysteresis: statusArtifact.policy?.hysteresis ?? 0
+        },
+        usage_totals: {
+          usedBytes: statusArtifact.usage?.usedBytes ?? 0,
+          fileCount: statusArtifact.usage?.fileCount ?? 0,
+          eventCount: statusArtifact.usage?.eventCount ?? 0
+        },
+        retention_classes_summary: {
+          canonical: Array.isArray(statusArtifact.classes?.canonical) ? statusArtifact.classes.canonical.length : 0,
+          compactable: Array.isArray(statusArtifact.classes?.compactable) ? statusArtifact.classes.compactable.length : 0,
+          disposable: Array.isArray(statusArtifact.classes?.disposable) ? statusArtifact.classes.disposable.length : 0
+        },
+        ordered_recommended_actions: filteredRecommendedActions,
+        full_status_artifact: statusArtifact,
+        full_plan_artifact: planArtifact
+      };
+
+      emitMemoryResult(
+        cwd,
+        options,
+        'memory pressure',
+        payload,
+        `Memory pressure ${payload.band}@${payload.score.toFixed(2)} actions=${payload.ordered_recommended_actions.length}`
+      );
+      return ExitCode.Success;
+    }
+
     if (subcommand === 'show') {
       const id = resolveSubcommandArgument(args);
       if (!id) {
@@ -364,7 +464,7 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
       emitMemoryResult(cwd, options, 'memory retire', payload, `Retired knowledge ${knowledgeId}.`);
       return ExitCode.Success;
     }
-    throw new Error('playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, compaction, show, promote, or retire.');
+    throw new Error('playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, compaction, pressure, show, promote, or retire.');
 
   } catch (error) {
     emitMemoryError(options, subcommand, error);
