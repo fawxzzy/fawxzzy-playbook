@@ -1,4 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { ExitCode } from '../lib/cliContract.js';
 
 const lookupMemoryEventTimeline = vi.fn();
@@ -179,6 +182,67 @@ describe('runMemory', () => {
     expect(payload.command).toBe('memory-retire');
     logSpy.mockRestore();
   });
+
+  it('supports pressure subcommand and emits filtered recommended actions', async () => {
+    const { runMemory } = await import('./memory.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-memory-pressure-'));
+
+    fs.mkdirSync(path.join(repoRoot, '.playbook'), { recursive: true });
+    fs.writeFileSync(
+      path.join(repoRoot, '.playbook', 'memory-pressure.json'),
+      `${JSON.stringify({
+        schemaVersion: '1.0',
+        kind: 'playbook-memory-pressure-status',
+        command: 'memory-pressure-evaluate',
+        score: { normalized: 0.82 },
+        band: 'pressure',
+        policy: { watermarks: { warm: 0.6, pressure: 0.8, critical: 0.95 }, hysteresis: 0.05 },
+        usage: { usedBytes: 2048, fileCount: 11, eventCount: 7 },
+        classes: { canonical: ['a'], compactable: ['b', 'c'], disposable: ['d', 'e', 'f'] }
+      }, null, 2)}\n`,
+      'utf8'
+    );
+    fs.writeFileSync(
+      path.join(repoRoot, '.playbook', 'memory-pressure-plan.json'),
+      `${JSON.stringify({
+        schemaVersion: '1.0',
+        kind: 'playbook-memory-pressure-plan',
+        command: 'memory-pressure-plan',
+        recommendedByBand: {
+          warm: [{ action: 'dedupe' }],
+          pressure: [{ action: 'summarize', reason: 'r1', targets: ['.playbook/memory/events/1.json'] }, { action: 'compact', reason: 'r2', targets: ['.playbook/memory/index.json'] }],
+          critical: [{ action: 'evict', reason: 'r3', targets: ['.playbook/memory/events/2.json'], requiresSummary: true }]
+        }
+      }, null, 2)}\n`,
+      'utf8'
+    );
+
+    const exitCode = await runMemory(repoRoot, ['pressure', '--action', 'compact'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Success);
+
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.command).toBe('memory-pressure');
+    expect(payload.band).toBe('pressure');
+    expect(payload.ordered_recommended_actions).toEqual([{ action: 'compact', reason: 'r2', targets: ['.playbook/memory/index.json'] }]);
+    expect(payload.retention_classes_summary).toEqual({ canonical: 1, compactable: 2, disposable: 3 });
+    logSpy.mockRestore();
+  });
+
+  it('returns deterministic failure envelope when pressure artifacts are missing', async () => {
+    const { runMemory } = await import('./memory.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-memory-pressure-missing-'));
+
+    const exitCode = await runMemory(repoRoot, ['pressure'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Failure);
+
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.command).toBe('memory-pressure');
+    expect(payload.error).toContain('missing required artifact .playbook/memory-pressure.json');
+    logSpy.mockRestore();
+  });
+
   it('returns deterministic failure envelope for unsupported subcommands', async () => {
     const { runMemory } = await import('./memory.js');
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);

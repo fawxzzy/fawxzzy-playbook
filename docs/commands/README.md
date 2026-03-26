@@ -333,6 +333,7 @@ Doctrine summary anchors:
 - `memory candidates` lists replay candidates for review from `.playbook/memory/replay-candidates.json` (compat-written to `.playbook/memory/candidates.json`).
 - replay/consolidation remain candidate-only: replay is derived from memory evidence, and consolidation writes `.playbook/memory/consolidation-candidates.json` for explicit review without auto-promotion.
 - `memory knowledge` lists promoted knowledge records.
+- `memory pressure` exposes read-only pressure/operator inspection from canonical `.playbook/memory-pressure.json` + `.playbook/memory-pressure-plan.json`, with lightweight `--band` and `--action` filters.
 - `memory show <id>` resolves either a candidate id or knowledge id, including provenance expansion for candidates.
 - `memory promote <candidate-id>` and `memory retire <knowledge-id>` provide explicit, human-driven lifecycle actions.
 - Postmortem reconsolidation stays inside this existing review boundary: incidents/changes should produce a structured postmortem, explicit candidate extraction, and then reviewed movement through `memory` / `promote` surfaces rather than any new command family or auto-promotion path.
@@ -347,6 +348,8 @@ Examples:
 pnpm playbook memory events --json
 pnpm playbook memory candidates --json
 pnpm playbook memory knowledge --json
+pnpm playbook memory pressure --json
+pnpm playbook memory pressure --band pressure --action summarize --json
 pnpm playbook memory show <id> --json
 ```
 
