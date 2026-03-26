@@ -72,8 +72,15 @@ describe('memory pressure policy', () => {
   });
 
   it('requires summarize/compact actions before disposable eviction at critical band', () => {
+    const repoRoot = makeRepo();
+    writeJson(repoRoot, '.playbook/memory/index.json', { events: [{ eventId: 'evt-critical' }] });
+    writeJson(repoRoot, '.playbook/memory/events/evt-critical.json', {
+      kind: 'memory-event',
+      summary: 'force critical-band pressure input'
+    });
+
     const actions = buildMemoryPressureStatusArtifact({
-      repoRoot: makeRepo(),
+      repoRoot,
       policy: {
         ...defaultConfig.memory.pressurePolicy,
         budgetBytes: 1,
