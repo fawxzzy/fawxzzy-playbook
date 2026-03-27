@@ -199,15 +199,6 @@ runs:
           echo "Release governance not present and repo not eligible; skipping release-plan materialization."
         fi
 
-    - name: Materialize canonical release plan artifact
-      if: inputs.execution-path == 'ci' && steps.release-governance.outputs.eligible == 'true'
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: |
-        mkdir -p .playbook
-        echo "+ node packages/cli/dist/main.js release plan --json --out .playbook/release-plan.json"
-        node packages/cli/dist/main.js release plan --json --out .playbook/release-plan.json
-
     - name: Guard release drift before verify
       if: inputs.execution-path == 'ci' && steps.release-governance.outputs.eligible == 'true'
       shell: bash
