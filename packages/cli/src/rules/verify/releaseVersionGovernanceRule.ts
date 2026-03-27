@@ -13,7 +13,8 @@ export const releaseVersionGovernanceRule: VerifyRule = {
   explanation:
     'Release-relevant diffs must carry the matching package-version and changelog governance updates so CI can enforce one canonical release gate instead of per-workflow heuristics.',
   remediation: [
-    'Run `pnpm playbook release plan --json --out .playbook/release-plan.json` to generate the deterministic release artifact.',
-    'Apply or mirror the approved version/changelog updates, then rerun `pnpm playbook verify --json`.'
+    'Run `pnpm playbook release sync --check` to detect release-plan drift and see actionable release tasks.',
+    'Run `pnpm playbook release sync` to materialize reviewed version/changelog updates through the canonical apply boundary.',
+    'Rerun `pnpm playbook verify --json` after release sync reports aligned state.'
   ]
 };

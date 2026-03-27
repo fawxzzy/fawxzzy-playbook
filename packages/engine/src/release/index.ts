@@ -62,6 +62,14 @@ export type ReleaseGovernanceFailure = {
   fix?: string;
 };
 
+export type ReleasePlanDrift = {
+  taskId: string;
+  file: string;
+  reason: string;
+  expected: string;
+  actual: string;
+};
+
 export type ReleasePlan = {
   schemaVersion: '1.0';
   kind: 'playbook-release-plan';
@@ -97,6 +105,18 @@ export type ReleasePlan = {
     reasons: string[];
   }>;
   tasks: ReleasePlanTask[];
+};
+
+export type ReleaseSyncAssessment = {
+  schemaVersion: '1.0';
+  kind: 'playbook-release-sync';
+  generatedAt: string;
+  mode: 'check' | 'apply';
+  plan: ReleasePlan;
+  hasDrift: boolean;
+  drift: ReleasePlanDrift[];
+  governanceFailures: ReleaseGovernanceFailure[];
+  actionableTasks: Array<{ id: string; file: string | null; action: string; task_kind: ReleasePlanTask['task_kind'] }>;
 };
 
 const VERSION_POLICY_PATH = '.playbook/version-policy.json';
@@ -564,6 +584,98 @@ const hasManagedChangelogUpdate = (repoRoot: string, baseSha: string): boolean =
   }
 };
 
+const readReleasePlanArtifact = (repoRoot: string): ReleasePlan | null => {
+  const absolutePath = path.join(repoRoot, RELEASE_PLAN_PATH);
+  if (!fs.existsSync(absolutePath)) {
+    return null;
+  }
+  try {
+    return readJson<ReleasePlan>(absolutePath);
+  } catch {
+    return null;
+  }
+};
+
+const extractManagedChangelogBlock = (content: string): string | null => {
+  const startIndex = content.indexOf(CHANGELOG_START_MARKER);
+  const endIndex = startIndex >= 0 ? content.indexOf(CHANGELOG_END_MARKER, startIndex + CHANGELOG_START_MARKER.length) : -1;
+  if (startIndex < 0 || endIndex < startIndex) {
+    return null;
+  }
+  return content.slice(startIndex, endIndex + CHANGELOG_END_MARKER.length);
+};
+
+export const detectReleasePlanDrift = (repoRoot: string, plan: ReleasePlan): ReleasePlanDrift[] => {
+  const drifts: ReleasePlanDrift[] = [];
+
+  for (const task of plan.tasks) {
+    if (task.task_kind === 'release-package-version' && task.file) {
+      const absolutePath = path.join(repoRoot, task.file);
+      if (!fs.existsSync(absolutePath)) {
+        drifts.push({
+          taskId: task.id,
+          file: task.file,
+          reason: 'target missing',
+          expected: 'package.json with planned version',
+          actual: 'missing file'
+        });
+        continue;
+      }
+
+      const parsed = readJson<{ version?: unknown }>(absolutePath);
+      const actualVersion = typeof parsed.version === 'string' ? parsed.version : '';
+      const expectedVersion = String(task.provenance.next_version ?? '');
+      if (expectedVersion.length > 0 && actualVersion !== expectedVersion) {
+        drifts.push({
+          taskId: task.id,
+          file: task.file,
+          reason: 'version mismatch',
+          expected: expectedVersion,
+          actual: actualVersion || '(missing version field)'
+        });
+      }
+      continue;
+    }
+
+    if (task.task_kind === 'docs-managed-write' && task.file && task.write?.content) {
+      const absolutePath = path.join(repoRoot, task.file);
+      if (!fs.existsSync(absolutePath)) {
+        drifts.push({
+          taskId: task.id,
+          file: task.file,
+          reason: 'target missing',
+          expected: 'managed changelog block updated from release plan',
+          actual: 'missing file'
+        });
+        continue;
+      }
+
+      const current = fs.readFileSync(absolutePath, 'utf8');
+      const currentBlock = extractManagedChangelogBlock(current);
+      const expectedBlock = extractManagedChangelogBlock(task.write.content);
+      if (!currentBlock || !expectedBlock || currentBlock !== expectedBlock) {
+        drifts.push({
+          taskId: task.id,
+          file: task.file,
+          reason: 'managed changelog block mismatch',
+          expected: 'managed block content from release plan',
+          actual: currentBlock ? 'managed block differs' : 'managed block missing'
+        });
+      }
+    }
+  }
+
+  return drifts;
+};
+
+const readReleasePlanArtifactDrift = (repoRoot: string): ReleasePlanDrift[] => {
+  const releasePlan = readReleasePlanArtifact(repoRoot);
+  if (!releasePlan) {
+    return [];
+  }
+  return detectReleasePlanDrift(repoRoot, releasePlan);
+};
+
 export const verifyReleaseGovernance = (repoRoot: string, options: { baseRef: string; baseSha: string }): ReleaseGovernanceFailure[] => {
   const policy = readVersionPolicy(repoRoot);
   const changedFiles = readChangedFiles(repoRoot, options.baseSha);
@@ -669,5 +781,44 @@ export const verifyReleaseGovernance = (repoRoot: string, options: { baseRef: st
     }
   }
 
+  const releasePlanDrift = readReleasePlanArtifactDrift(repoRoot);
+  if (releasePlanDrift.length > 0) {
+    failures.push({
+      id: 'release.plan.notApplied',
+      message: 'Release plan exists but expected version/changelog updates are not fully applied in the current repo state.',
+      evidence: `release_plan=${RELEASE_PLAN_PATH}; drift_count=${releasePlanDrift.length}; files=${uniqueSorted(releasePlanDrift.map((entry) => entry.file)).join(',')}`,
+      fix: 'Run `pnpm playbook release sync` (or `pnpm playbook release sync --check`) to reconcile release-plan drift before verify.'
+    });
+  }
+
   return failures;
+};
+
+export const assessReleaseSync = (repoRoot: string, options: { baseRef?: string; mode?: 'check' | 'apply' } = {}): ReleaseSyncAssessment => {
+  const plan = buildReleasePlan(repoRoot, { baseRef: options.baseRef });
+  const governanceFailures = verifyReleaseGovernance(repoRoot, { baseRef: plan.diff.baseRef, baseSha: plan.diff.baseSha });
+  const drift = detectReleasePlanDrift(repoRoot, plan);
+  const hasGovernanceDrift = governanceFailures.some((failure) => (
+    failure.id === 'release.requiredVersionBump.missing'
+    || failure.id === 'release.contractExpansion.releasePlan.required'
+    || failure.id === 'release.plan.notApplied'
+    || failure.id === 'release.versionGroup.inconsistent'
+  ));
+
+  return {
+    schemaVersion: '1.0',
+    kind: 'playbook-release-sync',
+    generatedAt: new Date().toISOString(),
+    mode: options.mode ?? 'check',
+    plan,
+    hasDrift: drift.length > 0 || hasGovernanceDrift,
+    drift,
+    governanceFailures,
+    actionableTasks: plan.tasks.map((task) => ({
+      id: task.id,
+      file: task.file,
+      action: task.action,
+      task_kind: task.task_kind
+    }))
+  };
 };

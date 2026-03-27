@@ -208,6 +208,22 @@ runs:
         echo "+ node packages/cli/dist/main.js release plan --json --out .playbook/release-plan.json"
         node packages/cli/dist/main.js release plan --json --out .playbook/release-plan.json
 
+    - name: Guard release drift before verify
+      if: inputs.execution-path == 'ci' && steps.release-governance.outputs.eligible == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        mkdir -p .playbook
+        echo "+ node packages/cli/dist/main.js release sync --check --json --out .playbook/release-plan.json"
+        set +e
+        node packages/cli/dist/main.js release sync --check --json --out .playbook/release-plan.json
+        release_sync_exit_code=${PIPESTATUS[0]}
+        set -e
+        if [[ "$release_sync_exit_code" -ne 0 ]]; then
+          echo "Release drift detected before verify. Run 'pnpm playbook release sync' locally and commit the resulting version/changelog updates."
+          exit "$release_sync_exit_code"
+        fi
+
     - name: Run preflight verify for release governance
       if: inputs.execution-path == 'ci' && steps.release-governance.outputs.eligible == 'true'
       id: run-verify-preflight

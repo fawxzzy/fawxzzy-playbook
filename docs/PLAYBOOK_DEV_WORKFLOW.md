@@ -122,6 +122,9 @@ Failure Mode: Shipping only the policy file makes release governance look portab
 Rule: Release-plan artifacts are only valid when mirrored by committed package-version and changelog updates in the same branch state.
 Pattern: release plan -> mirror versions/changelog -> verify.
 Failure Mode: Keeping `.playbook/release-plan.json` while dropping mirrored package/changelog state leaves preflight verify blocked.
+Rule: Always run `pnpm playbook release sync` before push on release-governed branches so plan artifacts and repo state cannot drift.
+Pattern: Compute -> Apply -> Verify (never Compute -> Verify).
+Failure Mode: Generating release plans without applying them causes deterministic CI failures and repeated developer friction.
 
 ## Smoke testing
 
