@@ -120,12 +120,18 @@ describe('buildPatternConvergenceArtifact', () => {
     writePromotedPatterns(repo);
 
     const artifact = buildPatternConvergenceArtifact(repo);
-    const convergenceCluster = artifact.clusters.find((entry) => entry.clusterId.includes('deterministic-governance'));
+    const convergenceCluster = artifact.clusters.find((entry) => {
+      const ids = entry.members.map((member) => member.id);
+      return ids.includes('candidate-deterministic-query') && ids.includes('pattern-query-before-mutate');
+    });
 
     expect(convergenceCluster).toBeDefined();
     expect(convergenceCluster?.members.length).toBeGreaterThanOrEqual(2);
     expect(convergenceCluster?.members.map((member) => member.id)).toContain('candidate-deterministic-query');
     expect(convergenceCluster?.members.map((member) => member.id)).toContain('pattern-query-before-mutate');
+    expect(convergenceCluster?.intent).toBe('deterministic-governance');
+    expect(convergenceCluster?.constraint_class).toBe('mutation-boundary');
+    expect(convergenceCluster?.resolution_strategy).toBe('read-only-artifact-synthesis');
   });
 
   it('does not mutate source artifacts', () => {

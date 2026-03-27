@@ -85,6 +85,7 @@ const toSlug = (value: string): string => {
 const hasAny = (value: string, patterns: RegExp[]): boolean => patterns.some((pattern) => pattern.test(value));
 
 const classifyIntent = (summary: string): string => {
+  if (hasAny(summary, [/query/, /read-only/, /mutation/, /governance/, /verification/])) return 'deterministic-governance';
   if (hasAny(summary, [/determinis/, /consisten/, /stable/, /repeatable/])) return 'deterministic-governance';
   if (hasAny(summary, [/modular/, /boundar/, /coupling/, /dependenc/])) return 'modular-boundary-safety';
   if (hasAny(summary, [/reus/, /portab/, /shared/, /cross[- ]repo/])) return 'pattern-portability';
