@@ -77,50 +77,6 @@ const readOptionValue = (args: string[], optionName: string): string | null => {
   return prefixed.slice(optionName.length + 1) || null;
 };
 
-const MEMORY_OPTIONS_WITH_VALUE = new Set([
-  '--kind',
-  '--module',
-  '--rule',
-  '--fingerprint',
-  '--limit',
-  '--order',
-  '--event-type',
-  '--subsystem',
-  '--run-id',
-  '--subject',
-  '--related-artifact',
-  '--view',
-  '--reason',
-  '--decision',
-  '--band',
-  '--action',
-  '--class',
-  '--from-candidate'
-]);
-
-const extractPositionalArgs = (args: string[]): string[] => {
-  const positional: string[] = [];
-  for (let index = 0; index < args.length; index += 1) {
-    const arg = args[index];
-    if (!arg) continue;
-
-    if (arg.startsWith('--')) {
-      const [optionName] = arg.split('=', 1);
-      if (MEMORY_OPTIONS_WITH_VALUE.has(optionName) && !arg.includes('=')) {
-        index += 1;
-      }
-      continue;
-    }
-
-    if (arg.startsWith('-')) {
-      continue;
-    }
-
-    positional.push(arg);
-  }
-  return positional;
-};
-
 const parseIntegerOption = (raw: string | null, optionName: string): number | undefined => {
   if (raw === null) {
     return undefined;
@@ -145,7 +101,7 @@ const parseOrderOption = (raw: string | null): 'asc' | 'desc' => {
 };
 
 const resolveSubcommandArgument = (args: string[]): string | null => {
-  const positional = extractPositionalArgs(args);
+  const positional = args.filter((arg) => !arg.startsWith('-'));
   if (positional.length < 2) {
     return null;
   }
@@ -153,7 +109,7 @@ const resolveSubcommandArgument = (args: string[]): string | null => {
 };
 
 const parseSubcommand = (args: string[]): MemorySubcommand | null => {
-  const subcommand = extractPositionalArgs(args)[0];
+  const subcommand = args.find((arg) => !arg.startsWith('-'));
   if (!subcommand) {
     return null;
   }
