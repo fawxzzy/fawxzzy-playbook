@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
-import { verifyReleaseGovernance } from '../src/release/index.js';
+import { assessReleaseSync, verifyReleaseGovernance } from '../src/release/index.js';
 
 const BREAKING_CHANGE_MARKER = ['BREAKING', 'CHANGE'].join(' ');
 
@@ -141,5 +141,34 @@ describe('verifyReleaseGovernance', () => {
 
     const failures = verifyReleaseGovernance(repoRoot, { baseRef: 'HEAD~0', baseSha });
     expect(failures.map((failure) => failure.id)).toContain('release.plan.notApplied');
+  });
+
+  it('keeps release sync idempotent by deriving next version from baseRef version', () => {
+    const { repoRoot, baseSha } = createRepo();
+    const featurePath = path.join(repoRoot, 'packages', 'alpha', 'src', 'feature.ts');
+    write(featurePath, 'export const value = 1;\n');
+    run(repoRoot, 'add', featurePath);
+
+    const initial = assessReleaseSync(repoRoot, { baseRef: baseSha, mode: 'check' });
+    const alphaTask = initial.plan.tasks.find((task) => task.task_kind === 'release-package-version' && task.file === 'packages/alpha/package.json');
+    expect(alphaTask?.provenance.next_version).toBe('1.2.4');
+    expect(initial.hasDrift).toBe(true);
+
+    writeJson(path.join(repoRoot, 'packages', 'alpha', 'package.json'), { name: '@scope/alpha', version: '1.2.4' });
+    writeJson(path.join(repoRoot, 'packages', 'beta', 'package.json'), { name: '@scope/beta', version: '1.2.4' });
+    const changelogTask = initial.plan.tasks.find((task) => task.task_kind === 'docs-managed-write');
+    const changelogContent = changelogTask?.write?.content;
+    if (!changelogContent) {
+      throw new Error('Expected docs-managed-write release task for changelog.');
+    }
+    write(path.join(repoRoot, 'docs', 'CHANGELOG.md'), changelogContent);
+    run(repoRoot, 'add', 'packages/alpha/package.json', 'packages/beta/package.json', 'docs/CHANGELOG.md');
+    run(repoRoot, 'commit', '-m', 'apply release sync once');
+
+    const afterApply = assessReleaseSync(repoRoot, { baseRef: baseSha, mode: 'check' });
+    const afterApplyAlphaTask = afterApply.plan.tasks.find((task) => task.task_kind === 'release-package-version' && task.file === 'packages/alpha/package.json');
+    expect(afterApplyAlphaTask?.provenance.base_version).toBe('1.2.3');
+    expect(afterApplyAlphaTask?.provenance.next_version).toBe('1.2.4');
+    expect(afterApply.hasDrift).toBe(false);
   });
 });

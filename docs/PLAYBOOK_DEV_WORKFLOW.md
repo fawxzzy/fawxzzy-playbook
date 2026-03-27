@@ -125,6 +125,9 @@ Failure Mode: Keeping `.playbook/release-plan.json` while dropping mirrored pack
 Rule: Always run `pnpm playbook release sync` before push on release-governed branches so plan artifacts and repo state cannot drift.
 Pattern: Compute -> Apply -> Verify (never Compute -> Verify).
 Failure Mode: Generating release plans without applying them causes deterministic CI failures and repeated developer friction.
+Rule: Release version must be derived from baseRef, not accumulated from prior local bumps.
+Pattern: Compute from base -> apply once -> stable thereafter.
+Failure Mode: Iterative release sync runs compound version increments and create infinite drift against CI.
 
 ## Smoke testing
 

@@ -92,6 +92,7 @@ export type ReleasePlan = {
   packages: Array<{
     name: string;
     path: string;
+    baseVersion: string;
     currentVersion: string;
     recommendedBump: ReleaseBump;
     versionGroup: string | null;
@@ -176,7 +177,7 @@ const buildChangelogTask = (
   repoRoot: string,
   generatedAt: string,
   recommendedBump: ReleaseBump,
-  packagesToUpdate: Array<{ name: string; path: string; currentVersion: string; nextVersion: string; versionGroup: string | null }>,
+  packagesToUpdate: Array<{ name: string; path: string; baseVersion: string; currentVersion: string; nextVersion: string; versionGroup: string | null }>,
   nextVersionByPackage: Map<string, string>
 ): ReleasePlanTask => {
   const changelogPath = path.join(repoRoot, CHANGELOG_PATH);
@@ -197,7 +198,7 @@ const buildChangelogTask = (
   const packageLines = packagesToUpdate
     .slice()
     .sort((left, right) => left.name.localeCompare(right.name))
-    .map((pkg) => `- ${pkg.name}: ${pkg.currentVersion} -> ${pkg.nextVersion}${pkg.versionGroup ? ` (${pkg.versionGroup})` : ''}`);
+    .map((pkg) => `- ${pkg.name}: ${pkg.baseVersion} -> ${pkg.nextVersion}${pkg.versionGroup ? ` (${pkg.versionGroup})` : ''}`);
   const entryLines = [
     `## ${releaseLabel} - ${generatedAt.slice(0, 10)}`,
     `- Recommended bump: ${recommendedBump}`,
@@ -233,6 +234,7 @@ const buildChangelogTask = (
       packages: packagesToUpdate.map((pkg) => ({
         name: pkg.name,
         path: pkg.path,
+        baseVersion: pkg.baseVersion,
         currentVersion: pkg.currentVersion,
         nextVersion: pkg.nextVersion,
         versionGroup: pkg.versionGroup
@@ -299,6 +301,20 @@ export const readWorkspacePackages = (repoRoot: string, policy: VersionPolicy): 
 
 const resolveHeadSha = (repoRoot: string): string =>
   execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).trim();
+
+const readPackageVersionAtGitRef = (repoRoot: string, gitRef: string, packagePath: string): string | null => {
+  try {
+    const previous = execFileSync('git', ['show', `${gitRef}:${packagePath}/package.json`], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    });
+    const parsed = JSON.parse(previous) as { version?: unknown };
+    return typeof parsed.version === 'string' ? parsed.version : null;
+  } catch {
+    return null;
+  }
+};
 
 export const readChangedFiles = (repoRoot: string, baseSha: string): Array<{ path: string; status: string }> => {
   const output = execFileSync('git', ['diff', '--name-status', '--find-renames', baseSha, '--'], {
@@ -412,6 +428,7 @@ export const buildReleasePlanFromInputs = (
 
   const packagePlans = workspacePackages.map((workspacePackage) => {
     const evidence = buildPackageEvidence(workspacePackage, changedFiles);
+    const baseVersion = readPackageVersionAtGitRef(repoRoot, inputs.baseSha, workspacePackage.path) ?? workspacePackage.currentVersion;
     let recommendedBump: ReleaseBump = 'none';
     for (const file of evidence) {
       recommendedBump = compareBumps(recommendedBump, file.bump);
@@ -421,6 +438,7 @@ export const buildReleasePlanFromInputs = (
     return {
       name: workspacePackage.name,
       path: workspacePackage.path,
+      baseVersion,
       currentVersion: workspacePackage.currentVersion,
       recommendedBump,
       versionGroup: workspacePackage.versionGroup,
@@ -477,7 +495,7 @@ export const buildReleasePlanFromInputs = (
   const packagesToUpdate = normalizedPackages
     .filter((pkg) => pkg.recommendedBump !== 'none')
     .map((pkg) => {
-      const nextVersion = bumpVersion(pkg.currentVersion, pkg.recommendedBump);
+      const nextVersion = bumpVersion(pkg.baseVersion, pkg.recommendedBump);
       nextVersionByPackage.set(pkg.name, nextVersion);
       return { ...pkg, nextVersion };
     });
@@ -493,6 +511,7 @@ export const buildReleasePlanFromInputs = (
       release_plan_kind: 'playbook-release-plan',
       package_name: pkg.name,
       package_path: pkg.path,
+      base_version: pkg.baseVersion,
       current_version: pkg.currentVersion,
       next_version: pkg.nextVersion,
       version_group: pkg.versionGroup,
