@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/playbook-lifeline-interop.schema.json",
+  "title": "Playbook Lifeline Interop Runtime",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "generatedAt", "capabilities", "requests", "statuses", "receipts", "heartbeat"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "kind": { "type": "string", "const": "playbook-lifeline-interop-runtime" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "capabilities": { "type": "array", "items": { "$ref": "#/$defs/capability" } },
+    "requests": { "type": "array", "items": { "$ref": "#/$defs/request" } },
+    "statuses": { "type": "array", "items": { "$ref": "#/$defs/status" } },
+    "receipts": { "type": "array", "items": { "$ref": "#/$defs/receipt" } },
+    "heartbeat": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/heartbeat" }] }
+  },
+  "$defs": {
+    "actionKind": { "type": "string", "enum": ["test-triage", "test-fix-plan", "apply-result", "test-autofix", "remediation-status"] },
+    "requestState": { "type": "string", "enum": ["pending", "running", "failed", "completed", "blocked"] },
+    "capability": {
+      "type": "object", "additionalProperties": false,
+      "required": ["capability_id", "action_kind", "version", "registered_at", "runtime_id", "idempotency_key_prefix"],
+      "properties": {
+        "capability_id": { "type": "string", "minLength": 1 },
+        "action_kind": { "$ref": "#/$defs/actionKind" },
+        "version": { "type": "string", "minLength": 1 },
+        "registered_at": { "type": "string", "format": "date-time" },
+        "runtime_id": { "type": "string", "minLength": 1 },
+        "idempotency_key_prefix": { "type": "string", "minLength": 1 }
+      }
+    },
+    "retry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["attempts", "max_attempts", "reconcile_token", "last_attempt_at", "next_retry_at"],
+      "properties": {
+        "attempts": { "type": "integer", "minimum": 0 },
+        "max_attempts": { "type": "integer", "minimum": 1 },
+        "reconcile_token": { "type": "string", "minLength": 1 },
+        "last_attempt_at": { "type": ["string", "null"], "format": "date-time" },
+        "next_retry_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "blockedReason": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reason_code", "reason", "rejected", "blocked_at"],
+      "properties": {
+        "reason_code": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "rejected": { "type": "boolean" },
+        "blocked_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "request": {
+      "type": "object", "additionalProperties": false,
+      "required": ["request_id", "remediation_id", "action_kind", "capability_id", "created_at", "updated_at", "request_state", "idempotency_key", "rendezvous_manifest_path", "rendezvous_manifest_sha256", "bounded_inputs", "blocked_reason", "retry"],
+      "properties": {
+        "request_id": { "type": "string", "minLength": 1 },
+        "remediation_id": { "type": "string", "minLength": 1 },
+        "action_kind": { "$ref": "#/$defs/actionKind" },
+        "capability_id": { "type": "string", "minLength": 1 },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "request_state": { "$ref": "#/$defs/requestState" },
+        "idempotency_key": { "type": "string", "minLength": 1 },
+        "rendezvous_manifest_path": { "type": "string", "minLength": 1 },
+        "rendezvous_manifest_sha256": { "type": "string", "minLength": 1 },
+        "bounded_inputs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "blocked_reason": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/blockedReason" }] },
+        "retry": { "$ref": "#/$defs/retry" }
+      }
+    },
+    "status": {
+      "type": "object", "additionalProperties": false,
+      "required": ["request_id", "request_state", "updated_at", "detail"],
+      "properties": {
+        "request_id": { "type": "string", "minLength": 1 },
+        "request_state": { "$ref": "#/$defs/requestState" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "detail": { "type": "string", "minLength": 1 }
+      }
+    },
+    "receipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["receipt_id", "request_id", "runtime_id", "action_kind", "received_at", "completed_at", "outcome", "output_artifact_path", "output_sha256", "detail"],
+      "properties": {
+        "receipt_id": { "type": "string", "minLength": 1 },
+        "request_id": { "type": "string", "minLength": 1 },
+        "runtime_id": { "type": "string", "minLength": 1 },
+        "action_kind": { "$ref": "#/$defs/actionKind" },
+        "received_at": { "type": "string", "format": "date-time" },
+        "completed_at": { "type": "string", "format": "date-time" },
+        "outcome": { "type": "string", "enum": ["completed", "failed", "blocked"] },
+        "output_artifact_path": { "type": ["string", "null"] },
+        "output_sha256": { "type": ["string", "null"] },
+        "detail": { "type": "string", "minLength": 1 }
+      }
+    },
+    "heartbeat": {
+      "type": "object", "additionalProperties": false,
+      "required": ["runtime_id", "observed_at", "health", "active_request_id", "pending_requests", "completed_requests"],
+      "properties": {
+        "runtime_id": { "type": "string", "minLength": 1 },
+        "observed_at": { "type": "string", "format": "date-time" },
+        "health": { "type": "string", "enum": ["healthy", "degraded", "offline"] },
+        "active_request_id": { "type": ["string", "null"] },
+        "pending_requests": { "type": "integer", "minimum": 0 },
+        "completed_requests": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}
