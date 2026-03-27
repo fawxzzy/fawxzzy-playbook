@@ -194,7 +194,7 @@ runs:
         )
         echo "eligible=$eligible" >> "$GITHUB_OUTPUT"
         if [[ "$eligible" == "true" ]]; then
-          echo "Release governance present or repo eligible; CI will materialize .playbook/release-plan.json."
+          echo "Release governance present or repo eligible; CI will generate .playbook/release-plan.json at runtime via release sync --check."
         else
           echo "Release governance not present and repo not eligible; skipping release-plan materialization."
         fi

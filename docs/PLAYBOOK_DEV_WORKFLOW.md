@@ -128,6 +128,9 @@ Failure Mode: Generating release plans without applying them causes deterministi
 Rule: Release version must be derived from baseRef, not accumulated from prior local bumps.
 Pattern: Compute from base -> apply once -> stable thereafter.
 Failure Mode: Iterative release sync runs compound version increments and create infinite drift against CI.
+Rule: Generated artifacts must not be enforced as committed repo state.
+Pattern: Compute -> validate -> discard (not compute -> commit -> compare).
+Failure Mode: Enforcing generated artifacts as committed state causes perpetual drift and CI instability.
 
 ## Smoke testing
 

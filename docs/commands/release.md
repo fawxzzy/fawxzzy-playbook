@@ -39,6 +39,7 @@ pnpm playbook apply --from-plan .playbook/release-plan.json
 This enforces the rule **Compute → Apply → Verify** and prevents recurring CI failures caused by committed code changes without mirrored release updates.
 
 Idempotency guarantee: release version computation is anchored to the selected `baseRef` package versions (base snapshot), not the current working version after local bumps. Re-running `release sync` against the same `baseRef` yields the same next-version targets instead of incrementing repeatedly.
+Generated-artifact mode: `.playbook/release-plan.json` may be absent in source control and is regenerated at runtime; enforcement checks durable version/changelog outputs rather than plan-file parity.
 
 ## Apply compatibility
 

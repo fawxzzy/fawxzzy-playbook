@@ -149,6 +149,22 @@ describe('verifyReleaseGovernance', () => {
     expect(assessed.hasDrift).toBe(false);
   });
 
+  it('fails generated-artifact mode when versions/changelog are not aligned', () => {
+    const { repoRoot, baseSha } = createRepo();
+    const featurePath = path.join(repoRoot, 'packages', 'alpha', 'src', 'feature.ts');
+    write(featurePath, 'export const value = 1;\n');
+    run(repoRoot, 'add', featurePath);
+
+    const releasePlanPath = path.join(repoRoot, '.playbook', 'release-plan.json');
+    if (fs.existsSync(releasePlanPath)) {
+      fs.rmSync(releasePlanPath);
+    }
+
+    const assessed = assessReleaseSync(repoRoot, { baseRef: baseSha, mode: 'check' });
+    expect(assessed.hasDrift).toBe(true);
+    expect(assessed.governanceFailures.map((failure) => failure.id)).toContain('release.requiredVersionBump.missing');
+  });
+
   it('keeps legacy committed-plan mode backward compatible by ignoring repo copy parity', () => {
     const { repoRoot, baseSha } = createRepo();
     const featurePath = path.join(repoRoot, 'packages', 'alpha', 'src', 'feature.ts');

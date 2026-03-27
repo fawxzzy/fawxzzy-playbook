@@ -761,7 +761,7 @@ export const verifyReleaseGovernance = (repoRoot: string, options: { baseRef: st
       id: 'release.requiredVersionBump.missing',
       message: 'Release-relevant changes require a corresponding package version update before merge.',
       evidence: `base_ref=${options.baseRef}; packages=${evidencePackages}; contract_files=${contractExpansionFiles.map((file) => file.path).join(',') || 'none'}; observed_version_bumps=${packageVersionPackages.join(',') || 'none'}; reasons=${evidenceReasons.join(',')}`,
-      fix: 'Run `pnpm playbook release plan --json --out .playbook/release-plan.json`, review the artifact, then apply the approved release tasks.'
+      fix: 'Run `pnpm playbook release sync --check`, then `pnpm playbook release sync` to apply the reviewed version/changelog updates.'
     });
   }
 
@@ -775,7 +775,7 @@ export const verifyReleaseGovernance = (repoRoot: string, options: { baseRef: st
         id: 'release.contractExpansion.releasePlan.required',
         message: 'Stable contract expansion must carry an applied release-governance update before merge.',
         evidence: `contract_files=${contractExpansionFiles.map((file) => file.path).join(',')}; recommended_bump=${plan.summary.recommendedBump}; package_updates_present=${String(packageVersionFilesChanged)}; changelog_updated=${String(changelogChanged)}`,
-        fix: 'Generate `.playbook/release-plan.json`, apply the approved package/changelog tasks, and rerun verify.'
+        fix: 'Run `pnpm playbook release sync` to apply package/changelog updates and rerun verify.'
       });
     }
   }
