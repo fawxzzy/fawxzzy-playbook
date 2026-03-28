@@ -406,6 +406,20 @@ export const commandMetadata: CommandMetadata[] = [
     machineReadable: true,
   },
   {
+    name: "interop",
+    description:
+      "Inspect and run remediation-first Playbook↔Lifeline interop contracts from rendezvous artifacts",
+    category: "Repository tools",
+    role: "remediation",
+    lifecycle: "canonical",
+    discoverability: "secondary",
+    onboardingPriority: null,
+    canonicalSequence: null,
+    productFacing: true,
+    exampleArgs: "interop health --json",
+    machineReadable: true,
+  },
+  {
     name: "ignore",
     description:
       "Suggest and safely apply ranked .playbookignore recommendations",

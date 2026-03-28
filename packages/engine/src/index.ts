@@ -820,3 +820,15 @@ export { buildTestTriageArtifact, renderTestTriageMarkdown, renderTestTriageText
 export { buildTestFixPlanArtifact } from './testFixPlan.js';
 export type { TestFixPlanArtifact, TestFixPlanExclusion, TestFixPlanExclusionReason, TestFixPlanTask, TestFixPlanTaskKind, TestFixPlanTaskProvenance } from '@zachariahredfield/playbook-core';
 export type { TestTriageArtifact, TestTriageFailureKind, TestTriageFinding, TestTriageFailureModeNote, TestTriageRepairClass, TestTriageRepairPlan } from '@zachariahredfield/playbook-core';
+
+
+export {
+  createEmptyInteropRuntime,
+  readInteropRuntime,
+  writeInteropRuntime,
+  registerInteropCapability,
+  emitBoundedInteropActionRequest,
+  runLifelineMockRuntimeOnce,
+  reconcileInteropRuntime,
+  loadManifestHashFromDisk
+} from './interop/playbookLifelineInterop.js';
