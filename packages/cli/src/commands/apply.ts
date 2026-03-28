@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { execSync } from 'node:child_process';
 import path from 'node:path';
 import * as engine from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
@@ -901,6 +902,27 @@ const runPolicyApplyFlow = (cwd: string, options: ApplyOptions): number => {
 };
 
 
+
+const hasWorkingTreeChanges = (cwd: string): boolean => {
+  const status = execSync('git status --porcelain', { cwd, encoding: 'utf8' }).trim();
+  return status.length > 0;
+};
+
+const applyReleaseSyncCommitBoundary = (cwd: string): void => {
+  execSync('pnpm playbook release sync --json --out .playbook/release-plan.json', { cwd, stdio: 'inherit' });
+  execSync('git add -A', { cwd, stdio: 'inherit' });
+
+  if (hasWorkingTreeChanges(cwd)) {
+    execSync('git commit -m "chore: apply + release sync" --no-verify', { cwd, stdio: 'inherit' });
+  }
+
+  execSync('pnpm playbook release sync --check --json --out .playbook/release-plan.json', { cwd, stdio: 'inherit' });
+
+  if (hasWorkingTreeChanges(cwd)) {
+    throw new Error('playbook apply: release sync boundary left repository dirty after commit.');
+  }
+};
+
 const resolveRunId = (cwd: string, requestedRunId: string | undefined): string => {
   if (requestedRunId) {
     return requestedRunId;
@@ -982,6 +1004,7 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
 
     writeCanonicalApplyArtifact(cwd, []);
     attachApplyRunArtifacts(cwd, runId, options.fromPlan);
+    applyReleaseSyncCommitBoundary(cwd);
 
     if (options.format === 'json') {
       console.log(JSON.stringify(payload, null, 2));
@@ -1043,5 +1066,10 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
 
   writeCanonicalApplyArtifact(cwd, execution.results);
   attachApplyRunArtifacts(cwd, runId, options.fromPlan);
+
+  if (exitCode === ExitCode.Success) {
+    applyReleaseSyncCommitBoundary(cwd);
+  }
+
   return emitApplyOutput(options, payload, renderTextApply);
 };

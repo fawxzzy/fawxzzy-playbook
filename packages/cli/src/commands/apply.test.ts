@@ -19,9 +19,11 @@ const buildPolicyPreflight = vi.fn();
 const pinSessionArtifact = vi.fn();
 const updateSession = vi.fn();
 const loadVerifyRules = vi.fn();
+const execSyncMock = vi.fn();
 
 vi.mock('@zachariahredfield/playbook-engine', () => ({ generatePlanContract, routeTask, applyExecutionPlan, parsePlanArtifact, validateRemediationPlan, getLatestMutableRun, createExecutionIntent, createExecutionRun, appendExecutionStep, executionRunPath, attachSessionRunState, buildPolicyPreflight, pinSessionArtifact, updateSession, POLICY_EVALUATION_RELATIVE_PATH: '.playbook/policy-evaluation.json' }));
 vi.mock('../lib/loadVerifyRules.js', () => ({ loadVerifyRules }));
+vi.mock('node:child_process', () => ({ execSync: execSyncMock }));
 
 
 const createPlanPayload = () => ({
@@ -168,6 +170,11 @@ describe('runApply', () => {
     pinSessionArtifact.mockReset();
     updateSession.mockReset();
     loadVerifyRules.mockReset();
+    execSyncMock.mockReset();
+    execSyncMock.mockImplementation((command: string) => {
+      if (command === 'git status --porcelain') return '';
+      return '';
+    });
     getLatestMutableRun.mockReturnValue({ id: 'run-test' });
     appendExecutionStep.mockReturnValue({ id: 'run-test' });
     executionRunPath.mockReturnValue('.playbook/runs/run-test.json');
@@ -245,6 +252,39 @@ describe('runApply', () => {
 
     logSpy.mockRestore();
     fs.rmSync(repoDir, { recursive: true, force: true });
+  });
+
+  it('runs release sync boundary commands after successful apply execution', async () => {
+    const { runApply } = await import('./apply.js');
+    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-release-boundary-'));
+
+    const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: false });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(execSyncMock).toHaveBeenCalledWith('pnpm playbook release sync --json --out .playbook/release-plan.json', { cwd: repoDir, stdio: 'inherit' });
+    expect(execSyncMock).toHaveBeenCalledWith('git add -A', { cwd: repoDir, stdio: 'inherit' });
+    expect(execSyncMock).toHaveBeenCalledWith('git update-index --again', { cwd: repoDir, stdio: 'inherit' });
+    expect(execSyncMock).toHaveBeenCalledWith('pnpm playbook release sync --check --json --out .playbook/release-plan.json', { cwd: repoDir, stdio: 'inherit' });
+  });
+
+  it('commits apply+release sync when release sync leaves staged mutations', async () => {
+    const { runApply } = await import('./apply.js');
+    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-release-commit-'));
+
+    let statusCalls = 0;
+    execSyncMock.mockImplementation((command: string) => {
+      if (command === 'git status --porcelain') {
+        statusCalls += 1;
+        if (statusCalls === 1) return ' M packages/engine/package.json';
+        return '';
+      }
+      return '';
+    });
+
+    const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: false });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(execSyncMock).toHaveBeenCalledWith('git commit -m "chore: apply + release sync" --no-verify', { cwd: repoDir, stdio: 'inherit' });
   });
 
 

@@ -127,6 +127,8 @@ Behavior:
 - Refreshes the Git index (`git update-index --again`) so the commit snapshot includes the post-sync mutation set.
 - Re-runs `pnpm playbook release sync --check` and blocks the commit on any residual drift.
 - Skips work when there are no staged changes, avoiding empty-commit loops.
+- For governed changes, prefer `pnpm playbook apply` as the mutation boundary and let Playbook-owned release sync + commit steps finalize the state.
+- Do not rely on direct manual `git commit` for governed mutation flows when `playbook apply` is available.
 
 Rule: Release governance must be applied before CI, not discovered by CI.
 Rule: Release governance must fail locally before CI, not after commit.
