@@ -902,8 +902,14 @@ const runPolicyApplyFlow = (cwd: string, options: ApplyOptions): number => {
 };
 
 
+const isReleaseGovernanceEligible = (cwd: string): boolean =>
+  fs.existsSync(path.resolve(cwd, '.playbook', 'version-policy.json'));
 
 const applyReleaseSyncCommitBoundary = (cwd: string): void => {
+  if (!isReleaseGovernanceEligible(cwd)) {
+    return;
+  }
+
   execSync('pnpm playbook release sync --json --out .playbook/release-plan.json', { cwd, stdio: 'inherit' });
   execSync('git add -A', { cwd, stdio: 'inherit' });
   try {
@@ -960,10 +966,16 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
     ? loadPlanFromFile(cwd, options.fromPlan)
     : (() => {
         const generatedPlan = engine.generatePlanContract(cwd);
-        const failureFacts = deriveVerifyFailureFacts(generatedPlan.verify);
+        const verifyPayload = typeof generatedPlan === 'object' && generatedPlan !== null && 'verify' in generatedPlan
+          ? (generatedPlan as { verify?: unknown }).verify ?? null
+          : null;
+        const tasks = Array.isArray((generatedPlan as { tasks?: unknown[] } | null)?.tasks)
+          ? (generatedPlan as { tasks: PlanTask[] }).tasks
+          : [];
+        const failureFacts = deriveVerifyFailureFacts(verifyPayload);
         return {
-          tasks: generatedPlan.tasks,
-          remediation: buildPlanRemediation({ failureCount: failureFacts.failureCount, stepCount: generatedPlan.tasks.length })
+          tasks,
+          remediation: buildPlanRemediation({ failureCount: failureFacts.failureCount, stepCount: tasks.length })
         };
       })();
   const applyPrecondition = remediationToApplyPrecondition(plan.remediation);
