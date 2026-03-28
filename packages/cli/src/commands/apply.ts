@@ -902,16 +902,28 @@ const runPolicyApplyFlow = (cwd: string, options: ApplyOptions): number => {
 };
 
 
-const isReleaseGovernanceEligible = (cwd: string): boolean =>
-  fs.existsSync(path.resolve(cwd, '.playbook', 'version-policy.json'));
+const shouldRunReleaseSyncBoundary = (cwd: string): boolean => {
+  const playbookDir = path.resolve(cwd, '.playbook');
+  const versionPolicyPath = path.resolve(playbookDir, 'version-policy.json');
+  if (fs.existsSync(versionPolicyPath)) {
+    return true;
+  }
+
+  if (fs.existsSync(playbookDir)) {
+    return false;
+  }
+
+  return true;
+};
 
 const applyReleaseSyncCommitBoundary = (cwd: string): void => {
-  if (!isReleaseGovernanceEligible(cwd)) {
+  if (!shouldRunReleaseSyncBoundary(cwd)) {
     return;
   }
 
   execSync('pnpm playbook release sync --json --out .playbook/release-plan.json', { cwd, stdio: 'inherit' });
   execSync('git add -A', { cwd, stdio: 'inherit' });
+  execSync('git update-index --again', { cwd, stdio: 'inherit' });
   try {
     execSync('pnpm playbook release sync --check --json --out .playbook/release-plan.json', { cwd, stdio: 'inherit' });
   } catch {
