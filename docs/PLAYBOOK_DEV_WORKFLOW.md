@@ -129,11 +129,13 @@ Behavior:
 - Skips work when there are no staged changes, avoiding empty-commit loops.
 - For governed changes, prefer `pnpm playbook apply` as the mutation boundary and let Playbook-owned release sync + commit steps finalize the state.
 - Do not rely on direct manual `git commit` for governed mutation flows when `playbook apply` is available.
+- Canonical governed flow: `pnpm playbook apply` -> release sync -> stage -> verify release-clean -> `git commit` -> `git push`.
 
 Rule: Release governance must be applied before CI, not discovered by CI.
 Rule: Release governance must fail locally before CI, not after commit.
 Pattern: Shift release sync from CI detection -> local pre-commit enforcement.
 Pattern: Mutate -> stage -> refresh index -> commit.
+Pattern: apply -> release sync -> stage -> verify clean -> commit -> push.
 Failure Mode: Relying on CI to detect release drift creates infinite failure loops and slows iteration.
 Failure Mode: Without index refresh, Git can commit stale snapshots after hook-time mutations.
 

@@ -171,10 +171,7 @@ describe('runApply', () => {
     updateSession.mockReset();
     loadVerifyRules.mockReset();
     execSyncMock.mockReset();
-    execSyncMock.mockImplementation((command: string) => {
-      if (command === 'git status --porcelain') return '';
-      return '';
-    });
+    execSyncMock.mockReturnValue('');
     getLatestMutableRun.mockReturnValue({ id: 'run-test' });
     appendExecutionStep.mockReturnValue({ id: 'run-test' });
     executionRunPath.mockReturnValue('.playbook/runs/run-test.json');
@@ -267,24 +264,30 @@ describe('runApply', () => {
     expect(execSyncMock).toHaveBeenCalledWith('pnpm playbook release sync --check --json --out .playbook/release-plan.json', { cwd: repoDir, stdio: 'inherit' });
   });
 
-  it('commits apply+release sync when release sync leaves staged mutations', async () => {
+  it('does not perform git commit directly during apply release-sync boundary', async () => {
     const { runApply } = await import('./apply.js');
-    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-release-commit-'));
-
-    let statusCalls = 0;
-    execSyncMock.mockImplementation((command: string) => {
-      if (command === 'git status --porcelain') {
-        statusCalls += 1;
-        if (statusCalls === 1) return ' M packages/engine/package.json';
-        return '';
-      }
-      return '';
-    });
+    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-release-no-commit-'));
 
     const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: false });
 
     expect(exitCode).toBe(ExitCode.Success);
-    expect(execSyncMock).toHaveBeenCalledWith('git commit -m "chore: apply + release sync" --no-verify', { cwd: repoDir, stdio: 'inherit' });
+    expect(execSyncMock).not.toHaveBeenCalledWith('git commit -m "chore: apply + release sync" --no-verify', { cwd: repoDir, stdio: 'inherit' });
+  });
+
+  it('fails clearly when release-sync check remains dirty after apply', async () => {
+    const { runApply } = await import('./apply.js');
+    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-release-check-fail-'));
+
+    execSyncMock.mockImplementation((command: string) => {
+      if (command === 'pnpm playbook release sync --check --json --out .playbook/release-plan.json') {
+        throw new Error('drift remains');
+      }
+      return '';
+    });
+
+    await expect(runApply(repoDir, { format: 'json', ci: false, quiet: false })).rejects.toThrow(
+      'playbook apply: release sync check failed after apply; repository is not release-clean.'
+    );
   });
 
 

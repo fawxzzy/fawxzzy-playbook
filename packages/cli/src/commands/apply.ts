@@ -903,23 +903,13 @@ const runPolicyApplyFlow = (cwd: string, options: ApplyOptions): number => {
 
 
 
-const hasWorkingTreeChanges = (cwd: string): boolean => {
-  const status = execSync('git status --porcelain', { cwd, encoding: 'utf8' }).trim();
-  return status.length > 0;
-};
-
 const applyReleaseSyncCommitBoundary = (cwd: string): void => {
   execSync('pnpm playbook release sync --json --out .playbook/release-plan.json', { cwd, stdio: 'inherit' });
   execSync('git add -A', { cwd, stdio: 'inherit' });
-
-  if (hasWorkingTreeChanges(cwd)) {
-    execSync('git commit -m "chore: apply + release sync" --no-verify', { cwd, stdio: 'inherit' });
-  }
-
-  execSync('pnpm playbook release sync --check --json --out .playbook/release-plan.json', { cwd, stdio: 'inherit' });
-
-  if (hasWorkingTreeChanges(cwd)) {
-    throw new Error('playbook apply: release sync boundary left repository dirty after commit.');
+  try {
+    execSync('pnpm playbook release sync --check --json --out .playbook/release-plan.json', { cwd, stdio: 'inherit' });
+  } catch {
+    throw new Error('playbook apply: release sync check failed after apply; repository is not release-clean.');
   }
 };
 
