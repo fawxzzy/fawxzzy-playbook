@@ -121,6 +121,16 @@ export const fitnessIntegrationContract = {
 export type FitnessIntegrationContract = typeof fitnessIntegrationContract;
 export type FitnessActionName = FitnessIntegrationContract['actions'][number]['name'];
 export type FitnessReceiptType = FitnessIntegrationContract['actions'][number]['receiptType'];
+type FitnessInputField = FitnessIntegrationContract['actions'][number]['input']['fields'][number];
+export type FitnessActionInput = Record<string, unknown>;
+type FitnessInputFieldNormalized = {
+  name: string;
+  type: 'string' | 'number';
+  required: boolean;
+  min?: number;
+  max?: number;
+  allowedValues?: readonly string[];
+};
 
 const actionByName = new Map(
   fitnessIntegrationContract.actions.map((action) => [action.name, action])
@@ -132,6 +142,81 @@ export const getFitnessActionContract = (actionName: FitnessActionName) => actio
 
 export const getFitnessReceiptTypeForAction = (actionName: FitnessActionName): FitnessReceiptType =>
   getFitnessActionContract(actionName).receiptType;
+
+const validateFitnessInputFieldType = (field: FitnessInputFieldNormalized, value: unknown): string | null => {
+  if (field.type === 'string' && typeof value !== 'string') {
+    return `Field "${field.name}" must be a string.`;
+  }
+  if (field.type === 'number' && (typeof value !== 'number' || Number.isNaN(value))) {
+    return `Field "${field.name}" must be a number.`;
+  }
+  return null;
+};
+
+const normalizeFitnessInputField = (field: FitnessInputField): FitnessInputFieldNormalized => ({
+  name: field.name,
+  type: field.type,
+  required: field.required,
+  min: 'min' in field ? field.min : undefined,
+  max: 'max' in field ? field.max : undefined,
+  allowedValues: 'allowedValues' in field ? field.allowedValues : undefined
+});
+
+const validateFitnessInputFieldRange = (field: FitnessInputFieldNormalized, value: unknown): string | null => {
+  if (typeof value !== 'number') return null;
+  if (typeof field.min === 'number' && value < field.min) {
+    return `Field "${field.name}" must be >= ${field.min}.`;
+  }
+  if (typeof field.max === 'number' && value > field.max) {
+    return `Field "${field.name}" must be <= ${field.max}.`;
+  }
+  return null;
+};
+
+const validateFitnessInputFieldAllowedValues = (field: FitnessInputFieldNormalized, value: unknown): string | null => {
+  if (!Array.isArray(field.allowedValues)) return null;
+  if (typeof value !== 'string') return null;
+  if (!field.allowedValues.includes(value)) {
+    return `Field "${field.name}" must be one of: ${field.allowedValues.join(', ')}.`;
+  }
+  return null;
+};
+
+export const validateFitnessActionInput = (
+  actionName: FitnessActionName,
+  input: FitnessActionInput
+): { valid: boolean; errors: string[] } => {
+  const action = getFitnessActionContract(actionName);
+  const entries = Object.entries(input);
+  const normalizedFields = action.input.fields.map((field) => normalizeFitnessInputField(field));
+  const fieldNames = new Set<string>(normalizedFields.map((field) => field.name));
+  const errors: string[] = [];
+
+  for (const field of normalizedFields) {
+    const value = input[field.name];
+    if (value === undefined || value === null) {
+      if (field.required) errors.push(`Field "${field.name}" is required.`);
+      continue;
+    }
+    const typeError = validateFitnessInputFieldType(field, value);
+    if (typeError) {
+      errors.push(typeError);
+      continue;
+    }
+    const rangeError = validateFitnessInputFieldRange(field, value);
+    if (rangeError) errors.push(rangeError);
+    const allowedValuesError = validateFitnessInputFieldAllowedValues(field, value);
+    if (allowedValuesError) errors.push(allowedValuesError);
+  }
+
+  for (const [fieldName] of entries) {
+    if (!fieldNames.has(fieldName)) {
+      errors.push(`Field "${fieldName}" is not allowed for ${actionName}.`);
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+};
 
 export type FitnessContractSyncMode = 'direct' | 'mirrored';
 

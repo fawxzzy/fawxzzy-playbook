@@ -44,6 +44,30 @@ type FitnessContractInspectPayload = {
 
 const fitnessIntegrationContract = (engineRuntime as unknown as { fitnessIntegrationContract: { actions: FitnessActionContract[] } }).fitnessIntegrationContract;
 const actionKinds = fitnessIntegrationContract.actions.map((entry: FitnessActionContract) => entry.name);
+const defaultBoundedActionInputByAction = {
+  adjust_upcoming_workout_load: {
+    athlete_id: 'athlete-001',
+    week_id: 'week-2026-W13',
+    workout_id: 'workout-001',
+    load_adjustment_percent: -10,
+    duration_days: 3,
+    reason_code: 'fatigue_spike'
+  },
+  schedule_recovery_block: {
+    athlete_id: 'athlete-001',
+    week_id: 'week-2026-W13',
+    start_date: '2026-03-30',
+    duration_days: 3,
+    recovery_mode: 'rest'
+  },
+  revise_weekly_goal_plan: {
+    athlete_id: 'athlete-001',
+    week_id: 'week-2026-W13',
+    goal_domain: 'consistency',
+    target_value: 4,
+    duration_days: 7
+  }
+} as const;
 
 const engine = engineRuntime as unknown as {
   readInteropRuntime: (cwd: string) => any;
@@ -96,6 +120,7 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
       options: [
         '--capability <id>   capability id for register/emit',
         '--action <kind>     remediation action kind',
+        '--action-input-json <json>  bounded action input payload (Fitness contract-shaped)',
         '--runtime <id>      runtime id (default lifeline-mock-runtime)',
         '--json              emit machine-readable output',
         '--help              show help'
@@ -113,6 +138,7 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
 
   try {
     const runtimeId = valueFor('--runtime') ?? 'lifeline-mock-runtime';
+    const actionInputJson = valueFor('--action-input-json');
     if (sub === 'fitness-contract') {
       const payload = await toFitnessContractInspectPayload(cwd);
       if (options.format === 'json') {
@@ -152,8 +178,19 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
     } else if (sub === 'emit') {
       const capability = valueFor('--capability') ?? 'lifeline-remediation-v1';
       const action = (valueFor('--action') ?? 'adjust_upcoming_workout_load') as RemediationInteropActionKind;
+      if (!actionKinds.includes(action)) throw new Error(`Unsupported --action ${action}`);
+      const boundedActionInput = actionInputJson
+        ? JSON.parse(actionInputJson) as Record<string, unknown>
+        : defaultBoundedActionInputByAction[action as keyof typeof defaultBoundedActionInputByAction];
       const { manifest, evaluation } = readRendezvous(cwd);
-      const emitted = engine.emitBoundedInteropActionRequest({ runtime, manifest, evaluation, action_kind: action, capability_id: capability });
+      const emitted = engine.emitBoundedInteropActionRequest({
+        runtime,
+        manifest,
+        evaluation,
+        action_kind: action,
+        bounded_action_input: boundedActionInput,
+        capability_id: capability
+      });
       runtime = emitted.runtime;
       engine.writeInteropRuntime(cwd, runtime);
     } else if (sub === 'run-mock') {

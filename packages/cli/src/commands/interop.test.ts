@@ -77,7 +77,15 @@ describe('runInterop', () => {
       request_state: 'completed',
       action_kind: 'adjust_upcoming_workout_load',
       receipt_type: 'schedule_adjustment_applied',
-      routing: { channel: 'fitness.actions', target: 'training-load', priority: 'high', maxDeliveryLatencySeconds: 300 }
+      routing: { channel: 'fitness.actions', target: 'training-load', priority: 'high', maxDeliveryLatencySeconds: 300 },
+      bounded_action_input: {
+        athlete_id: 'athlete-001',
+        week_id: 'week-2026-W13',
+        workout_id: 'workout-001',
+        load_adjustment_percent: -10,
+        duration_days: 3,
+        reason_code: 'fatigue_spike'
+      }
     });
     expect(runtime.receipts[0]).toMatchObject({
       outcome: 'completed',
@@ -86,6 +94,32 @@ describe('runInterop', () => {
       routing: { channel: 'fitness.actions', target: 'training-load', priority: 'high', maxDeliveryLatencySeconds: 300 }
     });
     expect(runtime.heartbeat.health).toBe('healthy');
+  });
+
+  it('rejects emit when provided bounded action input violates canonical fitness contract fields', async () => {
+    const repo = createRepo();
+    writeArtifact(repo, '.playbook/rendezvous-manifest.json', {
+      remediationId: 'remediation-001',
+      requiredArtifactIds: ['fitness-contract', 'rendezvous-status']
+    });
+
+    expect(await runInterop(repo, ['register', '--capability', 'lifeline-remediation-v1', '--action', 'adjust_upcoming_workout_load'], { format: 'json', quiet: false })).toBe(ExitCode.Success);
+
+    const exitCode = await runInterop(
+      repo,
+      [
+        'emit',
+        '--capability',
+        'lifeline-remediation-v1',
+        '--action',
+        'adjust_upcoming_workout_load',
+        '--action-input-json',
+        '{"athlete_id":"athlete-001","week_id":"week-2026-W13","workout_id":"workout-001","load_adjustment_percent":-10,"duration_days":3,"reason_code":"not_in_contract"}'
+      ],
+      { format: 'json', quiet: false }
+    );
+
+    expect(exitCode).toBe(ExitCode.Failure);
   });
 
   it('exposes consumed fitness contract inspect surface with deterministic summary and artifact', async () => {

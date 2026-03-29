@@ -67,7 +67,7 @@
     },
     "request": {
       "type": "object", "additionalProperties": false,
-      "required": ["request_id", "remediation_id", "action_kind", "receipt_type", "routing", "capability_id", "created_at", "updated_at", "request_state", "idempotency_key", "rendezvous_manifest_path", "rendezvous_manifest_sha256", "bounded_inputs", "blocked_reason", "retry"],
+      "required": ["request_id", "remediation_id", "action_kind", "receipt_type", "routing", "capability_id", "created_at", "updated_at", "request_state", "idempotency_key", "rendezvous_manifest_path", "rendezvous_manifest_sha256", "bounded_inputs", "bounded_action_input", "blocked_reason", "retry"],
       "properties": {
         "request_id": { "type": "string", "minLength": 1 },
         "remediation_id": { "type": "string", "minLength": 1 },
@@ -82,6 +82,7 @@
         "rendezvous_manifest_path": { "type": "string", "minLength": 1 },
         "rendezvous_manifest_sha256": { "type": "string", "minLength": 1 },
         "bounded_inputs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "bounded_action_input": { "type": "object", "additionalProperties": true },
         "blocked_reason": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/blockedReason" }] },
         "retry": { "$ref": "#/$defs/retry" }
       }

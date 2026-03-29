@@ -30,6 +30,20 @@ Playbook emits bounded Lifeline requests **only** when rendezvous evaluation is 
 6. blocked/rejected reason
 7. retry/reconcile state
 
+## Fitness contract boundary
+
+Rule:
+
+External app contracts are consumed, not semantically redesigned.
+
+Pattern:
+
+Source contract -> validated mirror -> adapter.
+
+Failure mode:
+
+Local reinterpretation drifts action/receipt/routing semantics away from the source contract.
+
 ## Deterministic runtime loop
 
 Pattern:
