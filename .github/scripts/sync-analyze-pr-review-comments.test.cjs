@@ -4,10 +4,21 @@ const {
   parsePatchAddedLines,
   validateAnnotationAnchor,
   syncAnalyzePrReviewComments,
+  runSyncAnalyzePrReviewCommentsSidecar,
+  callGitHubWithRetry,
 } = require('./sync-analyze-pr-review-comments.cjs');
 
-const makeGithub = ({ headSha = 'head-1', files = [], reviewComments = [], issueComments = [], failCreate = false } = {}) => {
+const makeGithub = ({
+  headSha = 'head-1',
+  files = [],
+  reviewComments = [],
+  issueComments = [],
+  failCreate = false,
+  failCreateStatus,
+  failCreateTimes = 1,
+} = {}) => {
   const calls = { createReviewComment: [], createComment: [], updateComment: [], deleteReviewComment: [], deleteComment: [] };
+  let createFailures = 0;
   const github = {
     rest: {
       pulls: {
@@ -19,6 +30,12 @@ const makeGithub = ({ headSha = 'head-1', files = [], reviewComments = [], issue
           if (failCreate) {
             const error = new Error('unprocessable');
             error.status = 422;
+            throw error;
+          }
+          if (failCreateStatus && createFailures < failCreateTimes) {
+            createFailures += 1;
+            const error = new Error('transient');
+            error.status = failCreateStatus;
             throw error;
           }
           return { data: { id: calls.createReviewComment.length } };
@@ -137,4 +154,83 @@ test('syncAnalyzePrReviewComments falls back when file is not present in diff or
   assert.equal(calls.createComment.length, 1);
   assert.match(calls.createComment[0].body, /old-head/);
   assert.equal(result.fallback.length, 1);
+});
+
+test('callGitHubWithRetry retries transient errors with bounded attempts', async () => {
+  let attempts = 0;
+  const value = await callGitHubWithRetry({
+    core,
+    endpoint: 'pulls.listFiles',
+    prNumber: 1,
+    operation: async () => {
+      attempts += 1;
+      if (attempts < 3) {
+        const error = new Error('service unavailable');
+        error.status = 503;
+        throw error;
+      }
+      return 'ok';
+    },
+  });
+  assert.equal(value, 'ok');
+  assert.equal(attempts, 3);
+});
+
+test('runSyncAnalyzePrReviewCommentsSidecar downgrades exhausted transient failures to warning path', async () => {
+  const { github } = makeGithub({
+    files: [{ filename: 'src/file.ts', patch: '@@ -1 +1,2 @@\n a\n+b' }],
+    failCreateStatus: 503,
+    failCreateTimes: 10,
+  });
+  const warnings = [];
+  const result = await runSyncAnalyzePrReviewCommentsSidecar({
+    github,
+    core: {
+      ...core,
+      warning: (message) => warnings.push(String(message)),
+      info() {},
+    },
+    context,
+    diagnostics: [{ path: 'src/file.ts', line: 2, body: 'Playbook Warning: retry fallback' }],
+    marker: '<!-- inline -->',
+    fallbackMarker: '<!-- fallback -->',
+    expectedHeadSha: 'head-1',
+  });
+  assert.equal(result.degraded, true);
+  assert.equal(result.reason, 'transient-provider-outage');
+  assert.equal(warnings.some((entry) => entry.includes('Skipping comment sync')), true);
+});
+
+test('runSyncAnalyzePrReviewCommentsSidecar keeps auth failures fail-closed', async () => {
+  const github = {
+    rest: { pulls: { get: async () => { const err = new Error('forbidden'); err.status = 403; throw err; } } },
+  };
+  await assert.rejects(
+    runSyncAnalyzePrReviewCommentsSidecar({
+      github,
+      core,
+      context,
+      diagnostics: [],
+      marker: '<!-- inline -->',
+      fallbackMarker: '<!-- fallback -->',
+      expectedHeadSha: 'head-1',
+    }),
+    /forbidden/,
+  );
+});
+
+test('runSyncAnalyzePrReviewCommentsSidecar keeps deterministic input bugs fail-closed', async () => {
+  const { github } = makeGithub();
+  await assert.rejects(
+    runSyncAnalyzePrReviewCommentsSidecar({
+      github,
+      core,
+      context,
+      diagnostics: null,
+      marker: '<!-- inline -->',
+      fallbackMarker: '<!-- fallback -->',
+      expectedHeadSha: 'head-1',
+    }),
+    /is not iterable/,
+  );
 });

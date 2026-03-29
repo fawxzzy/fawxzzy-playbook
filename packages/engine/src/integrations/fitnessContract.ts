@@ -38,9 +38,10 @@ export const fitnessIntegrationContract = {
       name: 'adjust_upcoming_workout_load',
       receiptType: 'schedule_adjustment_applied',
       routing: {
-        topic: 'fitness.actions.training-load',
-        must_route_through_playbook_plan: true,
-        no_direct_lifeline_bypass: true
+        channel: 'fitness.actions',
+        target: 'training-load',
+        priority: 'high',
+        maxDeliveryLatencySeconds: 300
       },
       constraints: ['same_week_only', 'max_duration_days_14'],
       input: {
@@ -63,9 +64,10 @@ export const fitnessIntegrationContract = {
       name: 'schedule_recovery_block',
       receiptType: 'recovery_guardrail_applied',
       routing: {
-        topic: 'fitness.actions.recovery',
-        must_route_through_playbook_plan: true,
-        no_direct_lifeline_bypass: true
+        channel: 'fitness.actions',
+        target: 'recovery',
+        priority: 'high',
+        maxDeliveryLatencySeconds: 300
       },
       constraints: ['same_week_only', 'max_duration_days_14'],
       input: {
@@ -87,9 +89,10 @@ export const fitnessIntegrationContract = {
       name: 'revise_weekly_goal_plan',
       receiptType: 'goal_plan_amended',
       routing: {
-        topic: 'fitness.actions.weekly-plan',
-        must_route_through_playbook_plan: true,
-        no_direct_lifeline_bypass: true
+        channel: 'fitness.actions',
+        target: 'weekly-plan',
+        priority: 'high',
+        maxDeliveryLatencySeconds: 300
       },
       constraints: ['same_week_only', 'max_duration_days_14'],
       input: {
@@ -293,9 +296,10 @@ export function validateFitnessContractExactShape(payload: unknown): asserts pay
       throw new Error('Fitness contract drift detected at action.routing (must be object).');
     }
     assertExactKeys('fitness contract action.routing', action.routing, [
-      'topic',
-      'must_route_through_playbook_plan',
-      'no_direct_lifeline_bypass'
+      'channel',
+      'target',
+      'priority',
+      'maxDeliveryLatencySeconds'
     ]);
     if (!Array.isArray(action.constraints) || !action.constraints.every((entry) => typeof entry === 'string')) {
       throw new Error('Fitness contract drift detected at action.constraints (must be string array).');

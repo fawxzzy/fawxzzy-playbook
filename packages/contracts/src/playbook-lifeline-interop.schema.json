@@ -21,11 +21,12 @@
     "routing": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["topic", "must_route_through_playbook_plan", "no_direct_lifeline_bypass"],
+      "required": ["channel", "target", "priority", "maxDeliveryLatencySeconds"],
       "properties": {
-        "topic": { "type": "string", "minLength": 1 },
-        "must_route_through_playbook_plan": { "type": "boolean" },
-        "no_direct_lifeline_bypass": { "type": "boolean" }
+        "channel": { "type": "string", "minLength": 1 },
+        "target": { "type": "string", "minLength": 1 },
+        "priority": { "type": "string", "minLength": 1 },
+        "maxDeliveryLatencySeconds": { "type": "integer", "minimum": 0 }
       }
     },
     "requestState": { "type": "string", "enum": ["pending", "running", "failed", "completed", "blocked"] },

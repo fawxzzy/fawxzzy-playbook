@@ -118,26 +118,22 @@ The GitHub Actions workflow `.github/workflows/release-prep.yml` is the only aut
 
 ## Release Sync Enforcement
 
-Local pre-commit enforcement now runs `pnpm playbook release sync` before commit finalization through `.husky/pre-commit` and fails closed if release drift remains after staged updates + re-check.
+Release sync now has an atomic commit surface: use `pnpm playbook commit` instead of raw `git commit` for release-governed changes.
 
 Behavior:
 
-- Runs deterministic release sync (`pnpm playbook release sync --json --out .playbook/release-plan.json`).
-- Stages release-sync updates into the in-flight commit (`git add -A`) before commit finalization.
-- Refreshes the Git index (`git update-index --again`) so the commit snapshot includes the post-sync mutation set.
-- Re-runs `pnpm playbook release sync --check` and blocks the commit on any residual drift.
-- Skips work when there are no staged changes, avoiding empty-commit loops.
-- For governed changes, prefer `pnpm playbook apply` as the mutation boundary and let Playbook-owned release sync + commit steps finalize the state.
-- Do not rely on direct manual `git commit` for governed mutation flows when `playbook apply` is available.
-- Canonical governed flow: `pnpm playbook apply` -> release sync -> stage -> verify release-clean -> `git commit` -> `git push`.
+- `pnpm playbook commit` runs release sync, stages all repo changes, and executes `git commit` with pass-through flags (for example `-m`).
+- `.husky/pre-commit` is warning-only for release drift (no mutation).
+- `.husky/pre-push` remains fail-closed and blocks push when drift still exists.
 
 Rule: Release governance must be applied before CI, not discovered by CI.
-Rule: Release governance must fail locally before CI, not after commit.
-Pattern: Shift release sync from CI detection -> local pre-commit enforcement.
-Pattern: Mutate -> stage -> refresh index -> commit.
-Pattern: apply -> release sync -> stage -> verify clean -> commit -> push.
+Rule: Release sync must occur before commit snapshot is created.
+Rule: Release sync is part of commit, not a separate step.
+Pattern: Atomic mutation = code + release state committed together.
+Pattern: Mutation -> auto-sync -> commit -> push clean state.
 Failure Mode: Relying on CI to detect release drift creates infinite failure loops and slows iteration.
-Failure Mode: Without index refresh, Git can commit stale snapshots after hook-time mutations.
+Failure Mode: Separating release sync from commit creates drift and guarantees CI failure cycles.
+Failure Mode: Mutating release state inside pre-commit leads to inconsistent commit snapshots and persistent CI drift.
 
 Rule: Installable workflow policy is incomplete until the trusted/manual mutation path is installable too.
 Pattern: Seed policy, seed reviewed executor, keep normal CI plan-only.
@@ -158,6 +154,19 @@ Rule: Managed release artifacts must remain idempotent after first successful ap
 Pattern: Apply once, verify many times.
 Failure Mode: Duplicate managed changelog prepends create permanent false drift.
 
+## Release Sync Requirement
+
+Release sync should run through `pnpm playbook commit` for atomic local commits, while pre-push keeps a fail-closed fallback check.
+
+- Use `pnpm playbook commit -m "<message>"` for release-governed changes instead of raw `git commit`.
+- `.husky/pre-commit` runs `pnpm playbook release sync --check` as warning-only and does not mutate.
+- `.husky/pre-push` runs `pnpm playbook release sync --check` and fails closed without mutating repository state.
+- CI parity is intentional: local push blocks and CI both fail on unresolved release drift.
+
+Rule: Release plan must be applied before code leaves local environment.
+Pattern: Detect drift locally -> apply -> commit -> push clean state.
+Failure Mode: Relying on CI to detect release drift creates redundant failure cycles and slows iteration.
+
 ## Smoke testing
 
 Run the repository smoke test:
@@ -167,6 +176,14 @@ node scripts/smoke-test.mjs
 ```
 
 The smoke test validates command execution, template generation, and verify behavior.
+
+## CI sidecar reporting behavior
+
+`analyze-pr-comment` reporting transport (sticky PR comments and inline diagnostics sync) is a non-authoritative sidecar: transient GitHub provider outages should degrade to warnings and not mark the workflow red when truth-producing checks already succeeded.
+
+Rule: Optional reporting surfaces must degrade gracefully under transient provider outages.
+Pattern: Truth-producing checks fail closed; commentary/reporting steps fail soft.
+Failure Mode: When sidecar comment publishing is treated as a hard gate, transient GitHub instability looks like product failure.
 
 ## Component ownership
 

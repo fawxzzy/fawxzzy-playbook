@@ -67,20 +67,41 @@ jobs:
           script: |
             const fs = require('node:fs');
             const { upsertStickyPrComment } = require('./.github/scripts/upsert-sticky-pr-comment.cjs');
+            const { callGitHubWithRetry, isTransientGitHubError } = require('./.github/scripts/sync-analyze-pr-review-comments.cjs');
             const marker = process.env.PLAYBOOK_COMMENT_MARKER;
             const commentPath = process.env.PLAYBOOK_COMMENT_FILE;
             const formattedComment = fs.readFileSync(commentPath, 'utf8').trimEnd();
             const body = `${marker}\n${formattedComment}`;
             const { owner, repo } = context.repo;
-            const result = await upsertStickyPrComment({
-              github,
-              owner,
-              repo,
-              issue_number: context.issue.number,
-              marker,
-              body,
-            });
-            core.info(`${result.action === 'updated' ? 'Updated' : 'Created'} Playbook PR comment: ${result.id}`);
+            const pullNumber = context.issue.number;
+            try {
+              const result = await callGitHubWithRetry({
+                core,
+                endpoint: 'issues.upsertStickyPrComment',
+                prNumber: pullNumber,
+                operation: () => upsertStickyPrComment({
+                  github,
+                  owner,
+                  repo,
+                  issue_number: pullNumber,
+                  marker,
+                  body,
+                }),
+              });
+              core.info(JSON.stringify({
+                event: 'playbook.sidecar.comment.sync',
+                endpoint: 'issues.upsertStickyPrComment',
+                pr_number: pullNumber,
+                action: result.action,
+                comment_id: result.id,
+              }));
+            } catch (error) {
+              if (isTransientGitHubError(error)) {
+                core.warning(`Playbook sticky PR comment degraded after transient GitHub API failures (pr=${pullNumber}). Skipping sidecar comment sync.`);
+                return;
+              }
+              throw error;
+            }
 
       - name: Sync inline Playbook diagnostics
         if: github.event.pull_request.head.repo.full_name == github.repository
@@ -92,14 +113,14 @@ jobs:
         with:
           script: |
             const fs = require('node:fs');
-            const { syncAnalyzePrReviewComments } = require('./.github/scripts/sync-analyze-pr-review-comments.cjs');
+            const { runSyncAnalyzePrReviewCommentsSidecar } = require('./.github/scripts/sync-analyze-pr-review-comments.cjs');
             const diagnostics = JSON.parse(fs.readFileSync(process.env.PLAYBOOK_REVIEW_FILE, 'utf8'));
             const expectedHeadSha = context.payload.pull_request?.head?.sha;
             if (!expectedHeadSha) {
               core.warning('Missing pull request head SHA for review diagnostics transport; degrading Playbook inline diagnostics to fallback comment behavior.');
             }
 
-            await syncAnalyzePrReviewComments({
+            await runSyncAnalyzePrReviewCommentsSidecar({
               github,
               core,
               context,

@@ -18,9 +18,10 @@ export const interopRequestStates = ['pending', 'running', 'failed', 'completed'
 export type InteropRequestState = (typeof interopRequestStates)[number];
 
 export type FitnessActionRoutingMetadata = {
-  topic: string;
-  must_route_through_playbook_plan: boolean;
-  no_direct_lifeline_bypass: boolean;
+  channel: string;
+  target: string;
+  priority: string;
+  maxDeliveryLatencySeconds: number;
 };
 
 export type InteropCapabilityRegistration = {

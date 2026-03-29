@@ -53,19 +53,22 @@ describe('fitness integration contract mirror', () => {
 
   it('preserves routing metadata and constraints exactly', () => {
     expect(getFitnessActionContract('adjust_upcoming_workout_load').routing).toEqual({
-      topic: 'fitness.actions.training-load',
-      must_route_through_playbook_plan: true,
-      no_direct_lifeline_bypass: true
+      channel: 'fitness.actions',
+      target: 'training-load',
+      priority: 'high',
+      maxDeliveryLatencySeconds: 300
     });
     expect(getFitnessActionContract('schedule_recovery_block').routing).toEqual({
-      topic: 'fitness.actions.recovery',
-      must_route_through_playbook_plan: true,
-      no_direct_lifeline_bypass: true
+      channel: 'fitness.actions',
+      target: 'recovery',
+      priority: 'high',
+      maxDeliveryLatencySeconds: 300
     });
     expect(getFitnessActionContract('revise_weekly_goal_plan').routing).toEqual({
-      topic: 'fitness.actions.weekly-plan',
-      must_route_through_playbook_plan: true,
-      no_direct_lifeline_bypass: true
+      channel: 'fitness.actions',
+      target: 'weekly-plan',
+      priority: 'high',
+      maxDeliveryLatencySeconds: 300
     });
 
     for (const action of fitnessIntegrationContract.actions) {
@@ -115,9 +118,10 @@ describe('fitness integration contract mirror', () => {
         action: string;
         receipt: string;
         routing: {
-          topic: string;
-          must_route_through_playbook_plan: boolean;
-          no_direct_lifeline_bypass: boolean;
+          channel: string;
+          target: string;
+          priority: string;
+          maxDeliveryLatencySeconds: number;
         };
         constraints: string[];
       }>;

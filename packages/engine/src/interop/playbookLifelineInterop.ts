@@ -85,9 +85,10 @@ export const registerInteropCapability = (
     );
   }
   if (
-    capability.routing.topic !== actionContract.routing.topic ||
-    capability.routing.must_route_through_playbook_plan !== actionContract.routing.must_route_through_playbook_plan ||
-    capability.routing.no_direct_lifeline_bypass !== actionContract.routing.no_direct_lifeline_bypass
+    capability.routing.channel !== actionContract.routing.channel ||
+    capability.routing.target !== actionContract.routing.target ||
+    capability.routing.priority !== actionContract.routing.priority ||
+    capability.routing.maxDeliveryLatencySeconds !== actionContract.routing.maxDeliveryLatencySeconds
   ) {
     throw new Error(`Cannot register interop capability: routing mismatch for ${capability.action_kind}.`);
   }
