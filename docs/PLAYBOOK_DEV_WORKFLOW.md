@@ -158,6 +158,18 @@ Rule: Managed release artifacts must remain idempotent after first successful ap
 Pattern: Apply once, verify many times.
 Failure Mode: Duplicate managed changelog prepends create permanent false drift.
 
+## Release Sync Requirement
+
+Always run release sync before pushing when contracts or CLI surfaces change.
+
+- `pnpm playbook release sync --check` runs in `.husky/pre-push` and fails closed without mutating repository state.
+- If drift is detected, run `pnpm playbook release sync`, commit the governed updates, and push again.
+- CI parity is intentional: local push blocks and CI both fail on unresolved release drift.
+
+Rule: Release plan must be applied before code leaves local environment.
+Pattern: Detect drift locally -> apply -> commit -> push clean state.
+Failure Mode: Relying on CI to detect release drift creates redundant failure cycles and slows iteration.
+
 ## Smoke testing
 
 Run the repository smoke test:
