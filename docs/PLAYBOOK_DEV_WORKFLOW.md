@@ -113,6 +113,10 @@ Fitness-targeted AI proposal boundary clarification:
 - `pnpm playbook ai propose --target fitness --json` may emit a proposal-only bounded request suggestion validated against canonical Fitness action/input contracts.
 - AI proposal output must not emit runtime requests directly and must not invoke interop runtime automatically.
 - Operators should route bounded suggestions through `pnpm playbook interop emit-fitness-plan ...` to preserve request/receipt governance seams.
+- `pnpm playbook interop draft --json` compiles `.playbook/ai-proposal.json` into additive `.playbook/interop-request-draft.json` for explicit review, with no runtime execution.
+- Rule: AI proposals may compile to request drafts, but execution must still pass through explicit `interop emit-fitness-plan` commands.
+- Pattern: AI proposal -> request draft -> explicit interop emit -> receipt -> updated truth.
+- Failure Mode: Manually translating proposal suggestions into emit arguments recreates hidden session state and reduces auditability.
 
 Fitness contract sync boundary clarification:
 
