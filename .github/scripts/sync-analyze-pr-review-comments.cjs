@@ -1,6 +1,11 @@
 const { upsertStickyPrComment } = require('./upsert-sticky-pr-comment.cjs');
 
 const RIGHT_SIDE = 'RIGHT';
+const TRANSIENT_HTTP_STATUSES = new Set([502, 503, 504]);
+const TRANSIENT_ERROR_CODES = new Set(['ECONNRESET', 'ETIMEDOUT', 'ESOCKETTIMEDOUT', 'ECONNABORTED']);
+const DEFAULT_RETRY_ATTEMPTS = 3;
+const DEFAULT_BASE_BACKOFF_MS = 200;
+const DEFAULT_JITTER_WINDOW_MS = 73;
 
 const normalizeBody = (body, marker) => String(body || '').replace(marker, '').trim();
 const keyForAnnotation = (annotation) => `${annotation.path}:${annotation.line}:${String(annotation.body || '').trim()}`;
@@ -82,6 +87,82 @@ const buildFallbackBody = (annotations, marker) => {
   return lines.join('\n').trimEnd();
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const extractStatus = (error) => error?.status ?? error?.response?.status;
+const extractCode = (error) => String(error?.code || error?.cause?.code || '');
+
+const isTransientGitHubError = (error) => {
+  const status = extractStatus(error);
+  if (TRANSIENT_HTTP_STATUSES.has(status)) return true;
+  return TRANSIENT_ERROR_CODES.has(extractCode(error));
+};
+
+const isAuthOrPermissionError = (error) => {
+  const status = extractStatus(error);
+  return status === 401 || status === 403;
+};
+
+const deterministicJitterMs = ({ endpoint, prNumber, attempt, windowMs }) => {
+  const seed = `${endpoint}:${prNumber}:${attempt}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  return hash % windowMs;
+};
+
+async function callGitHubWithRetry({
+  operation,
+  core,
+  endpoint,
+  prNumber,
+  maxAttempts = DEFAULT_RETRY_ATTEMPTS,
+  baseBackoffMs = DEFAULT_BASE_BACKOFF_MS,
+  jitterWindowMs = DEFAULT_JITTER_WINDOW_MS,
+}) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      const transient = isTransientGitHubError(error);
+      const status = extractStatus(error);
+      if (!transient || attempt === maxAttempts) {
+        if (transient && attempt === maxAttempts) {
+          core?.warning?.(
+            `::warning::${JSON.stringify({
+              event: 'playbook.sidecar.retry.exhausted',
+              endpoint,
+              pr_number: prNumber,
+              retries: maxAttempts,
+              status: status ?? null,
+              code: extractCode(error) || null,
+              degradation: 'skip-comment-sync',
+            })}`,
+          );
+        }
+        throw error;
+      }
+
+      const backoff = baseBackoffMs * (2 ** (attempt - 1));
+      const jitter = deterministicJitterMs({ endpoint, prNumber, attempt, windowMs: jitterWindowMs });
+      const waitMs = backoff + jitter;
+      core?.info?.(
+        JSON.stringify({
+          event: 'playbook.sidecar.retry',
+          endpoint,
+          pr_number: prNumber,
+          attempt,
+          max_attempts: maxAttempts,
+          status: status ?? null,
+          code: extractCode(error) || null,
+          wait_ms: waitMs,
+        }),
+      );
+      await sleep(waitMs);
+    }
+  }
+  throw new Error('unreachable');
+}
+
 async function deleteIssueCommentByMarker({ github, owner, repo, issue_number, marker }) {
   const comments = await github.paginate(github.rest.issues.listComments, {
     owner,
@@ -98,21 +179,36 @@ async function deleteIssueCommentByMarker({ github, owner, repo, issue_number, m
 async function syncAnalyzePrReviewComments({ github, core, context, diagnostics, marker, fallbackMarker, expectedHeadSha }) {
   const { owner, repo } = context.repo;
   const pull_number = context.issue.number;
-  const livePull = await github.rest.pulls.get({ owner, repo, pull_number });
+  const livePull = await callGitHubWithRetry({
+    core,
+    endpoint: 'pulls.get',
+    prNumber: pull_number,
+    operation: () => github.rest.pulls.get({ owner, repo, pull_number }),
+  });
   const liveHeadSha = livePull.data.head?.sha;
-  const files = await github.paginate(github.rest.pulls.listFiles, {
-    owner,
-    repo,
-    pull_number,
-    per_page: 100,
+  const files = await callGitHubWithRetry({
+    core,
+    endpoint: 'pulls.listFiles',
+    prNumber: pull_number,
+    operation: () => github.paginate(github.rest.pulls.listFiles, {
+      owner,
+      repo,
+      pull_number,
+      per_page: 100,
+    }),
   });
   const anchorIndex = buildDiffAnchorIndex(files);
 
-  const reviewComments = await github.paginate(github.rest.pulls.listReviewComments, {
-    owner,
-    repo,
-    pull_number,
-    per_page: 100,
+  const reviewComments = await callGitHubWithRetry({
+    core,
+    endpoint: 'pulls.listReviewComments',
+    prNumber: pull_number,
+    operation: () => github.paginate(github.rest.pulls.listReviewComments, {
+      owner,
+      repo,
+      pull_number,
+      per_page: 100,
+    }),
   });
   const playbookComments = reviewComments.filter((comment) =>
     comment.user?.type === 'Bot' && typeof comment.body === 'string' && comment.body.includes(marker),
@@ -140,22 +236,32 @@ async function syncAnalyzePrReviewComments({ github, core, context, diagnostics,
   const desiredResolvableKeys = new Set(resolvable.map((annotation) => keyForAnnotation(annotation)));
   for (const [existingKey, comment] of existingByKey.entries()) {
     if (desiredResolvableKeys.has(existingKey)) continue;
-    await github.rest.pulls.deleteReviewComment({ owner, repo, comment_id: comment.id });
+    await callGitHubWithRetry({
+      core,
+      endpoint: 'pulls.deleteReviewComment',
+      prNumber: pull_number,
+      operation: () => github.rest.pulls.deleteReviewComment({ owner, repo, comment_id: comment.id }),
+    });
   }
 
   for (const annotation of resolvable) {
     const desiredKey = keyForAnnotation(annotation);
     if (existingByKey.has(desiredKey)) continue;
     try {
-      await github.rest.pulls.createReviewComment({
-        owner,
-        repo,
-        pull_number,
-        commit_id: liveHeadSha,
-        path: annotation.path,
-        line: annotation.line,
-        side: RIGHT_SIDE,
-        body: `${String(annotation.body).trim()}\n\n${marker}`,
+      await callGitHubWithRetry({
+        core,
+        endpoint: 'pulls.createReviewComment',
+        prNumber: pull_number,
+        operation: () => github.rest.pulls.createReviewComment({
+          owner,
+          repo,
+          pull_number,
+          commit_id: liveHeadSha,
+          path: annotation.path,
+          line: annotation.line,
+          side: RIGHT_SIDE,
+          body: `${String(annotation.body).trim()}\n\n${marker}`,
+        }),
       });
     } catch (error) {
       const status = error?.status ?? error?.response?.status;
@@ -175,10 +281,20 @@ async function syncAnalyzePrReviewComments({ github, core, context, diagnostics,
 
   if (fallback.length > 0) {
     const body = buildFallbackBody(fallback, fallbackMarker);
-    const result = await upsertStickyPrComment({ github, owner, repo, issue_number: pull_number, marker: fallbackMarker, body });
+    const result = await callGitHubWithRetry({
+      core,
+      endpoint: 'issues.upsertStickyFallbackComment',
+      prNumber: pull_number,
+      operation: () => upsertStickyPrComment({ github, owner, repo, issue_number: pull_number, marker: fallbackMarker, body }),
+    });
     core?.info?.(`Playbook inline fallback comment ${result.action}: ${result.id}`);
   } else {
-    const deleted = await deleteIssueCommentByMarker({ github, owner, repo, issue_number: pull_number, marker: fallbackMarker });
+    const deleted = await callGitHubWithRetry({
+      core,
+      endpoint: 'issues.deleteFallbackCommentByMarker',
+      prNumber: pull_number,
+      operation: () => deleteIssueCommentByMarker({ github, owner, repo, issue_number: pull_number, marker: fallbackMarker }),
+    });
     if (deleted) core?.info?.('Removed stale Playbook inline fallback comment.');
   }
 
@@ -192,11 +308,32 @@ async function syncAnalyzePrReviewComments({ github, core, context, diagnostics,
   return { resolvable, fallback, liveHeadSha, expectedHeadSha };
 }
 
+async function runSyncAnalyzePrReviewCommentsSidecar(args) {
+  const { core, context } = args;
+  try {
+    return await syncAnalyzePrReviewComments(args);
+  } catch (error) {
+    if (isTransientGitHubError(error)) {
+      const pullNumber = context?.issue?.number;
+      core?.warning?.(
+        `Playbook analyze-pr comment sync degraded after transient GitHub API failures (pr=${pullNumber ?? 'unknown'}). Skipping comment sync.`,
+      );
+      return { degraded: true, reason: 'transient-provider-outage' };
+    }
+    if (isAuthOrPermissionError(error)) throw error;
+    throw error;
+  }
+}
+
 module.exports = {
   RIGHT_SIDE,
+  isTransientGitHubError,
+  isAuthOrPermissionError,
+  callGitHubWithRetry,
   parsePatchAddedLines,
   buildDiffAnchorIndex,
   validateAnnotationAnchor,
   buildFallbackBody,
   syncAnalyzePrReviewComments,
+  runSyncAnalyzePrReviewCommentsSidecar,
 };

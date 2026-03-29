@@ -180,6 +180,14 @@ node scripts/smoke-test.mjs
 
 The smoke test validates command execution, template generation, and verify behavior.
 
+## CI sidecar reporting behavior
+
+`analyze-pr-comment` reporting transport (sticky PR comments and inline diagnostics sync) is a non-authoritative sidecar: transient GitHub provider outages should degrade to warnings and not mark the workflow red when truth-producing checks already succeeded.
+
+Rule: Optional reporting surfaces must degrade gracefully under transient provider outages.
+Pattern: Truth-producing checks fail closed; commentary/reporting steps fail soft.
+Failure Mode: When sidecar comment publishing is treated as a hard gate, transient GitHub instability looks like product failure.
+
 ## Component ownership
 
 ### CLI (`packages/cli`)
