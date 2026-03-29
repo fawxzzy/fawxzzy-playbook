@@ -30,7 +30,7 @@ describe('runInterop', () => {
     const payload = JSON.parse(String(spy.mock.calls.at(-1)?.[0])) as {
       command: string;
       subcommand: string;
-      payload: Array<{ capability_id: string; action_kind: string; receipt_type: string; routing: { topic: string } }>;
+      payload: Array<{ capability_id: string; action_kind: string; receipt_type: string; routing: { channel: string; target: string; priority: string; maxDeliveryLatencySeconds: number } }>;
     };
 
     expect(exitCode).toBe(ExitCode.Success);
@@ -42,9 +42,10 @@ describe('runInterop', () => {
         action_kind: 'adjust_upcoming_workout_load',
         receipt_type: 'schedule_adjustment_applied',
         routing: {
-          topic: 'fitness.actions.training-load',
-          must_route_through_playbook_plan: true,
-          no_direct_lifeline_bypass: true
+          channel: 'fitness.actions',
+          target: 'training-load',
+          priority: 'high',
+          maxDeliveryLatencySeconds: 300
         },
         version: '1.0.0',
         runtime_id: 'lifeline-mock-runtime',
@@ -66,8 +67,8 @@ describe('runInterop', () => {
     expect(await runInterop(repo, ['run-mock'], { format: 'json', quiet: false })).toBe(ExitCode.Success);
 
     const runtime = JSON.parse(fs.readFileSync(path.join(repo, '.playbook/lifeline-interop-runtime.json'), 'utf8')) as {
-      requests: Array<{ request_state: string; action_kind: string; receipt_type: string; routing: { topic: string } }>;
-      receipts: Array<{ outcome: string; action_kind: string; receipt_type: string; routing: { topic: string } }>;
+      requests: Array<{ request_state: string; action_kind: string; receipt_type: string; routing: { channel: string; target: string; priority: string; maxDeliveryLatencySeconds: number } }>;
+      receipts: Array<{ outcome: string; action_kind: string; receipt_type: string; routing: { channel: string; target: string; priority: string; maxDeliveryLatencySeconds: number } }>;
       heartbeat: { health: string };
     };
 
@@ -76,13 +77,13 @@ describe('runInterop', () => {
       request_state: 'completed',
       action_kind: 'adjust_upcoming_workout_load',
       receipt_type: 'schedule_adjustment_applied',
-      routing: { topic: 'fitness.actions.training-load' }
+      routing: { channel: 'fitness.actions', target: 'training-load', priority: 'high', maxDeliveryLatencySeconds: 300 }
     });
     expect(runtime.receipts[0]).toMatchObject({
       outcome: 'completed',
       action_kind: 'adjust_upcoming_workout_load',
       receipt_type: 'schedule_adjustment_applied',
-      routing: { topic: 'fitness.actions.training-load' }
+      routing: { channel: 'fitness.actions', target: 'training-load', priority: 'high', maxDeliveryLatencySeconds: 300 }
     });
     expect(runtime.heartbeat.health).toBe('healthy');
   });

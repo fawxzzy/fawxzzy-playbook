@@ -11,7 +11,7 @@ type InteropOptions = { format: 'text' | 'json'; quiet: boolean; help?: boolean 
 type FitnessActionContract = {
   name: string;
   receiptType: string;
-  routing: { topic: string; must_route_through_playbook_plan: boolean; no_direct_lifeline_bypass: boolean };
+  routing: { channel: string; target: string; priority: string; maxDeliveryLatencySeconds: number };
 };
 type RemediationInteropActionKind = FitnessActionContract['name'];
 type RendezvousManifest = { remediationId: string; requiredArtifactIds: string[] };
