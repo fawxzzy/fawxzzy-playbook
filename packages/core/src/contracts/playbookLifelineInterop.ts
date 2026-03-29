@@ -64,6 +64,7 @@ export type InteropActionRequest = {
   rendezvous_manifest_path: string;
   rendezvous_manifest_sha256: string;
   bounded_inputs: string[];
+  bounded_action_input: Record<string, unknown>;
   blocked_reason: InteropBlockedReason | null;
   retry: InteropRetryState;
 };

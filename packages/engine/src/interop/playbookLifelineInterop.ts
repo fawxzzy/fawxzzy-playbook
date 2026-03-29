@@ -18,6 +18,7 @@ import {
 } from '@zachariahredfield/playbook-core';
 import {
   getFitnessActionContract,
+  validateFitnessActionInput,
   getFitnessReceiptTypeForAction,
   isFitnessActionName
 } from '../integrations/fitnessContract.js';
@@ -102,6 +103,7 @@ export const emitBoundedInteropActionRequest = (input: {
   manifest: RendezvousManifest;
   evaluation: RendezvousManifestEvaluation;
   action_kind: RemediationInteropActionKind;
+  bounded_action_input?: Record<string, unknown>;
   capability_id: string;
   manifest_path?: string;
   max_attempts?: number;
@@ -114,6 +116,13 @@ export const emitBoundedInteropActionRequest = (input: {
   }
   const actionContract = getFitnessActionContract(input.action_kind);
   const receiptType = getFitnessReceiptTypeForAction(input.action_kind);
+  const boundedActionInput = input.bounded_action_input ?? {};
+  const inputValidation = validateFitnessActionInput(input.action_kind, boundedActionInput);
+  if (!inputValidation.valid) {
+    throw new Error(
+      `Cannot emit interop request: bounded_action_input validation failed for ${input.action_kind}: ${inputValidation.errors.join(' ')}`
+    );
+  }
   const capability = input.runtime.capabilities.find((entry) => entry.capability_id === input.capability_id && entry.action_kind === input.action_kind);
   if (!capability) {
     throw new Error(`Cannot emit interop request: capability ${input.capability_id} is not registered for ${input.action_kind}.`);
@@ -142,6 +151,7 @@ export const emitBoundedInteropActionRequest = (input: {
     rendezvous_manifest_path: manifestPath,
     rendezvous_manifest_sha256: manifestHash,
     bounded_inputs: input.manifest.requiredArtifactIds.map((id) => `artifact:${id}`),
+    bounded_action_input: boundedActionInput,
     blocked_reason: null,
     retry: {
       attempts: 0,
@@ -235,6 +245,21 @@ export const reconcileInteropRuntime = (runtime: PlaybookLifelineInteropRuntimeA
   for (const request of next.requests) {
     const receipt = next.receipts.find((entry) => entry.request_id === request.request_id);
     if (!receipt) continue;
+    const expectedReceiptType = getFitnessReceiptTypeForAction(request.action_kind);
+    const expectedRouting = getFitnessActionContract(request.action_kind).routing;
+    if (receipt.action_kind !== request.action_kind || receipt.receipt_type !== expectedReceiptType) {
+      throw new Error(
+        `Cannot reconcile interop runtime: receipt mismatch for request ${request.request_id}. expected ${request.action_kind}->${expectedReceiptType}, actual ${receipt.action_kind}->${receipt.receipt_type}.`
+      );
+    }
+    if (
+      receipt.routing.channel !== expectedRouting.channel ||
+      receipt.routing.target !== expectedRouting.target ||
+      receipt.routing.priority !== expectedRouting.priority ||
+      receipt.routing.maxDeliveryLatencySeconds !== expectedRouting.maxDeliveryLatencySeconds
+    ) {
+      throw new Error(`Cannot reconcile interop runtime: routing mismatch for request ${request.request_id}.`);
+    }
     if (receipt.outcome === 'completed') request.request_state = 'completed';
     else if (receipt.outcome === 'blocked') request.request_state = 'blocked';
     else request.request_state = 'failed';
