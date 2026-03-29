@@ -118,26 +118,22 @@ The GitHub Actions workflow `.github/workflows/release-prep.yml` is the only aut
 
 ## Release Sync Enforcement
 
-Local pre-commit enforcement now runs `pnpm playbook release sync` before commit finalization through `.husky/pre-commit` and fails closed if release drift remains after staged updates + re-check.
+Local pre-commit enforcement runs release sync before commit finalization through `.husky/pre-commit`, so release drift is auto-corrected and staged as part of the commit path.
 
 Behavior:
 
-- Runs deterministic release sync (`pnpm playbook release sync --json --out .playbook/release-plan.json`).
-- Stages release-sync updates into the in-flight commit (`git add -A`) before commit finalization.
-- Refreshes the Git index (`git update-index --again`) so the commit snapshot includes the post-sync mutation set.
-- Re-runs `pnpm playbook release sync --check` and blocks the commit on any residual drift.
+- Runs fast drift detection first (`pnpm playbook release sync --check`).
+- If drift is detected, runs `pnpm playbook release sync`.
+- Stages only governed release artifacts into the in-flight commit (`packages/**/package.json`, `docs/CHANGELOG.md`).
 - Skips work when there are no staged changes, avoiding empty-commit loops.
-- For governed changes, prefer `pnpm playbook apply` as the mutation boundary and let Playbook-owned release sync + commit steps finalize the state.
-- Do not rely on direct manual `git commit` for governed mutation flows when `playbook apply` is available.
-- Canonical governed flow: `pnpm playbook apply` -> release sync -> stage -> verify release-clean -> `git commit` -> `git push`.
+- Keeps pre-push `release sync --check` as fail-closed fallback if drift somehow remains.
 
 Rule: Release governance must be applied before CI, not discovered by CI.
-Rule: Release governance must fail locally before CI, not after commit.
-Pattern: Shift release sync from CI detection -> local pre-commit enforcement.
-Pattern: Mutate -> stage -> refresh index -> commit.
+Rule: Release sync is part of commit, not a separate step.
+Pattern: Mutation -> auto-sync -> commit -> push clean state.
 Pattern: apply -> release sync -> stage -> verify clean -> commit -> push.
 Failure Mode: Relying on CI to detect release drift creates infinite failure loops and slows iteration.
-Failure Mode: Without index refresh, Git can commit stale snapshots after hook-time mutations.
+Failure Mode: Separating release sync from commit creates drift and guarantees CI failure cycles.
 
 Rule: Installable workflow policy is incomplete until the trusted/manual mutation path is installable too.
 Pattern: Seed policy, seed reviewed executor, keep normal CI plan-only.
@@ -160,10 +156,10 @@ Failure Mode: Duplicate managed changelog prepends create permanent false drift.
 
 ## Release Sync Requirement
 
-Always run release sync before pushing when contracts or CLI surfaces change.
+Release sync now runs automatically during commit when drift exists, and pre-push keeps a fail-closed fallback check.
 
-- `pnpm playbook release sync --check` runs in `.husky/pre-push` and fails closed without mutating repository state.
-- If drift is detected, run `pnpm playbook release sync`, commit the governed updates, and push again.
+- `.husky/pre-commit` runs `pnpm playbook release sync --check`; on drift it auto-runs `pnpm playbook release sync` and stages governed release files.
+- `.husky/pre-push` runs `pnpm playbook release sync --check` and fails closed without mutating repository state.
 - CI parity is intentional: local push blocks and CI both fail on unresolved release drift.
 
 Rule: Release plan must be applied before code leaves local environment.
