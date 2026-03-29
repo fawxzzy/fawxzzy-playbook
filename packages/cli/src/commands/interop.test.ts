@@ -254,4 +254,112 @@ describe('runInterop', () => {
     });
     expect(artifact.fingerprint).toBe(payload.payload.sourceHash);
   });
+
+  it('compiles fitness-targeted ai proposal into deterministic interop request draft', async () => {
+    const repo = createRepo();
+    writeArtifact(repo, '.playbook/ai-proposal.json', {
+      schemaVersion: '1.0',
+      command: 'ai-propose',
+      proposalId: 'ai-proposal-abc123',
+      scope: {
+        mode: 'proposal-only',
+        boundaries: ['no-direct-apply', 'no-memory-promotion', 'no-pattern-promotion', 'no-external-interop-emit', 'artifact-only-output'],
+        allowedInputs: ['.playbook/ai-context.json', '.playbook/ai-contract.json', '.playbook/repo-index.json', 'playbook-engine:fitnessIntegrationContract'],
+        optionalInputs: [],
+        target: 'fitness'
+      },
+      reasoningSummary: ['fitness suggestion'],
+      recommendedNextGovernedSurface: 'interop emit-fitness-plan',
+      suggestedArtifactPath: '.playbook/ai-proposal.json',
+      blockers: [],
+      assumptions: ['advisory only'],
+      confidence: 0.82,
+      provenance: [
+        { artifactPath: '.playbook/repo-index.json', source: 'file', required: true, available: true, used: true }
+      ],
+      fitnessRequestSuggestion: {
+        canonicalActionName: 'adjust_upcoming_workout_load',
+        boundedActionInput: {
+          athlete_id: 'athlete-001',
+          week_id: 'week-2026-W13',
+          workout_id: 'workout-001',
+          load_adjustment_percent: -10,
+          duration_days: 3,
+          reason_code: 'fatigue_spike'
+        },
+        canonicalExpectedReceiptType: 'schedule_adjustment_applied',
+        routingMetadataSummary: {
+          channel: 'fitness.actions',
+          target: 'training-load',
+          priority: 'high',
+          maxDeliveryLatencySeconds: 300,
+          constraints: ['same_week_only', 'max_duration_days_14']
+        },
+        recommendedNextGovernedSurface: 'interop emit-fitness-plan',
+        blockers: [],
+        assumptions: ['canonical'],
+        confidence: 0.84
+      }
+    });
+
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const exitCode = await runInterop(repo, ['draft'], { format: 'json', quiet: false });
+    const payload = JSON.parse(String(spy.mock.calls.at(-1)?.[0])) as {
+      command: string;
+      subcommand: string;
+      payload: { artifactPath: string; draft: { kind: string; action: string; expected_receipt_type: string } };
+    };
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(payload.command).toBe('interop');
+    expect(payload.subcommand).toBe('draft');
+    expect(payload.payload.artifactPath).toBe('.playbook/interop-request-draft.json');
+    expect(payload.payload.draft).toMatchObject({
+      kind: 'interop-request-draft',
+      action: 'adjust_upcoming_workout_load',
+      expected_receipt_type: 'schedule_adjustment_applied'
+    });
+  });
+
+  it('rejects draft compilation for invalid non-canonical action suggestion', async () => {
+    const repo = createRepo();
+    writeArtifact(repo, '.playbook/ai-proposal.json', {
+      schemaVersion: '1.0',
+      command: 'ai-propose',
+      proposalId: 'ai-proposal-bad',
+      scope: {
+        mode: 'proposal-only',
+        boundaries: ['no-direct-apply', 'no-memory-promotion', 'no-pattern-promotion', 'no-external-interop-emit', 'artifact-only-output'],
+        allowedInputs: ['.playbook/ai-context.json', '.playbook/ai-contract.json', '.playbook/repo-index.json', 'playbook-engine:fitnessIntegrationContract'],
+        optionalInputs: [],
+        target: 'fitness'
+      },
+      reasoningSummary: ['fitness suggestion'],
+      recommendedNextGovernedSurface: 'interop emit-fitness-plan',
+      suggestedArtifactPath: '.playbook/ai-proposal.json',
+      blockers: [],
+      assumptions: ['advisory only'],
+      confidence: 0.82,
+      provenance: [],
+      fitnessRequestSuggestion: {
+        canonicalActionName: 'non_canonical_action',
+        boundedActionInput: {},
+        canonicalExpectedReceiptType: 'schedule_adjustment_applied',
+        routingMetadataSummary: {
+          channel: 'fitness.actions',
+          target: 'training-load',
+          priority: 'high',
+          maxDeliveryLatencySeconds: 300,
+          constraints: ['same_week_only', 'max_duration_days_14']
+        },
+        recommendedNextGovernedSurface: 'interop emit-fitness-plan',
+        blockers: [],
+        assumptions: [],
+        confidence: 0.84
+      }
+    });
+
+    const exitCode = await runInterop(repo, ['draft'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Failure);
+  });
 });

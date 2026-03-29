@@ -48,7 +48,9 @@ The proposal artifact includes:
 
 - Rule: AI must remain a proposal-only layer within deterministic systems.
 - Rule: AI may interpret canonical external contracts, but may not widen or execute them directly.
-- Pattern: AI context -> proposal artifact -> bounded interop request -> receipt -> updated truth.
+- Rule: AI proposals may be compiled into bounded interop request drafts, but may not execute interop requests directly.
+- Failure Mode: Operators manually re-translating proposal artifacts into execution requests recreate hidden session state and reduce auditability.
+- Pattern: AI context -> proposal artifact -> interop request draft -> explicit interop emit -> receipt -> updated truth.
 - Pattern: AI -> proposal artifact -> route/plan/review -> apply -> verify.
 - Failure Mode: Allowing AI to mutate state directly collapses auditability and reproducibility.
 - Failure Mode: Letting AI skip from interpretation to execution collapses the request/receipt boundary and makes the Fitness seam untrustworthy.

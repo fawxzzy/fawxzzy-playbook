@@ -78,6 +78,7 @@ const engine = engineRuntime as unknown as {
   runLifelineMockRuntimeOnce: (runtime: any, runtimeId: string) => any;
   reconcileInteropRuntime: (runtime: any) => any;
   materializeFitnessContractArtifact: (options: { repoRoot: string }) => Promise<any>;
+  compileInteropRequestDraft: (cwd: string, options?: { proposalPath?: string; outFile?: string; capability?: string }) => { artifactPath: string; draft: any };
   readArtifactJson: <T>(path: string) => T;
 };
 
@@ -145,7 +146,7 @@ const toFitnessContractInspectPayload = async (cwd: string): Promise<FitnessCont
 export const runInterop = async (cwd: string, commandArgs: string[], options: InteropOptions): Promise<number> => {
   if (options.help) {
     printCommandHelp({
-      usage: 'playbook interop <register|emit|emit-fitness-plan|run-mock|reconcile|capabilities|requests|receipts|health|fitness-contract> [--json]',
+      usage: 'playbook interop <register|emit|emit-fitness-plan|draft|run-mock|reconcile|capabilities|requests|receipts|health|fitness-contract> [--json]',
       description: 'Inspect and operate remediation-first Playbook↔Lifeline interop runtime artifacts.',
       options: [
         '--capability <id>   capability id for register/emit',
@@ -153,10 +154,11 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
         '--action-input-json <json>  bounded action input payload (Fitness contract-shaped)',
         '--approved-plan     require explicit approval when deriving from .playbook/plan.json',
         '--runtime <id>      runtime id (default lifeline-mock-runtime)',
+        '--from-proposal <path>  proposal artifact path for draft compile (default .playbook/ai-proposal.json)',
         '--json              emit machine-readable output',
         '--help              show help'
       ],
-      artifacts: ['.playbook/lifeline-interop-runtime.json', '.playbook/rendezvous-manifest.json']
+      artifacts: ['.playbook/lifeline-interop-runtime.json', '.playbook/rendezvous-manifest.json', '.playbook/interop-request-draft.json']
     });
     return ExitCode.Success;
   }
@@ -170,6 +172,24 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
   try {
     const runtimeId = valueFor('--runtime') ?? 'lifeline-mock-runtime';
     const actionInputJson = valueFor('--action-input-json');
+    if (sub === 'draft') {
+      const fromProposal = valueFor('--from-proposal');
+      const compiled = engine.compileInteropRequestDraft(cwd, fromProposal ? { proposalPath: fromProposal } : {});
+      const payload = { artifactPath: compiled.artifactPath, draft: compiled.draft };
+      if (options.format === 'json') {
+        emitJsonOutput({ cwd, command: 'interop', payload: { command: 'interop', subcommand: sub, payload } });
+      } else if (!options.quiet) {
+        console.log(`draftId: ${compiled.draft.draftId}`);
+        console.log(`proposalId: ${compiled.draft.proposalId}`);
+        console.log(`target: ${compiled.draft.target}`);
+        console.log(`action: ${compiled.draft.action}`);
+        console.log(`capability: ${compiled.draft.capability}`);
+        console.log(`expected receipt: ${compiled.draft.expected_receipt_type}`);
+        console.log(`artifact: ${compiled.artifactPath}`);
+      }
+      return ExitCode.Success;
+    }
+
     if (sub === 'fitness-contract') {
       const payload = await toFitnessContractInspectPayload(cwd);
       if (options.format === 'json') {
