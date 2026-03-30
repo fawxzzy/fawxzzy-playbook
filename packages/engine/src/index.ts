@@ -255,7 +255,7 @@ export type { ExplainTargetResult, RuleExplanation, ModuleExplanation, Architect
 
 export { loadAiContract, validateAiContract, getDefaultAiContract, AI_CONTRACT_FILE, AI_CONTRACT_SCHEMA_VERSION } from './ai/aiContract.js';
 export { generateAiProposal, AI_PROPOSAL_DEFAULT_FILE, AI_PROPOSAL_SCHEMA_VERSION } from './ai/aiProposal.js';
-export { compileInteropRequestDraft, INTEROP_REQUEST_DRAFT_DEFAULT_FILE, INTEROP_REQUEST_DRAFT_SCHEMA_VERSION } from './interop/interopRequestDraft.js';
+export { compileInteropRequestDraft, readInteropRequestDraft, INTEROP_REQUEST_DRAFT_DEFAULT_FILE, INTEROP_REQUEST_DRAFT_SCHEMA_VERSION } from './interop/interopRequestDraft.js';
 
 export { parseOrchestratorContract, buildOrchestratorPlan, writeOrchestratorArtifacts } from './orchestrator.js';
 export type { OrchestratorContract, OrchestratorLane, OrchestratorPlan, RepoShape } from './orchestrator.js';

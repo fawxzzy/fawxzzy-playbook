@@ -86,6 +86,94 @@ const parseAiProposal = (cwd: string, filePath: string): AiProposal => {
   return parsed as AiProposal;
 };
 
+const parseInteropRequestDraft = (cwd: string, filePath: string): InteropRequestDraftArtifact => {
+  const canonicalPath = path.resolve(cwd, INTEROP_REQUEST_DRAFT_DEFAULT_FILE);
+  const requestedPath = path.resolve(cwd, filePath);
+  if (requestedPath !== canonicalPath) {
+    throw new Error(
+      `Cannot read interop request draft: only canonical ${INTEROP_REQUEST_DRAFT_DEFAULT_FILE} is supported for emit-fitness-plan --from-draft.`
+    );
+  }
+  if (!fs.existsSync(canonicalPath)) {
+    throw new Error(`Cannot read interop request draft: missing ${INTEROP_REQUEST_DRAFT_DEFAULT_FILE}.`);
+  }
+  const parsed = JSON.parse(fs.readFileSync(canonicalPath, 'utf8')) as unknown;
+  const record = assertRecord(parsed, 'interop request draft');
+  if (record.kind !== 'interop-request-draft') {
+    throw new Error('Cannot read interop request draft: kind must be interop-request-draft.');
+  }
+  if (record.target !== 'fitness') {
+    throw new Error('Cannot read interop request draft: target must be fitness.');
+  }
+
+  const capability = assertString(record.capability, 'interop request draft capability');
+  const action = assertString(record.action, 'interop request draft action');
+  if (!isFitnessActionName(action)) {
+    throw new Error(`Cannot read interop request draft: action ${action} is not part of the canonical Fitness contract.`);
+  }
+  const boundedActionInput = assertRecord(record.bounded_action_input, 'interop request draft bounded_action_input');
+  const inputValidation = validateFitnessActionInput(action, boundedActionInput);
+  if (!inputValidation.valid) {
+    throw new Error(
+      `Cannot read interop request draft: bounded_action_input validation failed for ${action}: ${inputValidation.errors.join(' ')}`
+    );
+  }
+
+  const expectedReceiptType = assertString(record.expected_receipt_type, 'interop request draft expected_receipt_type');
+  const canonicalReceiptType = getFitnessReceiptTypeForAction(action);
+  if (expectedReceiptType !== canonicalReceiptType) {
+    throw new Error(
+      `Cannot read interop request draft: expected receipt type mismatch for ${action}. expected=${canonicalReceiptType} actual=${expectedReceiptType}.`
+    );
+  }
+
+  const routing = assertRecord(record.routing_metadata, 'interop request draft routing_metadata');
+  const channel = assertString(routing.channel, 'interop request draft routing_metadata.channel');
+  const target = assertString(routing.target, 'interop request draft routing_metadata.target');
+  const priority = assertString(routing.priority, 'interop request draft routing_metadata.priority');
+  const maxDeliveryLatencySeconds = assertNumber(routing.maxDeliveryLatencySeconds, 'interop request draft routing_metadata.maxDeliveryLatencySeconds');
+  const constraints = assertStringArray(routing.constraints, 'interop request draft routing_metadata.constraints');
+  const actionContract = getFitnessActionContract(action);
+  if (
+    channel !== actionContract.routing.channel
+    || target !== actionContract.routing.target
+    || priority !== actionContract.routing.priority
+    || maxDeliveryLatencySeconds !== actionContract.routing.maxDeliveryLatencySeconds
+  ) {
+    throw new Error(`Cannot read interop request draft: routing metadata mismatch for ${action}.`);
+  }
+  const expectedConstraints = [...actionContract.constraints].sort();
+  const receivedConstraints = [...constraints].sort();
+  if (expectedConstraints.length !== receivedConstraints.length || expectedConstraints.some((entry, index) => entry !== receivedConstraints[index])) {
+    throw new Error(`Cannot read interop request draft: constraint metadata mismatch for ${action}.`);
+  }
+
+  return {
+    schemaVersion: INTEROP_REQUEST_DRAFT_SCHEMA_VERSION,
+    kind: 'interop-request-draft',
+    command: 'interop draft',
+    draftId: assertString(record.draftId, 'interop request draft draftId'),
+    proposalId: assertString(record.proposalId, 'interop request draft proposalId'),
+    target: 'fitness',
+    capability,
+    action,
+    bounded_action_input: boundedActionInput,
+    expected_receipt_type: expectedReceiptType,
+    routing_metadata: {
+      channel,
+      target,
+      priority,
+      maxDeliveryLatencySeconds,
+      constraints: [...actionContract.constraints]
+    },
+    blockers: assertStringArray(record.blockers ?? [], 'interop request draft blockers'),
+    assumptions: assertStringArray(record.assumptions ?? [], 'interop request draft assumptions'),
+    confidence: assertNumber(record.confidence ?? 0.5, 'interop request draft confidence'),
+    provenance_refs: assertStringArray(record.provenance_refs ?? [], 'interop request draft provenance_refs'),
+    nextActionText: assertString(record.nextActionText, 'interop request draft nextActionText')
+  };
+};
+
 export const compileInteropRequestDraft = (
   cwd: string,
   options: { proposalPath?: string; outFile?: string; capability?: string } = {}
@@ -207,4 +295,13 @@ export const compileInteropRequestDraft = (
   fs.writeFileSync(absoluteOut, deterministicStringify(draft));
 
   return { artifactPath: outFile, draft };
+};
+
+export const readInteropRequestDraft = (
+  cwd: string,
+  options: { draftPath?: string } = {}
+): { artifactPath: typeof INTEROP_REQUEST_DRAFT_DEFAULT_FILE; draft: InteropRequestDraftArtifact } => {
+  const draftPath = options.draftPath ?? INTEROP_REQUEST_DRAFT_DEFAULT_FILE;
+  const draft = parseInteropRequestDraft(cwd, draftPath);
+  return { artifactPath: INTEROP_REQUEST_DRAFT_DEFAULT_FILE, draft };
 };

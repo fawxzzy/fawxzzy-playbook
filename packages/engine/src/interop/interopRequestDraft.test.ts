@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { generateAiProposal } from '../ai/aiProposal.js';
-import { compileInteropRequestDraft } from './interopRequestDraft.js';
+import { compileInteropRequestDraft, readInteropRequestDraft } from './interopRequestDraft.js';
 
 const createRepo = (name: string): string => {
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`));
@@ -41,5 +41,32 @@ describe('compileInteropRequestDraft', () => {
     fs.writeFileSync(path.join(repo, '.playbook', 'ai-proposal.json'), JSON.stringify(proposal, null, 2));
 
     expect(() => compileInteropRequestDraft(repo)).toThrow(/not part of the canonical Fitness contract/);
+  });
+
+  it('reads canonical draft artifact for interop emit path and rejects non-canonical draft path', () => {
+    const repo = createRepo('playbook-engine-interop-draft-read');
+    const proposal = generateAiProposal(repo, { target: 'fitness' });
+    fs.writeFileSync(path.join(repo, '.playbook', 'ai-proposal.json'), JSON.stringify(proposal, null, 2));
+    compileInteropRequestDraft(repo);
+
+    const loaded = readInteropRequestDraft(repo, { draftPath: '.playbook/interop-request-draft.json' });
+    expect(loaded.artifactPath).toBe('.playbook/interop-request-draft.json');
+    expect(loaded.draft.target).toBe('fitness');
+    expect(loaded.draft.action).toBe('adjust_upcoming_workout_load');
+
+    expect(() => readInteropRequestDraft(repo, { draftPath: '.playbook/not-canonical-draft.json' })).toThrow(/only canonical/);
+  });
+
+  it('rejects draft artifact when expected receipt metadata drifts from canonical fitness contract', () => {
+    const repo = createRepo('playbook-engine-interop-draft-drift');
+    const proposal = generateAiProposal(repo, { target: 'fitness' });
+    fs.writeFileSync(path.join(repo, '.playbook', 'ai-proposal.json'), JSON.stringify(proposal, null, 2));
+    compileInteropRequestDraft(repo);
+    const draftPath = path.join(repo, '.playbook', 'interop-request-draft.json');
+    const draft = JSON.parse(fs.readFileSync(draftPath, 'utf8')) as { expected_receipt_type: string };
+    draft.expected_receipt_type = 'drifted_receipt_type';
+    fs.writeFileSync(draftPath, JSON.stringify(draft, null, 2));
+
+    expect(() => readInteropRequestDraft(repo, { draftPath: '.playbook/interop-request-draft.json' })).toThrow(/expected receipt type mismatch/);
   });
 });

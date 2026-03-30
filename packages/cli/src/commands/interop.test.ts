@@ -162,6 +162,89 @@ describe('runInterop', () => {
     expect(allowedExit).toBe(ExitCode.Success);
   });
 
+  it('emits Fitness request from canonical interop-request-draft artifact via --from-draft', async () => {
+    const repo = createRepo();
+    writeArtifact(repo, '.playbook/rendezvous-manifest.json', {
+      remediationId: 'remediation-interop-fit-draft-1',
+      requiredArtifactIds: ['fitness-contract']
+    });
+    writeArtifact(repo, '.playbook/rendezvous-status.json', {
+      evaluation: { state: 'complete', releaseReady: true, blockers: [], missingArtifactIds: [], conflictingArtifactIds: [], stale: false }
+    });
+    writeArtifact(repo, '.playbook/interop-request-draft.json', {
+      schemaVersion: '1.0',
+      kind: 'interop-request-draft',
+      command: 'interop draft',
+      draftId: 'interop-draft-abc123',
+      proposalId: 'ai-proposal-abc123',
+      target: 'fitness',
+      capability: 'lifeline-remediation-v1',
+      action: 'schedule_recovery_block',
+      bounded_action_input: {
+        athlete_id: 'athlete-001',
+        week_id: 'week-2026-W13',
+        start_date: '2026-03-30',
+        duration_days: 3,
+        recovery_mode: 'rest'
+      },
+      expected_receipt_type: 'recovery_guardrail_applied',
+      routing_metadata: {
+        channel: 'fitness.actions',
+        target: 'recovery',
+        priority: 'high',
+        maxDeliveryLatencySeconds: 300,
+        constraints: ['same_week_only', 'max_duration_days_14']
+      },
+      blockers: [],
+      assumptions: ['canonical'],
+      confidence: 0.84,
+      provenance_refs: ['.playbook/ai-proposal.json', 'playbook-engine:fitnessIntegrationContract'],
+      nextActionText: 'Run emit-fitness-plan --from-draft after review.'
+    });
+
+    expect(await runInterop(repo, ['register', '--capability', 'lifeline-remediation-v1', '--action', 'schedule_recovery_block'], { format: 'json', quiet: false })).toBe(ExitCode.Success);
+    expect(await runInterop(repo, ['emit-fitness-plan', '--from-draft', '.playbook/interop-request-draft.json'], { format: 'json', quiet: false })).toBe(ExitCode.Success);
+
+    const runtime = JSON.parse(fs.readFileSync(path.join(repo, '.playbook/lifeline-interop-runtime.json'), 'utf8')) as {
+      requests: Array<{
+        action_kind: string;
+        capability_id: string;
+        receipt_type: string;
+        routing: { channel: string; target: string; priority: string; maxDeliveryLatencySeconds: number };
+        bounded_action_input: { recovery_mode: string };
+      }>;
+    };
+    expect(runtime.requests[0]).toMatchObject({
+      action_kind: 'schedule_recovery_block',
+      capability_id: 'lifeline-remediation-v1',
+      receipt_type: 'recovery_guardrail_applied',
+      routing: {
+        channel: 'fitness.actions',
+        target: 'recovery',
+        priority: 'high',
+        maxDeliveryLatencySeconds: 300
+      },
+      bounded_action_input: {
+        recovery_mode: 'rest'
+      }
+    });
+  });
+
+  it('rejects --from-draft when path is not the canonical interop-request-draft artifact', async () => {
+    const repo = createRepo();
+    writeArtifact(repo, '.playbook/rendezvous-manifest.json', {
+      remediationId: 'remediation-interop-fit-draft-2',
+      requiredArtifactIds: ['fitness-contract']
+    });
+    writeArtifact(repo, '.playbook/rendezvous-status.json', {
+      evaluation: { state: 'complete', releaseReady: true, blockers: [], missingArtifactIds: [], conflictingArtifactIds: [], stale: false }
+    });
+    expect(await runInterop(repo, ['register', '--capability', 'lifeline-remediation-v1', '--action', 'schedule_recovery_block'], { format: 'json', quiet: false })).toBe(ExitCode.Success);
+
+    const exitCode = await runInterop(repo, ['emit-fitness-plan', '--from-draft', '.playbook/non-canonical-draft.json'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Failure);
+  });
+
   it('exposes consumed fitness contract inspect surface with deterministic summary and artifact', async () => {
     const repo = createRepo();
     writeArtifact(repo, 'playbook.fitness.config.json', {
