@@ -11,6 +11,23 @@ const createRepo = (name: string): string => {
   return repo;
 };
 
+
+const writeFitnessConfig = (repo: string): void => {
+  fs.writeFileSync(
+    path.join(repo, 'playbook.fitness.config.json'),
+    `${JSON.stringify({
+      fitnessContractSource: {
+        sourceRepo: 'ZachariahRedfield/fawxzzy-fitness',
+        sourceRef: 'main',
+        sourcePath: 'src/lib/ecosystem/fitness-integration-contract.ts',
+        syncMode: 'mirrored'
+      }
+    }, null, 2)}
+`,
+    'utf8'
+  );
+};
+
 const writeUpdatedTruth = (repo: string, updates: InteropUpdatedTruthArtifact['updates']): void => {
   const artifact: InteropUpdatedTruthArtifact = {
     schemaVersion: '1.0',
@@ -95,6 +112,7 @@ describe('compileInteropFollowups', () => {
 describe('reconcileInteropRuntime', () => {
   it('fails closed when receipt metadata drifts from canonical request contract', async () => {
     const repo = createRepo('playbook-engine-interop-reconcile-mismatch');
+    writeFitnessConfig(repo);
     const runtime = {
       schemaVersion: '1.0',
       kind: 'playbook-lifeline-interop-runtime',
