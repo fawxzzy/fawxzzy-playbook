@@ -79,6 +79,7 @@ const engine = engineRuntime as unknown as {
   reconcileInteropRuntime: (runtime: any) => any;
   materializeFitnessContractArtifact: (options: { repoRoot: string }) => Promise<any>;
   compileInteropRequestDraft: (cwd: string, options?: { proposalPath?: string; outFile?: string; capability?: string }) => { artifactPath: string; draft: any };
+  readInteropRequestDraft: (cwd: string, options?: { draftPath?: string }) => { artifactPath: string; draft: any };
   readArtifactJson: <T>(path: string) => T;
 };
 
@@ -155,6 +156,7 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
         '--approved-plan     require explicit approval when deriving from .playbook/plan.json',
         '--runtime <id>      runtime id (default lifeline-mock-runtime)',
         '--from-proposal <path>  proposal artifact path for draft compile (default .playbook/ai-proposal.json)',
+        '--from-draft <path>  emit from canonical .playbook/interop-request-draft.json after explicit review',
         '--json              emit machine-readable output',
         '--help              show help'
       ],
@@ -172,6 +174,7 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
   try {
     const runtimeId = valueFor('--runtime') ?? 'lifeline-mock-runtime';
     const actionInputJson = valueFor('--action-input-json');
+    const fromDraft = valueFor('--from-draft');
     if (sub === 'draft') {
       const fromProposal = valueFor('--from-proposal');
       const compiled = engine.compileInteropRequestDraft(cwd, fromProposal ? { proposalPath: fromProposal } : {});
@@ -245,12 +248,20 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
       runtime = emitted.runtime;
       engine.writeInteropRuntime(cwd, runtime);
     } else if (sub === 'emit-fitness-plan') {
-      const capability = valueFor('--capability') ?? 'lifeline-remediation-v1';
-      const action = (valueFor('--action') ?? 'adjust_upcoming_workout_load') as RemediationInteropActionKind;
+      const directAction = valueFor('--action');
+      const directCapability = valueFor('--capability');
+      if (fromDraft && (directAction || directCapability || actionInputJson)) {
+        throw new Error('Cannot emit plan-derived Fitness request: --from-draft cannot be combined with --capability, --action, or --action-input-json.');
+      }
+      const draft = fromDraft ? engine.readInteropRequestDraft(cwd, { draftPath: fromDraft }).draft : null;
+      const capability = draft ? String(draft.capability) : (directCapability ?? 'lifeline-remediation-v1');
+      const action = (draft ? String(draft.action) : (directAction ?? 'adjust_upcoming_workout_load')) as RemediationInteropActionKind;
       if (!actionKinds.includes(action)) throw new Error(`Unsupported --action ${action}`);
-      const boundedActionInput = actionInputJson
-        ? JSON.parse(actionInputJson) as Record<string, unknown>
-        : defaultBoundedActionInputByAction[action as keyof typeof defaultBoundedActionInputByAction];
+      const boundedActionInput = draft
+        ? draft.bounded_action_input as Record<string, unknown>
+        : actionInputJson
+          ? JSON.parse(actionInputJson) as Record<string, unknown>
+          : defaultBoundedActionInputByAction[action as keyof typeof defaultBoundedActionInputByAction];
       const approvedPlan = commandArgs.includes('--approved-plan');
       const readiness = readPlanDerivedReadiness(cwd, approvedPlan);
       const emitted = readiness.source === 'rendezvous'
@@ -278,6 +289,28 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
           bounded_action_input: boundedActionInput,
           capability_id: capability
         });
+      if (draft) {
+        const emittedRequest = emitted.request;
+        if (emittedRequest.action_kind !== draft.action) {
+          throw new Error(`Cannot emit plan-derived Fitness request: emitted action ${emittedRequest.action_kind} does not match draft action ${draft.action}.`);
+        }
+        if (emittedRequest.capability_id !== draft.capability) {
+          throw new Error(`Cannot emit plan-derived Fitness request: emitted capability ${emittedRequest.capability_id} does not match draft capability ${draft.capability}.`);
+        }
+        if (emittedRequest.receipt_type !== draft.expected_receipt_type) {
+          throw new Error(
+            `Cannot emit plan-derived Fitness request: emitted receipt type ${emittedRequest.receipt_type} does not match draft expected receipt type ${draft.expected_receipt_type}.`
+          );
+        }
+        if (
+          emittedRequest.routing.channel !== draft.routing_metadata.channel
+          || emittedRequest.routing.target !== draft.routing_metadata.target
+          || emittedRequest.routing.priority !== draft.routing_metadata.priority
+          || emittedRequest.routing.maxDeliveryLatencySeconds !== draft.routing_metadata.maxDeliveryLatencySeconds
+        ) {
+          throw new Error('Cannot emit plan-derived Fitness request: emitted routing does not match draft routing metadata.');
+        }
+      }
       runtime = emitted.runtime;
       engine.writeInteropRuntime(cwd, runtime);
     } else if (sub === 'run-mock') {

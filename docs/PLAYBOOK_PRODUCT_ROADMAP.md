@@ -34,6 +34,10 @@ This roadmap defines strategic product direction and sequencing only.
 Pattern: Product Story Follows Architecture.
 Rule: Roadmap sequencing must preserve CLI-first, offline-capable, private-first operation.
 Failure Mode: Business docs drifting away from runtime truth.
+Recent implementation note: `pnpm playbook interop emit-fitness-plan --from-draft .playbook/interop-request-draft.json` now closes the explicit bounded interop loop by consuming only the canonical draft artifact, re-validating canonical Fitness metadata, and reusing the existing bounded emit runtime path without widening runtime authority.
+Rule: AI proposals may be compiled into bounded request drafts, but may not execute them directly.
+Pattern: AI proposal -> request draft -> explicit interop emit -> receipt -> updated truth.
+Failure Mode: Manual proposal-to-request translation recreates hidden session state and weakens auditability.
 
 
 ## Architecture doctrine status

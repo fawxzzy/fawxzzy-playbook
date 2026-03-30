@@ -6,6 +6,10 @@
 - @zachariahredfield/playbook-core: 0.39.0 -> 0.40.0 (playbook-installable-workspace)
 - @zachariahredfield/playbook-engine: 0.39.0 -> 0.40.0 (playbook-installable-workspace)
 - @zachariahredfield/playbook-node: 0.39.0 -> 0.40.0 (playbook-installable-workspace)
+- WHAT: Added explicit `pnpm playbook interop emit-fitness-plan --from-draft <path>` support to consume `.playbook/interop-request-draft.json` through the existing bounded interop emit path after canonical contract re-validation (target/action/input/receipt/routing + canonical artifact-path gate). WHY: This closes the bounded proposal→draft→emit loop without introducing hidden execution authority or bypassing remediation-first runtime controls.
+- Rule: AI proposals may be compiled into bounded request drafts, but may not execute them directly.
+- Pattern: AI proposal -> request draft -> explicit interop emit -> receipt -> updated truth.
+- Failure Mode: Operators manually re-translating proposal artifacts into runtime requests recreates hidden session state and weakens auditability.
 
 ## 0.39.0 - 2026-03-29
 - Recommended bump: minor
