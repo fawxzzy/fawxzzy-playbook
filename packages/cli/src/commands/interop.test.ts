@@ -109,7 +109,16 @@ describe('runInterop', () => {
         authority: string;
         proposalOnly: boolean;
         summary: { total: number; returned: number };
-        followups: Array<{ followupId: string; followupType: string; targetSurface: string }>;
+        followups: Array<{
+          followupId: string;
+          followupType: string;
+          targetSurface: string;
+          action: string;
+          nextActionText: string;
+          provenanceRefs: string[];
+          confidence: { score: number };
+          source: { requestId: string; receiptId: string };
+        }>;
       };
     };
 
@@ -121,13 +130,61 @@ describe('runInterop', () => {
     expect(payload.payload.authority).toBe('read-only');
     expect(payload.payload.proposalOnly).toBe(true);
     expect(payload.payload.summary).toEqual({ total: 2, returned: 1 });
-    expect(payload.payload.followups).toEqual([
+    expect(payload.payload.followups).toMatchObject([
       {
         followupId: 'followup-1',
         followupType: 'next-plan-hint',
-        targetSurface: '.playbook/plan.json'
+        targetSurface: '.playbook/plan.json',
+        action: expect.any(String),
+        nextActionText: expect.any(String),
+        provenanceRefs: expect.any(Array),
+        confidence: { score: expect.any(Number) },
+        source: {
+          requestId: expect.any(String),
+          receiptId: expect.any(String)
+        }
       }
     ]);
+  });
+
+  it('followups include deterministic enrichment fields', async () => {
+    const repo = createRepo();
+    writeArtifact(repo, '.playbook/interop-followups.json', {
+      schemaVersion: '1.0',
+      kind: 'interop-followups-artifact',
+      command: 'interop followups',
+      followups: [
+        {
+          followupId: 'followup-1',
+          source: { receiptId: 'receipt-1', requestId: 'request-1' },
+          action: 'queue-memory-candidate',
+          targetSurface: '.playbook/memory/candidates.json',
+          followupType: 'memory-candidate',
+          provenanceRefs: ['.playbook/interop-updated-truth.json', 'receipt:receipt-1'],
+          nextActionText: 'Queue request request-1 receipt receipt-1 as memory candidate evidence.',
+          confidence: { score: 0.91, rationale: 'deterministic' }
+        }
+      ]
+    });
+
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const exitCode = await runInterop(repo, ['followups'], { format: 'json', quiet: false });
+    const payload = JSON.parse(String(spy.mock.calls.at(-1)?.[0])) as {
+      payload: { payload: { followups: Array<Record<string, unknown>> } };
+    };
+    const followup = payload.payload.payload.followups[0] as {
+      action?: unknown;
+      confidence?: { score?: unknown };
+      provenanceRefs?: unknown;
+      source?: { requestId?: unknown; receiptId?: unknown };
+    };
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(followup.action).toBeTypeOf('string');
+    expect(followup.confidence?.score).toBeTypeOf('number');
+    expect(Array.isArray(followup.provenanceRefs)).toBe(true);
+    expect(followup.source?.requestId).toBeTypeOf('string');
+    expect(followup.source?.receiptId).toBeTypeOf('string');
   });
 
   it('renders compact followups text output', async () => {
