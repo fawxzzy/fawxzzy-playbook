@@ -52,7 +52,7 @@ describe('patterns csia', () => {
   });
 
   it('handles missing and invalid --from path deterministically', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const invalidRelativePath = path.join('.playbook', 'tmp', 'invalid-csia.json');
     const invalidAbsolutePath = path.join(repoRoot, invalidRelativePath);
     fs.mkdirSync(path.dirname(invalidAbsolutePath), { recursive: true });
@@ -60,15 +60,15 @@ describe('patterns csia', () => {
 
     const missingExitCode = await runPatterns(repoRoot, ['csia', '--from', '.playbook/tmp/missing-csia.json'], { format: 'json', quiet: false });
     expect(missingExitCode).toBe(ExitCode.Failure);
-    const missingPayload = JSON.parse(String(errorSpy.mock.calls[0]?.[0]));
+    const missingPayload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(missingPayload.error).toContain('mapping file not found');
 
     const invalidExitCode = await runPatterns(repoRoot, ['csia', '--from', invalidRelativePath], { format: 'json', quiet: false });
     expect(invalidExitCode).toBe(ExitCode.Failure);
-    const invalidPayload = JSON.parse(String(errorSpy.mock.calls[1]?.[0]));
+    const invalidPayload = JSON.parse(String(logSpy.mock.calls[1]?.[0]));
     expect(invalidPayload.error).toContain('invalid JSON');
 
-    errorSpy.mockRestore();
+    logSpy.mockRestore();
   });
 
   it('links failure modes relevant to filtered regimes', async () => {
