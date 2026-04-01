@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/csia-framework.schema.json",
+  "title": "CSIA Framework",
+  "description": "Minimal schema for Compute/Simulate/Interpret/Adapt framework contracts and mappings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "primitives",
+    "bridges",
+    "regimes",
+    "failureModes"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "kind": {
+      "type": "string",
+      "const": "csia-framework"
+    },
+    "primitives": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["compute", "simulate", "interpret", "adapt"]
+      }
+    },
+    "bridges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/bridge"
+      }
+    },
+    "regimes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/regime"
+      }
+    },
+    "failureModes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/failureMode"
+      }
+    }
+  },
+  "$defs": {
+    "primitive": {
+      "type": "string",
+      "enum": ["compute", "simulate", "interpret", "adapt"]
+    },
+    "bridge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "intent"],
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/primitive"
+        },
+        "to": {
+          "$ref": "#/$defs/primitive"
+        },
+        "intent": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "regime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "dominantPrimitive", "secondaryPrimitives"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dominantPrimitive": {
+          "$ref": "#/$defs/primitive"
+        },
+        "secondaryPrimitives": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/primitive"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "failureMode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "risk", "linkedPrimitives"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "risk": {
+          "type": "string",
+          "minLength": 1
+        },
+        "linkedPrimitives": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/primitive"
+          }
+        },
+        "mitigation": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
