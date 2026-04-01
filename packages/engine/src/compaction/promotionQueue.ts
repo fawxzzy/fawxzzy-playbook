@@ -9,6 +9,7 @@ import { PATTERN_CONVERGENCE_RELATIVE_PATH } from '../learning/patternConvergenc
 export type ConvergencePrioritySuggestion = {
   proposalOnly: true;
   suggestedPriority: 'low' | 'medium' | 'high';
+  convergenceConfidence: number;
   weightedScore: number;
   weightingFactors: {
     basePromotionScore: number;
@@ -159,6 +160,7 @@ const buildConvergencePrioritySuggestion = (patternId: string, promotionScore: n
   return {
     proposalOnly: true,
     suggestedPriority,
+    convergenceConfidence: Number(convergenceConfidence.toFixed(4)),
     weightedScore,
     weightingFactors: {
       basePromotionScore: Number(promotionScore.toFixed(4)),
@@ -207,7 +209,12 @@ export const buildPatternReviewQueue = (
       };
     })
     .filter((entry): entry is CandidatePattern => entry !== null)
-    .sort((left, right) => right.promotionScore - left.promotionScore || left.id.localeCompare(right.id));
+    .sort(
+      (left, right) =>
+        right.convergencePrioritySuggestion.weightedScore - left.convergencePrioritySuggestion.weightedScore ||
+        right.promotionScore - left.promotionScore ||
+        left.id.localeCompare(right.id)
+    );
 
   return {
     schemaVersion: '1.0',
