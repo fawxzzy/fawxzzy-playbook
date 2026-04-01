@@ -631,6 +631,7 @@ export type {
   PatternCardReviewDraftEntry,
   SynthesizePatternCardDraftsInput,
   PatternCandidateScore,
+  ConvergencePrioritySuggestion,
   PatternReviewQueueArtifact,
   PromotedPatternsArtifact,
   DoctrineCandidate,

@@ -88,4 +88,4 @@ export {
 } from './promotionQueue.js';
 export { scorePatternCandidate } from './scorePatternCandidate.js';
 export type { PatternCandidateScore, AttractorScoreBreakdown } from './scorePatternCandidate.js';
-export type { PatternReviewQueueArtifact, PromotedPatternsArtifact, DoctrineCandidate, DoctrineCandidatesArtifact } from './promotionQueue.js';
+export type { ConvergencePrioritySuggestion, PatternReviewQueueArtifact, PromotedPatternsArtifact, DoctrineCandidate, DoctrineCandidatesArtifact } from './promotionQueue.js';

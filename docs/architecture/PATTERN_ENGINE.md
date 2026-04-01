@@ -15,7 +15,7 @@ Pattern Engine aligns to current Playbook doctrine:
 
 Rule: Stable input signals produce convergent abstractions across independent systems.
 
-Pattern: Signal -> Compression -> Convergence -> Reuse.
+Pattern: Signal -> Compression -> Convergence -> Weighted Review -> Explicit Promotion.
 
 Failure Mode: Mistaking convergence for hidden coordination instead of shared constraint.
 
@@ -44,6 +44,10 @@ Higher-order patterns are valid only when provenance remains linked to source cl
 A **promotion confidence multiplier** is an explicit weighting factor applied when independent convergence increases trust that a candidate pattern is stable enough for review.
 
 The multiplier can raise review priority, but it does not bypass promotion gates, lifecycle checks, or explicit human/governed acceptance.
+
+Rule: Convergence may raise review priority, but must not bypass promotion gates.
+
+Failure Mode: Treating convergence as automatic truth causes silent authority creep in promotion workflows.
 
 ## Implemented now vs future architecture
 
