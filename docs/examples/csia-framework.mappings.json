@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "csia-framework",
+  "primitives": ["compute", "simulate", "interpret", "adapt"],
+  "bridges": [
+    {
+      "from": "compute",
+      "to": "simulate",
+      "intent": "Use deterministic state to run bounded what-if checks before rollout."
+    },
+    {
+      "from": "simulate",
+      "to": "interpret",
+      "intent": "Convert simulation outcomes into explicit operator-facing meaning."
+    },
+    {
+      "from": "interpret",
+      "to": "adapt",
+      "intent": "Turn interpreted findings into governed updates."
+    }
+  ],
+  "regimes": [
+    {
+      "id": "feature-release-gating",
+      "dominantPrimitive": "simulate",
+      "secondaryPrimitives": ["compute", "interpret", "adapt"],
+      "notes": "Feature example: staged release gates for a checkout recommendation toggle."
+    },
+    {
+      "id": "incident-triage-workflow",
+      "dominantPrimitive": "interpret",
+      "secondaryPrimitives": ["compute", "simulate", "adapt"],
+      "notes": "Workflow example: on-call incident triage and remediation loop."
+    },
+    {
+      "id": "repo-maintenance-system",
+      "dominantPrimitive": "adapt",
+      "secondaryPrimitives": ["compute", "simulate", "interpret"],
+      "notes": "Repo/system example: deterministic CI governance for a monorepo."
+    }
+  ],
+  "failureModes": [
+    {
+      "id": "local-optima-lock-in",
+      "risk": "Overfitting to historical data blocks exploration and future performance.",
+      "linkedPrimitives": ["compute", "adapt"],
+      "mitigation": "Schedule simulation checkpoints with explicit novelty thresholds."
+    },
+    {
+      "id": "simulation-fidelity-gap",
+      "risk": "Offline scenarios diverge from production behavior and mislead decisions.",
+      "linkedPrimitives": ["simulate", "interpret"],
+      "mitigation": "Continuously compare simulation outputs against fresh production evidence."
+    },
+    {
+      "id": "interpretation-drift",
+      "risk": "Narrative framing overtakes source evidence and causes policy mistakes.",
+      "linkedPrimitives": ["interpret", "adapt"],
+      "mitigation": "Require evidence links for every adaptation proposal."
+    }
+  ]
+}

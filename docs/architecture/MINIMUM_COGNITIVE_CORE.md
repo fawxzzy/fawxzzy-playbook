@@ -58,3 +58,12 @@ A stable reasoning engine keeps a tiny cognitive kernel and surrounds it with pr
 
 Failure Mode:
 If repo-specific logic leaks into the kernel, or if meta-analysis mutates doctrine directly, the system becomes brittle and loses replayable governance.
+
+## Schema usage (Wave 1A linkage)
+
+For machine-readable Compute/Simulate/Interpret/Adapt (CSIA) mappings used by Wave 1A framework work, use:
+
+- schema: `packages/contracts/src/csia-framework.schema.json`
+- examples: `docs/examples/csia-framework.mappings.json`
+
+This document remains conceptual; the schema and examples carry the structured contract and concrete mappings.
