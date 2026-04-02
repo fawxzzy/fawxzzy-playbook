@@ -1640,7 +1640,10 @@ TODO (roadmap contract alignment): add explicit feature IDs, dependencies, and v
 
 3. **Managed subagents / hooks execution hardening (next seam)**
    - The verify/CI protected-doc merge-guard seam is already implemented and remains the enforced boundary for unresolved or drifted protected-doc consolidation state.
-   - The next genuinely missing seam is controlled managed subagents/hooks execution layered on top of the existing merge-guard boundary.
+   - The first implementation slice is now a proposal-only deterministic launch-authorization seam emitted through `workers launch-plan` as `.playbook/worker-launch-plan.json`.
+   - Rule: Managed execution may begin only from explicit launch authorization, never from worker intent alone.
+   - Pattern: `assign -> launch-plan -> execute -> receipt -> submit -> consolidate`.
+   - Failure Mode: Without a launch authorization seam, managed subagents can bypass governance boundaries already enforced for humans.
    - Keeps the dependency-ordered path explicit: `worker partitioning / overlap detection -> worker-local fragments / receipts -> workers submit -> proposal-only docs consolidate -> docs consolidate-plan -> drift-locked apply guards -> verify/CI protected-doc merge-guard enforcement -> managed subagents / hooks`.
    - Focuses future work on execution orchestration and policy gates without reclassifying already-implemented verify/CI enforcement as incomplete.
 

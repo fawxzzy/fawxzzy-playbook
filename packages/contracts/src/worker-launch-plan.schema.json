@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/worker-launch-plan.schema.json",
+  "title": "Worker Launch Plan Artifact",
+  "description": "Deterministic proposal-only launch authorization artifact derived from lane-state, worker assignments, and governance findings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "proposalOnly", "generatedAt", "sourceArtifacts", "summary", "lanes"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "kind": { "type": "string", "const": "worker-launch-plan" },
+    "proposalOnly": { "type": "boolean", "const": true },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "sourceArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worksetPlanPath", "laneStatePath", "workerAssignmentsPath", "verifyPath", "policyEvaluationPath"],
+      "properties": {
+        "worksetPlanPath": { "type": "string", "minLength": 1 },
+        "laneStatePath": { "type": "string", "minLength": 1 },
+        "workerAssignmentsPath": { "type": "string", "minLength": 1 },
+        "verifyPath": { "type": "string", "minLength": 1 },
+        "policyEvaluationPath": { "type": "string", "minLength": 1 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["launchEligibleLanes", "blockedLanes", "failClosedReasons"],
+      "properties": {
+        "launchEligibleLanes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "blockedLanes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["lane_id", "blockers"],
+            "properties": {
+              "lane_id": { "type": "string", "minLength": 1 },
+              "blockers": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+            }
+          }
+        },
+        "failClosedReasons": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    },
+    "lanes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "lane_id",
+          "worker_id",
+          "worker_type",
+          "launchEligible",
+          "blockers",
+          "requiredCapabilities",
+          "allowedWriteSurfaces",
+          "protectedSingletonImpact",
+          "requiredReceipts",
+          "releaseReadyPreconditions"
+        ],
+        "properties": {
+          "lane_id": { "type": "string", "minLength": 1 },
+          "worker_id": { "type": ["string", "null"], "minLength": 1 },
+          "worker_type": { "type": ["string", "null"], "minLength": 1 },
+          "launchEligible": { "type": "boolean" },
+          "blockers": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "requiredCapabilities": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "allowedWriteSurfaces": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "protectedSingletonImpact": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["hasProtectedSingletonWork", "targets", "consolidationStage", "unresolved"],
+            "properties": {
+              "hasProtectedSingletonWork": { "type": "boolean" },
+              "targets": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+              "consolidationStage": { "type": "string", "minLength": 1 },
+              "unresolved": { "type": "boolean" }
+            }
+          },
+          "requiredReceipts": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "releaseReadyPreconditions": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+        }
+      }
+    }
+  }
+}

@@ -3,6 +3,7 @@ import path from 'node:path';
 import {
   assignWorkersToLanes,
   buildAssignedPrompt,
+  buildWorkerLaunchPlan,
   deriveLaneState,
   mergeWorkerResult,
   readWorkerResultsArtifact,
@@ -10,10 +11,13 @@ import {
   recordWorkerAssignment,
   safeRecordRepositoryEvent,
   validateWorkerResultInput,
+  writeWorkerLaunchPlanArtifact,
   writeWorkerResultsArtifact,
+  WORKER_LAUNCH_PLAN_RELATIVE_PATH,
   WORKER_RESULTS_RELATIVE_PATH,
   type LaneStateArtifact,
   type WorksetPlanArtifact,
+  type WorkerAssignmentsArtifact,
   type WorkerResultArtifactRef,
   type WorkerResultFragmentRef
 } from '@zachariahredfield/playbook-engine';
@@ -47,7 +51,7 @@ type WorkerAssignmentsArtifactView = {
 type WorkersOptions = {
   format: 'text' | 'json';
   quiet: boolean;
-  action?: 'assign' | 'submit';
+  action?: 'assign' | 'submit' | 'launch-plan';
   from?: string;
 };
 
@@ -176,6 +180,45 @@ const runAssign = async (cwd: string, options: WorkersOptions, worksetPlan: Work
   return ExitCode.Success;
 };
 
+const runLaunchPlan = async (cwd: string, options: WorkersOptions, worksetPlan: WorksetPlanArtifact): Promise<number> => {
+  const laneState = resolveLaneState(cwd, worksetPlan);
+  writeJsonArtifact(cwd, LANE_STATE_PATH, laneState);
+
+  const assignments = assignWorkersToLanes(laneState, worksetPlan) as WorkerAssignmentsArtifact;
+  writeJsonArtifact(cwd, WORKER_ASSIGNMENTS_PATH, assignments);
+
+  const launchPlan = buildWorkerLaunchPlan(cwd, {
+    worksetPlan,
+    laneState,
+    workerAssignments: assignments,
+    worksetPlanPath: WORKSET_PLAN_PATH,
+    laneStatePath: LANE_STATE_PATH,
+    workerAssignmentsPath: WORKER_ASSIGNMENTS_PATH
+  });
+  writeWorkerLaunchPlanArtifact(cwd, launchPlan);
+
+  if (options.format === 'json') {
+    console.log(JSON.stringify({
+      schemaVersion: '1.0',
+      command: 'workers',
+      action: 'launch-plan',
+      worker_launch_plan_path: WORKER_LAUNCH_PLAN_RELATIVE_PATH,
+      worker_launch_plan: launchPlan
+    }, null, 2));
+    return ExitCode.Success;
+  }
+
+  if (!options.quiet) {
+    console.log('Worker Launch Plan');
+    console.log('──────────────────');
+    console.log(`Launch-eligible lanes: ${launchPlan.summary.launchEligibleLanes.length}`);
+    console.log(`Blocked lanes: ${launchPlan.summary.blockedLanes.length}`);
+    console.log(`Artifact: ${WORKER_LAUNCH_PLAN_RELATIVE_PATH}`);
+  }
+
+  return ExitCode.Success;
+};
+
 const runSubmit = async (cwd: string, options: WorkersOptions, worksetPlan: WorksetPlanArtifact): Promise<number> => {
   if (!options.from) {
     printError(options, 'playbook workers submit: --from <path> is required.');
@@ -242,5 +285,6 @@ export const runWorkers = async (cwd: string, options: WorkersOptions): Promise<
   }
 
   if (options.action === 'submit') return runSubmit(cwd, options, worksetPlan);
+  if (options.action === 'launch-plan') return runLaunchPlan(cwd, options, worksetPlan);
   return runAssign(cwd, options, worksetPlan);
 };

@@ -152,6 +152,35 @@ describe('runWorkers', () => {
     logSpy.mockRestore();
   });
 
+
+  it('builds deterministic launch authorization plan artifact via workers launch-plan', async () => {
+    const repo = createRepo('playbook-cli-workers-launch-plan');
+    writeWorksetPlan(repo);
+
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const exitCode = await runWorkers(repo, { format: 'json', quiet: false, action: 'launch-plan' });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(fs.existsSync(path.join(repo, '.playbook', 'worker-launch-plan.json'))).toBe(true);
+
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0])) as {
+      action: string;
+      worker_launch_plan_path: string;
+      worker_launch_plan: {
+        kind: string;
+        lanes: Array<{ lane_id: string; launchEligible: boolean; blockers: string[] }>;
+      };
+    };
+
+    expect(payload.action).toBe('launch-plan');
+    expect(payload.worker_launch_plan_path).toBe('.playbook/worker-launch-plan.json');
+    expect(payload.worker_launch_plan.kind).toBe('worker-launch-plan');
+    expect(payload.worker_launch_plan.lanes.find((lane) => lane.lane_id === 'lane-1')?.launchEligible).toBe(false);
+    expect(payload.worker_launch_plan.lanes.find((lane) => lane.lane_id === 'lane-1')?.blockers.some((entry) => entry.startsWith('protected-doc:'))).toBe(true);
+
+    logSpy.mockRestore();
+  });
+
   it('fails clearly for invalid protected-doc fragment refs in submit mode', async () => {
     const repo = createRepo('playbook-cli-workers-submit-invalid');
     writeWorksetPlan(repo);
@@ -196,6 +225,6 @@ describe('command registry', () => {
   it('registers the workers command', () => {
     const command = listRegisteredCommands().find((entry) => entry.name === 'workers');
     expect(command).toBeDefined();
-    expect(command?.description).toBe('Assign deterministic proposal-only workers and submit worker results from lane-state/workset artifacts');
+    expect(command?.description).toBe('Assign deterministic proposal-only workers, derive launch authorization, and submit worker results from lane-state/workset artifacts');
   });
 });

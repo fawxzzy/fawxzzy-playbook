@@ -105,7 +105,7 @@ export const commandMetadata: CommandMetadata[] = [
   {
     name: "workers",
     description:
-      "Assign deterministic proposal-only workers and submit worker results from lane-state/workset artifacts",
+      "Assign deterministic proposal-only workers, derive launch authorization, and submit worker results from lane-state/workset artifacts",
     category: "Core",
     role: "remediation",
     lifecycle: "canonical",
