@@ -174,6 +174,45 @@ const riskAwareContextSchema: JsonSchema = {
   ]
 };
 
+const contextCacheLifecycleSchema: JsonSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['cacheKey', 'reused', 'scope', 'shapingLevel', 'riskTier', 'generatedAt', 'invalidationReason', 'sourceFingerprints', 'indexPath', 'snapshotPath', 'expiresAt'],
+  properties: {
+    cacheKey: { type: 'string' },
+    reused: { type: 'boolean' },
+    scope: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['kind', 'id'],
+      properties: {
+        kind: { enum: ['repo', 'module', 'subapp'] },
+        id: { type: 'string' }
+      }
+    },
+    shapingLevel: { type: 'string' },
+    riskTier: { type: 'string' },
+    generatedAt: { type: 'string' },
+    invalidationReason: { enum: ['none', 'cache-miss', 'snapshot-missing', 'source-fingerprint-drift', 'policy-expired', 'cache-key-collision'] },
+    sourceFingerprints: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['artifact', 'fingerprint', 'present'],
+        properties: {
+          artifact: { type: 'string' },
+          fingerprint: { type: 'string' },
+          present: { type: 'boolean' }
+        }
+      }
+    },
+    indexPath: { const: '.playbook/context/cache-index.json' },
+    snapshotPath: { type: 'string' },
+    expiresAt: { type: 'string' }
+  }
+};
+
 const knowledgeSummarySchema: JsonSchema = {
   type: 'object',
   additionalProperties: false,
@@ -505,7 +544,7 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
     title: 'PlaybookContextOutput',
     type: 'object',
     additionalProperties: false,
-    required: ['schemaVersion', 'command', 'architecture', 'workflow', 'repositoryIntelligence', 'controlPlaneArtifacts', 'runtimeManifests', 'cli', 'riskAwareContext'],
+    required: ['schemaVersion', 'command', 'architecture', 'workflow', 'repositoryIntelligence', 'controlPlaneArtifacts', 'runtimeManifests', 'cli', 'riskAwareContext', 'cacheLifecycle'],
     properties: {
       schemaVersion: { type: 'string' },
       command: { const: 'context' },
@@ -569,7 +608,8 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
           }
         }
       },
-      riskAwareContext: riskAwareContextSchema
+      riskAwareContext: riskAwareContextSchema,
+      cacheLifecycle: contextCacheLifecycleSchema
     }
   },
 
@@ -2104,6 +2144,7 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
       'operatingLadder',
       'productCommands',
       'riskAwareContext',
+      'cacheLifecycle',
       'guidance'
     ],
     properties: {
@@ -2200,6 +2241,7 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
         }
       },
       riskAwareContext: riskAwareContextSchema,
+      cacheLifecycle: contextCacheLifecycleSchema,
       guidance: {
         type: 'object',
         additionalProperties: false,

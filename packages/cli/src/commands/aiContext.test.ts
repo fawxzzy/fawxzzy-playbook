@@ -73,6 +73,10 @@ describe('runAiContext', () => {
 
     const riskAwareContext = payload.riskAwareContext as Record<string, unknown> | null;
     expect(riskAwareContext).toBeNull();
+    const cacheLifecycle = payload.cacheLifecycle as Record<string, unknown>;
+    expect(cacheLifecycle.indexPath).toBe('.playbook/context/cache-index.json');
+    expect(typeof cacheLifecycle.cacheKey).toBe('string');
+    expect(typeof cacheLifecycle.reused).toBe('boolean');
 
     const guidance = payload.guidance as Record<string, unknown>;
     expect(guidance.preferPlaybookCommands).toBe(true);
@@ -137,6 +141,10 @@ describe('runAiContext', () => {
   it('produces deterministic JSON ordering/stability', async () => {
     const repo = createRepo();
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const warmupExit = await runAiContext(repo, { format: 'json', quiet: false });
+    expect(warmupExit).toBe(ExitCode.Success);
+    logSpy.mockClear();
 
     const firstExit = await runAiContext(repo, { format: 'json', quiet: false });
     const first = String(logSpy.mock.calls[0]?.[0]);

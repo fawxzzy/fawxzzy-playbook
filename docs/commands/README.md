@@ -129,6 +129,9 @@ Do not hand-edit entries inside the managed markers.
 - Rule: Risk-aware context shaping must reflect canonical repository intelligence artifacts, never ad hoc heuristics.
 - Pattern: `module digest -> risk tier -> shaped context` (high-risk modules get richer depth; low-risk modules stay concise).
 - Failure Mode: Uniform context payloads either waste tokens on low-risk modules or starve high-risk modules of detail needed for safe reasoning.
+- Rule: Cached context snapshots are valid only while canonical intelligence source fingerprints remain unchanged.
+- Pattern: `canonical sources -> shaped context -> .playbook/context snapshot -> deterministic invalidation/reuse`.
+- Failure Mode: Without cache lifecycle policy, context snapshots either drift stale or are recomputed wastefully on each read.
 - Governance and support: [`docs`](docs.md), [`audit`](audit.md), [`rules`](rules.md), [`doctor`](doctor.md), [`schema`](schema.md), [`contracts`](contracts.md), [`release`](release.md), [`ignore`](ignore.md), [`diagram`](diagram.md), [`route`](route.md), [`memory`](memory.md), [`patterns`](patterns.md), [`story`](story.md), [`promote`](promote.md), [`observer`](observer.md), [`receipt`](receipt.md), [`learn`](learn.md), [`fix`](fix.md), [`upgrade`](upgrade.md), [`status`](status.md), [`analyze`](analyze.md)
 - Pattern convergence note: `pnpm playbook patterns convergence --json` is the canonical read-only inspection surface for `.playbook/pattern-convergence.json`, with additive filters (`--intent`, `--constraint`, `--resolution`, `--min-confidence`) and compact text output for operator review.
 - CSIA overlay note: `pnpm playbook patterns csia --json` is the canonical read-only machine-readable overlay for CSIA mappings; it must not mutate doctrine or expand the Minimum Cognitive Core.

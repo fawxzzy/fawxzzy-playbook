@@ -5,6 +5,7 @@ import type { RepositoryModule } from '../indexer/repoIndexer.js';
 import { buildModuleAskContext, resolveIndexedModuleContext, type IndexedModuleContext } from '../query/moduleIntelligence.js';
 import { readModuleDigest, type ModuleDigest } from '../context/moduleDigests.js';
 import { buildRiskAwareContextSummary, shapeRiskAwareModuleContext, type RiskAwareModuleContext } from '../context/riskAwareContext.js';
+import { resolveContextSnapshotCache } from '../context/contextSnapshotCache.js';
 import { resolveDiffAskContext, type DiffAskContext } from './diffContext.js';
 import { readRuntimeMemoryEnvelope, type RuntimeMemoryEnvelope } from '../intelligence/runtimeMemory.js';
 import {
@@ -182,7 +183,7 @@ const buildMemoryKnowledgeHits = (projectRoot: string, target: 'repo-context' | 
     .map(stripRelevance);
 };
 
-const gatherContext = (projectRoot: string): AskContext => {
+const gatherContextSnapshot = (projectRoot: string): AskContext => {
   const architecture = queryRepositoryIndex(projectRoot, 'architecture').result as string;
   const modules = toModuleNames(queryRepositoryIndex(projectRoot, 'modules').result as string[] | RepositoryModule[]);
   const framework = queryRepositoryIndex(projectRoot, 'framework').result as string;
@@ -195,6 +196,16 @@ const gatherContext = (projectRoot: string): AskContext => {
     rules
   };
 };
+
+const gatherContext = (projectRoot: string, scope: { kind: 'repo' | 'module'; id: string }, shapingLevel: string): AskContext =>
+  resolveContextSnapshotCache({
+    projectRoot,
+    scope,
+    shapingLevel,
+    riskTier: scope.kind === 'module' ? 'module' : 'repo',
+    sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json'],
+    buildSnapshot: () => gatherContextSnapshot(projectRoot)
+  }).snapshot;
 
 const formatRulesHint = (rules: string[]): string => {
   if (rules.length === 0) {
@@ -292,7 +303,7 @@ const governanceQuestionAnswer = (
 export const answerRepositoryQuestion = (projectRoot: string, question: string, options?: AskEngineOptions): AskEngineResult => {
   const userQuestion = extractUserQuestion(question);
   const normalizedQuestion = normalizeQuestion(userQuestion);
-  const context = gatherContext(projectRoot);
+  const context = gatherContext(projectRoot, options?.module ? { kind: 'module', id: options.module } : { kind: 'repo', id: 'root' }, options?.module ? 'ask-module-context' : 'ask-context');
   const riskAwareContext = buildRiskAwareContextSummary(projectRoot);
   if (options?.module && options.diffContext) {
     throw new Error('playbook ask: --module and --diff-context cannot be used together. Choose one deterministic scope.');

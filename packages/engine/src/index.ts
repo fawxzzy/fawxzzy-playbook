@@ -82,6 +82,22 @@ export {
 } from './context/runtimeManifests.js';
 export type { RuntimeManifestEntry, RuntimeManifestsArtifact } from './context/runtimeManifests.js';
 export { buildRiskAwareContextSummary, shapeRiskAwareModuleContext } from './context/riskAwareContext.js';
+export {
+  CONTEXT_CACHE_DIR_RELATIVE_PATH,
+  CONTEXT_CACHE_SNAPSHOTS_DIR_RELATIVE_PATH,
+  CONTEXT_CACHE_INDEX_RELATIVE_PATH,
+  CONTEXT_CACHE_SCHEMA_VERSION,
+  resolveContextSnapshotCache
+} from './context/contextSnapshotCache.js';
+export type {
+  ContextCacheIndexArtifact,
+  ContextCacheIndexEntry,
+  ContextCacheInvalidationReason,
+  ContextCacheMetadata,
+  ContextCacheScope,
+  ContextCacheScopeKind,
+  ContextCacheSourceFingerprint
+} from './context/contextSnapshotCache.js';
 export type { RiskAwareContextSummary, RiskAwareModuleContext, RiskContextTier, RiskContextDepth } from './context/riskAwareContext.js';
 export type { ModuleContextDigest } from './context/moduleContext.js';
 export type { ModuleDigest, ModuleDigestsArtifact } from './context/moduleDigests.js';

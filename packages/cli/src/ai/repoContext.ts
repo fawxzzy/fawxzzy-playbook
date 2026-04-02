@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildRiskAwareContextSummary, loadAiContract } from '@zachariahredfield/playbook-engine';
+import {
+  buildRiskAwareContextSummary,
+  loadAiContract,
+  resolveContextSnapshotCache,
+  type ContextCacheMetadata
+} from '@zachariahredfield/playbook-engine';
 
 const REPO_INDEX_PATH = '.playbook/repo-index.json' as const;
 const AI_CONTRACT_PATH = '.playbook/ai-contract.json' as const;
@@ -29,6 +34,7 @@ export type AskRepoContextResult = {
   enabled: boolean;
   sources: string[];
   promptContext: string;
+  cacheLifecycle?: ContextCacheMetadata;
 };
 
 const ensureStringArray = (value: unknown): string[] =>
@@ -140,23 +146,37 @@ export const loadAskRepoContext = (options: AskRepoContextOptions): AskRepoConte
     };
   }
 
-  const repoIndex = loadRepoIndex(options.cwd);
-  const contract = loadAiContract(options.cwd);
-  const riskAware = renderRiskAwareSummary(options.cwd);
+  const cached = resolveContextSnapshotCache({
+    projectRoot: options.cwd,
+    scope: { kind: 'repo', id: 'root' },
+    shapingLevel: 'ask-repo-context',
+    riskTier: 'repo-context',
+    sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json', '.playbook/ai-contract.json'],
+    buildSnapshot: () => {
+      const repoIndex = loadRepoIndex(options.cwd);
+      const contract = loadAiContract(options.cwd);
+      const riskAware = renderRiskAwareSummary(options.cwd);
+      const promptContext = [
+        'Trusted repository context:',
+        ...renderRepoIndexSummary(repoIndex),
+        ...renderAiContractSummary(contract.contract),
+        ...riskAware.lines,
+        `AI contract source: ${contract.source === 'file' ? AI_CONTRACT_PATH : 'generated fallback (run `playbook ai-contract --json` to inspect/commit explicit contract)'}`,
+        'End trusted repository context.'
+      ].join('\n');
 
-  const promptContext = [
-    'Trusted repository context:',
-    ...renderRepoIndexSummary(repoIndex),
-    ...renderAiContractSummary(contract.contract),
-    ...riskAware.lines,
-    `AI contract source: ${contract.source === 'file' ? AI_CONTRACT_PATH : 'generated fallback (run `playbook ai-contract --json` to inspect/commit explicit contract)'}`,
-    'End trusted repository context.'
-  ].join('\n');
+      return {
+        sources: [REPO_INDEX_PATH, contract.source === 'file' ? AI_CONTRACT_PATH : 'generated-ai-contract-fallback', ...(riskAware.source ? [riskAware.source] : [])],
+        promptContext
+      };
+    }
+  });
 
   return {
     enabled: true,
-    sources: [REPO_INDEX_PATH, contract.source === 'file' ? AI_CONTRACT_PATH : 'generated-ai-contract-fallback', ...(riskAware.source ? [riskAware.source] : [])],
-    promptContext
+    sources: cached.snapshot.sources,
+    promptContext: cached.snapshot.promptContext,
+    cacheLifecycle: cached.cache
   };
 };
 

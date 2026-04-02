@@ -8,6 +8,7 @@ import { getRuleMetadata } from './ruleRegistry.js';
 import { resolveRepositoryTarget, type ResolvedTarget } from '../intelligence/targetResolver.js';
 import { readModuleDigest } from '../context/moduleDigests.js';
 import { shapeRiskAwareModuleContext, type RiskAwareModuleContext } from '../context/riskAwareContext.js';
+import { resolveContextSnapshotCache } from '../context/contextSnapshotCache.js';
 import { readRuntimeMemoryEnvelope, type RuntimeMemoryEnvelope } from '../intelligence/runtimeMemory.js';
 import {
   expandMemoryProvenance,
@@ -322,7 +323,7 @@ const readRecordArray = (value: unknown): Array<Record<string, unknown>> =>
   Array.isArray(value) ? value.filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)) : [];
 
 
-const gatherContext = (projectRoot: string): ExplainContext => {
+const gatherContextSnapshot = (projectRoot: string): ExplainContext => {
   const architecture = queryRepositoryIndex(projectRoot, 'architecture').result as string;
   const modules = toModuleNames(queryRepositoryIndex(projectRoot, 'modules').result as string[] | RepositoryModule[]);
   const framework = queryRepositoryIndex(projectRoot, 'framework').result as string;
@@ -335,6 +336,16 @@ const gatherContext = (projectRoot: string): ExplainContext => {
     rules
   };
 };
+
+const gatherContext = (projectRoot: string, scope: { kind: 'repo' | 'module'; id: string }, shapingLevel: string): ExplainContext =>
+  resolveContextSnapshotCache({
+    projectRoot,
+    scope,
+    shapingLevel,
+    riskTier: scope.kind === 'module' ? 'module' : 'repo',
+    sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json'],
+    buildSnapshot: () => gatherContextSnapshot(projectRoot)
+  }).snapshot;
 
 const inferModuleResponsibilities = (name: string): string[] => [
   `Owns ${name} feature behavior and boundaries.`,
@@ -1032,8 +1043,8 @@ export const explainTarget = (projectRoot: string, target: string, options?: Exp
     return withMemory(projectRoot, options?.withMemory, explainCommand(projectRoot, commandName), { target: commandName });
   }
 
-  const context = gatherContext(projectRoot);
   const resolvedTarget = resolveRepositoryTarget(projectRoot, normalizeTarget(target));
+  const context = gatherContext(projectRoot, resolvedTarget.kind === 'module' ? { kind: 'module', id: resolvedTarget.selector } : { kind: 'repo', id: 'root' }, resolvedTarget.kind === 'module' ? 'explain-module-context' : 'explain-context');
 
   if (resolvedTarget.kind === 'rule') {
     return withMemory(projectRoot, options?.withMemory, explainRule(projectRoot, context, resolvedTarget), { target: resolvedTarget.selector });

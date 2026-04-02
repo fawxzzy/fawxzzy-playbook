@@ -1,6 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { MODULE_DIGESTS_RELATIVE_PATH, buildRiskAwareContextSummary, readConsumedRuntimeManifestsArtifact, readModuleDigestsArtifact, RUNTIME_MANIFESTS_RELATIVE_PATH } from '@zachariahredfield/playbook-engine';
+import {
+  MODULE_DIGESTS_RELATIVE_PATH,
+  CONTEXT_CACHE_INDEX_RELATIVE_PATH,
+  buildRiskAwareContextSummary,
+  readConsumedRuntimeManifestsArtifact,
+  readModuleDigestsArtifact,
+  resolveContextSnapshotCache,
+  RUNTIME_MANIFESTS_RELATIVE_PATH,
+  type ContextCacheMetadata
+} from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
 import { listRegisteredCommands } from './index.js';
 
@@ -59,6 +68,7 @@ type AiContextResult = {
     example: string;
   }>;
   riskAwareContext: ReturnType<typeof buildRiskAwareContextSummary>;
+  cacheLifecycle: ContextCacheMetadata;
   guidance: {
     preferPlaybookCommands: true;
     authorityRule: string;
@@ -73,7 +83,7 @@ type AiContextResult = {
   };
 };
 
-const buildAiContextResult = (cwd: string): AiContextResult => {
+const buildAiContextSnapshot = (cwd: string): Omit<AiContextResult, 'cacheLifecycle'> => {
   const indexFile = path.join(cwd, '.playbook', 'repo-index.json');
   const runtimeManifestArtifact = readConsumedRuntimeManifestsArtifact(cwd);
   const moduleDigests = readModuleDigestsArtifact(cwd);
@@ -161,6 +171,22 @@ const buildAiContextResult = (cwd: string): AiContextResult => {
   };
 };
 
+const buildAiContextResult = (cwd: string): AiContextResult => {
+  const cached = resolveContextSnapshotCache({
+    projectRoot: cwd,
+    scope: { kind: 'repo', id: 'root' },
+    shapingLevel: 'ai-context',
+    riskTier: 'ai-context',
+    sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json', '.playbook/ai-contract.json'],
+    buildSnapshot: () => buildAiContextSnapshot(cwd)
+  });
+
+  return {
+    ...cached.snapshot,
+    cacheLifecycle: cached.cache
+  };
+};
+
 const printText = (result: AiContextResult): void => {
   console.log('Playbook AI Context');
   console.log('');
@@ -197,6 +223,12 @@ const printText = (result: AiContextResult): void => {
     console.log(`Low-risk modules: ${result.riskAwareContext.lowRiskModules}`);
     console.log(`Depth mapping: high=${result.riskAwareContext.defaultDepthByTier.high}, low=${result.riskAwareContext.defaultDepthByTier.low}`);
   }
+  console.log('');
+  console.log('Cache Lifecycle');
+  console.log(`Index artifact: ${CONTEXT_CACHE_INDEX_RELATIVE_PATH}`);
+  console.log(`Cache key: ${result.cacheLifecycle.cacheKey}`);
+  console.log(`Cache reused: ${result.cacheLifecycle.reused ? 'yes' : 'no'}`);
+  console.log(`Invalidation reason: ${result.cacheLifecycle.invalidationReason}`);
   console.log('');
   console.log('AI Operating Ladder');
   console.log(result.operatingLadder.preferredCommandOrder.join(' -> '));
