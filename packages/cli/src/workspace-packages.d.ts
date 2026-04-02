@@ -135,6 +135,9 @@ declare module "@zachariahredfield/playbook-engine" {
   export const readModuleDigestsArtifact: (...args: any[]) => any;
   export const readModuleDigest: (...args: any[]) => any;
   export const MODULE_DIGESTS_RELATIVE_PATH: ".playbook/module-digests.json";
+  export const CONTEXT_CACHE_INDEX_RELATIVE_PATH: ".playbook/context/cache-index.json";
+  export const resolveContextSnapshotCache: (...args: any[]) => any;
+  export type ContextCacheMetadata = any;
   export const buildRiskAwareContextSummary: (...args: any[]) => any;
   export const shapeRiskAwareModuleContext: (...args: any[]) => any;
   export const buildModuleContextDigests: (...args: any[]) => any;

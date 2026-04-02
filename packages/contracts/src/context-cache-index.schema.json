@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PlaybookContextCacheIndex",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "generatedAt", "entries"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "kind": { "const": "playbook-context-cache-index" },
+    "generatedAt": { "type": "string" },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cacheKey",
+          "scope",
+          "shapingLevel",
+          "riskTier",
+          "generatedAt",
+          "lastValidatedAt",
+          "expiresAt",
+          "invalidationReason",
+          "sourceFingerprints",
+          "snapshotPath"
+        ],
+        "properties": {
+          "cacheKey": { "type": "string" },
+          "scope": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id"],
+            "properties": {
+              "kind": { "enum": ["repo", "module", "subapp"] },
+              "id": { "type": "string" }
+            }
+          },
+          "shapingLevel": { "type": "string" },
+          "riskTier": { "type": "string" },
+          "generatedAt": { "type": "string" },
+          "lastValidatedAt": { "type": "string" },
+          "expiresAt": { "type": "string" },
+          "invalidationReason": {
+            "enum": ["none", "cache-miss", "snapshot-missing", "source-fingerprint-drift", "policy-expired", "cache-key-collision"]
+          },
+          "sourceFingerprints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["artifact", "fingerprint", "present"],
+              "properties": {
+                "artifact": { "type": "string" },
+                "fingerprint": { "type": "string" },
+                "present": { "type": "boolean" }
+              }
+            }
+          },
+          "snapshotPath": { "type": "string" }
+        }
+      }
+    }
+  }
+}

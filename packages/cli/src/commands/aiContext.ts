@@ -1,6 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { MODULE_DIGESTS_RELATIVE_PATH, buildRiskAwareContextSummary, readConsumedRuntimeManifestsArtifact, readModuleDigestsArtifact, RUNTIME_MANIFESTS_RELATIVE_PATH } from '@zachariahredfield/playbook-engine';
+import {
+  MODULE_DIGESTS_RELATIVE_PATH,
+  buildRiskAwareContextSummary,
+  readConsumedRuntimeManifestsArtifact,
+  readModuleDigestsArtifact,
+  resolveContextSnapshotCache,
+  RUNTIME_MANIFESTS_RELATIVE_PATH
+} from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
 import { listRegisteredCommands } from './index.js';
 
@@ -73,7 +80,7 @@ type AiContextResult = {
   };
 };
 
-const buildAiContextResult = (cwd: string): AiContextResult => {
+const buildAiContextSnapshot = (cwd: string): AiContextResult => {
   const indexFile = path.join(cwd, '.playbook', 'repo-index.json');
   const runtimeManifestArtifact = readConsumedRuntimeManifestsArtifact(cwd);
   const moduleDigests = readModuleDigestsArtifact(cwd);
@@ -159,6 +166,19 @@ const buildAiContextResult = (cwd: string): AiContextResult => {
       candidateKnowledgeGuidance: 'Treat candidates as advisory-only signals until reviewed promotion; never treat candidate artifacts as authoritative doctrine.'
     }
   };
+};
+
+const buildAiContextResult = (cwd: string): AiContextResult => {
+  const cached = resolveContextSnapshotCache({
+    projectRoot: cwd,
+    scope: { kind: 'repo', id: 'root' },
+    shapingLevel: 'ai-context',
+    riskTier: 'ai-context',
+    sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json', '.playbook/ai-contract.json'],
+    buildSnapshot: () => buildAiContextSnapshot(cwd)
+  });
+
+  return cached.snapshot;
 };
 
 const printText = (result: AiContextResult): void => {

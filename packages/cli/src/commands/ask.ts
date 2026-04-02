@@ -1,4 +1,4 @@
-import { answerRepositoryQuestion } from '@zachariahredfield/playbook-engine';
+import { answerRepositoryQuestion, type ContextCacheMetadata } from '@zachariahredfield/playbook-engine';
 import { loadAskRepoContext } from '../ai/repoContext.js';
 import { getResponseModeInstruction, parseResponseMode, type ResponseMode } from '../ai/responseModes.js';
 import { ExitCode } from '../lib/cliContract.js';
@@ -29,6 +29,7 @@ type AskResult = {
   repoContext: {
     enabled: boolean;
     sources: string[];
+    cacheLifecycle?: ContextCacheMetadata;
   };
   scope: {
     module?: string;
@@ -300,7 +301,8 @@ export const runAsk = async (cwd: string, commandArgs: string[], options: AskOpt
       reason: answer.reason,
       repoContext: {
         enabled: repoContext.enabled,
-        sources: repoContext.sources
+        sources: repoContext.sources,
+        cacheLifecycle: repoContext.cacheLifecycle
       },
       scope: {
         module: options.module,

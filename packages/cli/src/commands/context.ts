@@ -1,5 +1,12 @@
 import { ExitCode } from '../lib/cliContract.js';
-import { MODULE_DIGESTS_RELATIVE_PATH, buildRiskAwareContextSummary, readConsumedRuntimeManifestsArtifact, readModuleDigestsArtifact, RUNTIME_MANIFESTS_RELATIVE_PATH } from '@zachariahredfield/playbook-engine';
+import {
+  MODULE_DIGESTS_RELATIVE_PATH,
+  buildRiskAwareContextSummary,
+  readConsumedRuntimeManifestsArtifact,
+  readModuleDigestsArtifact,
+  resolveContextSnapshotCache,
+  RUNTIME_MANIFESTS_RELATIVE_PATH
+} from '@zachariahredfield/playbook-engine';
 import { listRegisteredCommands } from './index.js';
 
 type ContextResult = {
@@ -34,7 +41,7 @@ type ContextResult = {
   riskAwareContext: ReturnType<typeof buildRiskAwareContextSummary>;
 };
 
-const buildContextResult = (cwd: string): ContextResult => {
+const buildContextSnapshot = (cwd: string): ContextResult => {
   const runtimeManifestArtifact = readConsumedRuntimeManifestsArtifact(cwd);
   const moduleDigests = readModuleDigestsArtifact(cwd);
   const riskAwareContext = buildRiskAwareContextSummary(cwd);
@@ -70,6 +77,19 @@ const buildContextResult = (cwd: string): ContextResult => {
     },
     riskAwareContext
   };
+};
+
+const buildContextResult = (cwd: string): ContextResult => {
+  const cached = resolveContextSnapshotCache({
+    projectRoot: cwd,
+    scope: { kind: 'repo', id: 'root' },
+    shapingLevel: 'context',
+    riskTier: 'context',
+    sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json'],
+    buildSnapshot: () => buildContextSnapshot(cwd)
+  });
+
+  return cached.snapshot;
 };
 
 const printText = (result: ContextResult): void => {

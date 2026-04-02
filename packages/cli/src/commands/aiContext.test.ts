@@ -138,6 +138,10 @@ describe('runAiContext', () => {
     const repo = createRepo();
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
+    const warmupExit = await runAiContext(repo, { format: 'json', quiet: false });
+    expect(warmupExit).toBe(ExitCode.Success);
+    logSpy.mockClear();
+
     const firstExit = await runAiContext(repo, { format: 'json', quiet: false });
     const first = String(logSpy.mock.calls[0]?.[0]);
 

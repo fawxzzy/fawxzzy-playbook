@@ -110,6 +110,9 @@ Module digest context-transfer governance:
 - Rule: Risk-aware context shaping must reflect canonical repository intelligence, not ad hoc heuristics.
 - Pattern: digest -> risk tier -> shaped context.
 - Failure Mode: Uniform context payloads either waste tokens on low-risk modules or starve high-risk modules of the detail needed for safe reasoning.
+- Rule: Cached context snapshots are valid only while canonical source intelligence fingerprints remain valid.
+- Pattern: canonical sources -> shaped context -> cached snapshot -> deterministic invalidation.
+- Failure Mode: Without context cache lifecycle policy, snapshots drift stale or trigger wasteful broad rescans on every read.
 
 For remediation workflow updates, run canonical deterministic flow checks:
 

@@ -97,6 +97,7 @@ describe('ask --repo-context', () => {
     expect(exitCode).toBe(ExitCode.Success);
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.repoContext.enabled).toBe(true);
+    expect(payload.repoContext.cacheLifecycle.indexPath).toBe('.playbook/context/cache-index.json');
     expect(payload.context.module.module.name).toBe('workouts');
     expect(payload.context.sources).toContainEqual({ type: 'module', name: 'workouts' });
     expect(payload.context.sources).toContainEqual({ type: 'module-digest', path: '.playbook/module-digests.json' });
@@ -121,10 +122,11 @@ describe('ask --repo-context', () => {
     expect(exitCode).toBe(ExitCode.Success);
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.mode).toBe('concise');
-    expect(payload.repoContext).toEqual({
+    expect(payload.repoContext).toMatchObject({
       enabled: true,
       sources: ['.playbook/repo-index.json', 'generated-ai-contract-fallback', '.playbook/module-digests.json']
     });
+    expect(payload.repoContext.cacheLifecycle.indexPath).toBe('.playbook/context/cache-index.json');
     expect(payload.scope).toEqual({
       module: undefined,
       diffContext: {
