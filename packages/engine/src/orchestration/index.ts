@@ -7,3 +7,6 @@ export type { WorkerAssignmentsArtifact, WorkerAssignmentEntry, WorkerAssignment
 
 export { WORKER_RESULTS_RELATIVE_PATH, createWorkerResultsArtifact, readWorkerResultsArtifact, validateWorkerResultInput, mergeWorkerResult, writeWorkerResultsArtifact, laneStatusOverridesFromWorkerResults } from './workerResults.js';
 export type { WorkerResultsArtifact, WorkerResultEntry, WorkerResultCompletionStatus, WorkerResultFragmentRef, WorkerResultArtifactRef } from './workerResults.js';
+
+export { buildWorkerLaunchPlan, writeWorkerLaunchPlanArtifact, WORKER_LAUNCH_PLAN_RELATIVE_PATH } from './workerLaunchPlan.js';
+export type { WorkerLaunchPlanArtifact, WorkerLaunchPlanLane } from './workerLaunchPlan.js';

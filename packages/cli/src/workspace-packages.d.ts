@@ -411,6 +411,10 @@ declare module "@zachariahredfield/playbook-engine" {
   export const mergeWorkerResult: (...args: any[]) => { artifact: WorkerResultsArtifact; result: any };
   export const writeWorkerResultsArtifact: (...args: any[]) => void;
   export type WorkerAssignmentsArtifact = any;
+  export type WorkerLaunchPlanArtifact = any;
+  export const WORKER_LAUNCH_PLAN_RELATIVE_PATH: '.playbook/worker-launch-plan.json';
+  export const buildWorkerLaunchPlan: (...args: any[]) => WorkerLaunchPlanArtifact;
+  export const writeWorkerLaunchPlanArtifact: (...args: any[]) => void;
   export const assignWorkersToLanes: (
     ...args: any[]
   ) => WorkerAssignmentsArtifact;

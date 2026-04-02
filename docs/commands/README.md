@@ -58,7 +58,7 @@ Do not hand-edit entries inside the managed markers.
 | `verify` | Detect repository state and extract governance invariants | canonical | governance | primary | P8 | Current (implemented) | `pnpm playbook verify --ci --json` |
 | `plan` | Transform findings into a structured remediation model | canonical | remediation | primary | P9 | Current (implemented) | `pnpm playbook plan --json` |
 | `lanes` | Derive deterministic lane-state from .playbook/workset-plan.json | canonical | remediation | primary | Later | Current (implemented) | `pnpm playbook lanes --json` |
-| `workers` | Assign deterministic proposal-only workers and submit worker results from lane-state/workset artifacts | canonical | remediation | primary | Later | Current (implemented) | `pnpm playbook workers assign --json` |
+| `workers` | Assign deterministic proposal-only workers, derive launch authorization, and submit worker results from lane-state/workset artifacts | canonical | remediation | primary | Later | Current (implemented) | `pnpm playbook workers assign --json` |
 | `orchestrate` | Generate deterministic orchestration lane artifacts for a goal or tasks-file workset | canonical | remediation | primary | Later | Current (implemented) | `pnpm playbook orchestrate --goal "ship capability" --lanes 3 --format both` |
 | `execute` | Execute orchestration lanes through the execution supervisor runtime | canonical | remediation | primary | Later | Current (implemented) | `pnpm playbook execute --json` |
 | `cycle` | Run the hardened execution primitives as one deterministic cycle orchestration pass | canonical | remediation | primary | Later | Current (implemented) | `pnpm playbook cycle --json` |

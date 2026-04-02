@@ -285,6 +285,9 @@ const commandRunners: Record<
     if (action === "submit") {
       return runWorkers(cwd, { format, quiet, action: "submit", from: parseOptionValue(commandArgs, "--from") });
     }
+    if (action === "launch-plan") {
+      return runWorkers(cwd, { format, quiet, action: "launch-plan" });
+    }
 
     return runWorkers(cwd, { format, quiet });
   },
