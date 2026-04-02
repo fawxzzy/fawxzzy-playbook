@@ -3,7 +3,7 @@ import path from 'node:path';
 import { queryRepositoryIndex } from '../query/repoQuery.js';
 import type { RepositoryModule } from '../indexer/repoIndexer.js';
 import { buildModuleAskContext, resolveIndexedModuleContext, type IndexedModuleContext } from '../query/moduleIntelligence.js';
-import { readModuleContextDigest, type ModuleContextDigest } from '../context/moduleContext.js';
+import { readModuleDigest, type ModuleDigest } from '../context/moduleDigests.js';
 import { resolveDiffAskContext, type DiffAskContext } from './diffContext.js';
 import { readRuntimeMemoryEnvelope, type RuntimeMemoryEnvelope } from '../intelligence/runtimeMemory.js';
 import {
@@ -41,7 +41,7 @@ export type AskEngineResult = {
     framework: string;
     modules: string[];
     module?: IndexedModuleContext;
-    moduleDigest?: ModuleContextDigest;
+    moduleDigest?: ModuleDigest;
     diff?: DiffAskContext;
   };
 };
@@ -399,25 +399,25 @@ export const answerRepositoryQuestion = (projectRoot: string, question: string, 
   }
 
   if (moduleContext && includesAny(normalizedQuestion, ['how', 'work', 'works', 'module'])) {
-    const moduleDigest = readModuleContextDigest(projectRoot, moduleContext.module.name);
+    const moduleDigest = readModuleDigest(projectRoot, moduleContext.module.name);
 
     if (moduleDigest) {
       const digestSummary = [
-        `Module scope: ${moduleDigest.module.name}`,
-        `Dependencies: ${moduleDigest.dependencies.length > 0 ? moduleDigest.dependencies.join(', ') : 'none'}`,
-        `Direct dependents: ${moduleDigest.directDependents.length > 0 ? moduleDigest.directDependents.join(', ') : 'none'}`,
+        `Module scope: ${moduleDigest.id}`,
+        `Dependencies: ${moduleDigest.dependencies.direct.length > 0 ? moduleDigest.dependencies.direct.join(', ') : 'none'}`,
+        `Direct dependents: ${moduleDigest.dependents.direct.length > 0 ? moduleDigest.dependents.direct.join(', ') : 'none'}`,
         `Risk: ${moduleDigest.risk.level} (${moduleDigest.risk.score.toFixed(2)})`,
-        `Graph neighborhood kinds: out[${moduleDigest.graphNeighborhood.outgoingKinds.join(', ') || 'none'}], in[${moduleDigest.graphNeighborhood.incomingKinds.join(', ') || 'none'}]`
+        moduleDigest.summary
       ].join('; ');
 
       return {
         question: userQuestion,
         answer: digestSummary,
         reason:
-          'Derived from module-scoped compressed context in .playbook/context/modules plus graph/index intelligence artifacts.',
+          'Derived from deterministic module digests in .playbook/module-digests.json plus graph/index intelligence artifacts.',
         answerability: {
           state: 'answered-from-trusted-artifact',
-          artifact: `.playbook/context/modules/${moduleDigest.module.name.replace(/[\\/]/g, '__')}.json`
+          artifact: '.playbook/module-digests.json'
         },
         context: {
         ...memoryContext,
