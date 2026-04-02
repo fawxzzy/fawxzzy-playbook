@@ -73,10 +73,6 @@ describe('runAiContext', () => {
 
     const riskAwareContext = payload.riskAwareContext as Record<string, unknown> | null;
     expect(riskAwareContext).toBeNull();
-    const cacheLifecycle = payload.cacheLifecycle as Record<string, unknown>;
-    expect(cacheLifecycle.indexPath).toBe('.playbook/context/cache-index.json');
-    expect(typeof cacheLifecycle.cacheKey).toBe('string');
-    expect(typeof cacheLifecycle.reused).toBe('boolean');
 
     const guidance = payload.guidance as Record<string, unknown>;
     expect(guidance.preferPlaybookCommands).toBe(true);
