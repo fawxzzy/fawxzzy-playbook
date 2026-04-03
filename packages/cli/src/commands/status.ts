@@ -750,7 +750,6 @@ export const runStatus = async (cwd: string, options: StatusOptions): Promise<nu
     }
 
     if (options.scope === 'proof') {
-      const proofPolicy = resolveProofPolicy(options);
       const proofResult = buildProofStatusResult(cwd);
       if (options.format === 'json') {
         console.log(JSON.stringify(proofResult, null, 2));
@@ -799,6 +798,7 @@ export const runStatus = async (cwd: string, options: StatusOptions): Promise<nu
           }]
         }));
       }
+      const proofPolicy = resolveProofPolicy(options);
       return resolveProofExitCode(proofResult, proofPolicy);
     }
 
