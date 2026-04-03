@@ -555,38 +555,37 @@ const readContinuitySummary = (cwd: string): StatusProofResult['continuity'] => 
   };
 };
 
-const toProofStatusResult = (
-  cwd: string,
-  options?: { enforceGate?: boolean }
-): { result: StatusProofResult; exitCode: ExitCode } => {
+const buildProofStatusResult = (cwd: string): StatusProofResult => {
   const proof = runBootstrapProof(cwd, { cliResolutionCommands: bootstrapCliResolutionCommands() });
   const parallelWork = readProofParallelWorkSummary(cwd);
   const failureDomainSummary = classifyProofFailureDomains(proof, parallelWork);
   const continuity = readContinuitySummary(cwd);
-  const hasReadableProofState =
-    typeof proof.current_state === 'string' &&
-    proof.current_state.trim().length > 0 &&
-    typeof parallelWork.status === 'string' &&
-    parallelWork.status.trim().length > 0;
-  const enforceGate = options?.enforceGate ?? false;
   return {
-    result: {
-      schemaVersion: '1.0',
-      command: 'status',
-      mode: 'proof',
-      proof,
-      parallel_work: parallelWork,
-      failureDomains: failureDomainSummary.failureDomains,
-      primaryFailureDomain: failureDomainSummary.primaryFailureDomain,
-      domainBlockers: failureDomainSummary.domainBlockers,
-      domainNextActions: failureDomainSummary.domainNextActions,
-      continuity,
-      interpretation: buildProofInterpretation(proof)
-    },
-    exitCode: enforceGate
-      ? (proof.ok ? ExitCode.Success : ExitCode.Failure)
-      : (hasReadableProofState ? ExitCode.Success : ExitCode.Failure)
+    schemaVersion: '1.0',
+    command: 'status',
+    mode: 'proof',
+    proof,
+    parallel_work: parallelWork,
+    failureDomains: failureDomainSummary.failureDomains,
+    primaryFailureDomain: failureDomainSummary.primaryFailureDomain,
+    domainBlockers: failureDomainSummary.domainBlockers,
+    domainNextActions: failureDomainSummary.domainNextActions,
+    continuity,
+    interpretation: buildProofInterpretation(proof)
   };
+};
+
+const hasRenderableProofContract = (result: StatusProofResult): boolean =>
+  typeof result.proof.current_state === 'string' &&
+  result.proof.current_state.trim().length > 0 &&
+  typeof result.parallel_work.status === 'string' &&
+  result.parallel_work.status.trim().length > 0;
+
+const resolveProofExitCode = (result: StatusProofResult, options?: { enforceGate?: boolean }): ExitCode => {
+  if (options?.enforceGate) {
+    return result.proof.ok ? ExitCode.Success : ExitCode.Failure;
+  }
+  return hasRenderableProofContract(result) ? ExitCode.Success : ExitCode.Failure;
 };
 
 const toUpdatedStateStatusResult = (cwd: string): { result: StatusUpdatedStateResult; exitCode: ExitCode } => {
@@ -749,7 +748,7 @@ export const runStatus = async (cwd: string, options: StatusOptions): Promise<nu
     }
 
     if (options.scope === 'proof') {
-      const { result: proofResult, exitCode } = toProofStatusResult(cwd, { enforceGate: options.proofGate });
+      const proofResult = buildProofStatusResult(cwd);
       if (options.format === 'json') {
         console.log(JSON.stringify(proofResult, null, 2));
       } else {
@@ -797,7 +796,7 @@ export const runStatus = async (cwd: string, options: StatusOptions): Promise<nu
           }]
         }));
       }
-      return exitCode;
+      return resolveProofExitCode(proofResult, { enforceGate: options.proofGate });
     }
 
     if (options.scope === 'updated') {
