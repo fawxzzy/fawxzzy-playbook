@@ -385,7 +385,6 @@ const commandRunners: Record<
       quiet,
       scope,
       proofPolicy: proofGate ? "enforce" : "report",
-      enforceProofGate: proofGate,
     });
   },
   upgrade: async ({ cwd, commandArgs, ci, explain, format, quiet }) => {
