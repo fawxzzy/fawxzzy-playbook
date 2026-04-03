@@ -774,7 +774,7 @@ describe('runStatus', () => {
     });
 
     const exitCode = await runStatus(process.cwd(), { ci: false, format: 'json', quiet: false, scope: 'proof' });
-    expect(exitCode).toBe(ExitCode.Failure);
+    expect(exitCode).toBe(ExitCode.Success);
 
     const payload = JSON.parse(logSpy.mock.calls.map((call) => String(call[0])).join('\n'));
     expect(payload).toMatchObject({

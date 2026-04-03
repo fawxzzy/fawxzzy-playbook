@@ -559,6 +559,11 @@ const toProofStatusResult = (cwd: string): { result: StatusProofResult; exitCode
   const parallelWork = readProofParallelWorkSummary(cwd);
   const failureDomainSummary = classifyProofFailureDomains(proof, parallelWork);
   const continuity = readContinuitySummary(cwd);
+  const hasReadableProofState =
+    typeof proof.current_state === 'string' &&
+    proof.current_state.trim().length > 0 &&
+    typeof parallelWork.status === 'string' &&
+    parallelWork.status.trim().length > 0;
   return {
     result: {
       schemaVersion: '1.0',
@@ -573,7 +578,7 @@ const toProofStatusResult = (cwd: string): { result: StatusProofResult; exitCode
       continuity,
       interpretation: buildProofInterpretation(proof)
     },
-    exitCode: proof.ok ? ExitCode.Success : ExitCode.Failure
+    exitCode: hasReadableProofState ? ExitCode.Success : ExitCode.Failure
   };
 };
 
