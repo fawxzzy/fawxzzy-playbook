@@ -581,8 +581,8 @@ const hasRenderableProofContract = (result: StatusProofResult): boolean =>
   typeof result.parallel_work.status === 'string' &&
   result.parallel_work.status.trim().length > 0;
 
-const resolveProofExitCode = (result: StatusProofResult, options?: { enforceGate?: boolean }): ExitCode => {
-  if (options?.enforceGate) {
+const resolveProofExitCode = (result: StatusProofResult, proofPolicy: 'report' | 'enforce'): ExitCode => {
+  if (proofPolicy === 'enforce') {
     return result.proof.ok ? ExitCode.Success : ExitCode.Failure;
   }
   return hasRenderableProofContract(result) ? ExitCode.Success : ExitCode.Failure;
@@ -750,6 +750,7 @@ export const runStatus = async (cwd: string, options: StatusOptions): Promise<nu
     }
 
     if (options.scope === 'proof') {
+      const proofPolicy = resolveProofPolicy(options);
       const proofResult = buildProofStatusResult(cwd);
       if (options.format === 'json') {
         console.log(JSON.stringify(proofResult, null, 2));
@@ -798,7 +799,7 @@ export const runStatus = async (cwd: string, options: StatusOptions): Promise<nu
           }]
         }));
       }
-      return resolveProofExitCode(proofResult, { enforceGate: resolveProofPolicy(options) === 'enforce' });
+      return resolveProofExitCode(proofResult, proofPolicy);
     }
 
     if (options.scope === 'updated') {
