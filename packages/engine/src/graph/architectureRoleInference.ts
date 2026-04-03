@@ -16,7 +16,6 @@ export type ArchitectureRoleInferenceRecord = {
 
 export type ArchitectureRoleInferenceSummary = {
   schemaVersion: typeof ARCHITECTURE_ROLE_INFERENCE_SCHEMA_VERSION;
-  inferredAt: string;
   roles: ArchitectureRoleInferenceRecord[];
 };
 
@@ -74,7 +73,6 @@ export const inferArchitectureRoles = (graph: RepositoryGraph): ArchitectureRole
 
   return {
     schemaVersion: ARCHITECTURE_ROLE_INFERENCE_SCHEMA_VERSION,
-    inferredAt: graph.generatedAt,
     roles: modules.map((module) => {
       const incomingDependencies = incomingByModule.get(module) ?? 0;
       const outgoingDependencies = outgoingByModule.get(module) ?? 0;

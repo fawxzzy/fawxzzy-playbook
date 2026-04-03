@@ -86,7 +86,6 @@ describe('repository graph', () => {
       ],
       architectureRoleInference: {
         schemaVersion: '1.0',
-        inferredAt: '2026-01-01T00:00:00.000Z',
         roles: [
           {
             module: 'auth',
@@ -119,7 +118,6 @@ describe('repository graph', () => {
 
     expect(inferArchitectureRoles(graph)).toEqual({
       schemaVersion: '1.0',
-      inferredAt: '2026-01-01T00:00:00.000Z',
       roles: [
         {
           module: 'adapter',

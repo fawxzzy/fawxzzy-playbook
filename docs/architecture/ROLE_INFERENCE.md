@@ -20,3 +20,9 @@ Role inference is read-only and computed from repository graph `depends_on` edge
 - `dependencyDirection`: `inbound`, `outbound`, `bidirectional`, or `isolated`.
 
 Classification rules are deterministic and additive in read models.
+
+## Contract hygiene for graph JSON
+
+- Rule: Any intentional CLI JSON surface change must update schema, contract snapshots, and docs in the same PR.
+- Pattern: Build green + contracts red usually means output-shape drift, not compile failure.
+- Failure Mode: Chasing downstream warnings before fixing the first contract validation failure wastes cycles and does not restore CI.
