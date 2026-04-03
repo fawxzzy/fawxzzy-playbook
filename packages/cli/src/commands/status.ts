@@ -557,7 +557,7 @@ const readContinuitySummary = (cwd: string): StatusProofResult['continuity'] => 
   };
 };
 
-const buildProofStatusResult = (cwd: string): StatusProofResult => {
+const toProofStatusResult = (cwd: string): StatusProofResult => {
   const proof = runBootstrapProof(cwd, { cliResolutionCommands: bootstrapCliResolutionCommands() });
   const parallelWork = readProofParallelWorkSummary(cwd);
   const failureDomainSummary = classifyProofFailureDomains(proof, parallelWork);
@@ -752,7 +752,7 @@ export const runStatus = async (cwd: string, options: StatusOptions): Promise<nu
     }
 
     if (options.scope === 'proof') {
-      const proofResult = buildProofStatusResult(cwd);
+      const proofResult = toProofStatusResult(cwd);
       if (options.format === 'json') {
         console.log(JSON.stringify(proofResult, null, 2));
       } else {
