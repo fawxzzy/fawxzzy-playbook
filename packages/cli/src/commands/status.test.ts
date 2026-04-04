@@ -28,8 +28,10 @@ const runBootstrapProof = vi.fn();
 const readProofParallelWorkSummary = vi.fn();
 const defaultBootstrapCliResolutionCommands = vi.fn();
 const classifyProofFailureDomains = vi.fn();
+const listOrchestrationExecutionRuns = vi.fn();
+const readSession = vi.fn();
 
-vi.mock('@zachariahredfield/playbook-engine', () => ({ buildRepoAdoptionReadiness, buildFleetAdoptionReadinessSummary, buildFleetAdoptionWorkQueue, buildFleetCodexExecutionPlan, buildFleetExecutionReceipt, buildFleetUpdatedAdoptionState, deriveNextAdoptionQueueFromUpdatedState, buildMemoryPressureStatusArtifact, loadConfig, runBootstrapProof, readProofParallelWorkSummary, defaultBootstrapCliResolutionCommands, classifyProofFailureDomains }));
+vi.mock('@zachariahredfield/playbook-engine', () => ({ buildRepoAdoptionReadiness, buildFleetAdoptionReadinessSummary, buildFleetAdoptionWorkQueue, buildFleetCodexExecutionPlan, buildFleetExecutionReceipt, buildFleetUpdatedAdoptionState, deriveNextAdoptionQueueFromUpdatedState, buildMemoryPressureStatusArtifact, loadConfig, runBootstrapProof, readProofParallelWorkSummary, defaultBootstrapCliResolutionCommands, classifyProofFailureDomains, listOrchestrationExecutionRuns, readSession }));
 
 const makeAnalyzeReport = (overrides?: Partial<AnalyzeReport>): AnalyzeReport => ({
   repoPath: '/tmp/repo',
@@ -70,7 +72,11 @@ describe('runStatus', () => {
     readProofParallelWorkSummary.mockReset();
     defaultBootstrapCliResolutionCommands.mockReset();
     classifyProofFailureDomains.mockReset();
+    listOrchestrationExecutionRuns.mockReset();
+    readSession.mockReset();
     defaultBootstrapCliResolutionCommands.mockReturnValue([]);
+    listOrchestrationExecutionRuns.mockReturnValue([]);
+    readSession.mockReturnValue(null);
     classifyProofFailureDomains.mockReturnValue({
       failureDomains: [],
       primaryFailureDomain: null,
