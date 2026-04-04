@@ -148,7 +148,7 @@ Do not hand-edit entries inside the managed markers.
 - Failure Mode: Leaving `proof.ok` as the exit source inside proof result construction prevents report/enforce split and default-report behavior from working.
 - Rule: Policy-aware CLI behavior must be introduced at the runtime command boundary before or alongside test expansion.
 - Pattern: Keep proof serialization invariant and move policy selection to the final exit boundary.
-- Failure Mode: Branch tests can outrun branch implementation while main still reflects the older contract, producing misleading “many failures” noise from one missing seam.
+- Failure Mode: Adding policy-aware tests before wiring policy into the runtime command boundary creates clustered proof-mode failures from one missing seam.
 - Rule: Local proof status reporting and proof enforcement are separate contracts even when bootstrap enforcement already passes through another caller path.
 - Pattern: Fix the shared local command surface after a specialized external caller turns green.
 - Failure Mode: Passing bootstrap enforcement can mask that `runStatus` still hardwires `proof.ok` to process exit behavior.
