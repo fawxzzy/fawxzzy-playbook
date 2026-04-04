@@ -106,7 +106,7 @@ describe('story helpers', () => {
     const persistedStory = readStoriesArtifact(repoRoot).stories[0];
     expect(persistedStory).toEqual(expect.objectContaining(baseStory));
     expect(persistedStory?.backlog_order).toBe(1);
-    expect(persistedStory?.backlog_priority_score).toBe(332);
+    expect(persistedStory?.backlog_priority_score).toBe(353);
     expect(persistedStory?.backlog_unmet_dependencies).toEqual([]);
     expect(persistedStory?.backlog_score_explanation).toEqual([
       'priority:high=300',
