@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/control-plane.schema.json",
+  "title": "Playbook Control Plane State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "generatedAt",
+    "active_actors",
+    "active_execution_mode",
+    "active_approvals",
+    "mutation_scope_level",
+    "external_execution_presence",
+    "receipt_lineage_refs",
+    "stale_or_invalid_state",
+    "source_artifacts",
+    "authority"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "kind": { "type": "string", "const": "playbook-control-plane-state" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "active_actors": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["planner-control-plane", "runtime-operator-plane", "app-domain-plane", "review-approval-actor"] },
+      "uniqueItems": true
+    },
+    "active_execution_mode": {
+      "type": "string",
+      "enum": ["read-runtime-inspection", "proposal-only", "reviewed-mutation", "bounded-external-execution"]
+    },
+    "active_approvals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "blockers"],
+      "properties": {
+        "required": { "type": "array", "items": { "type": "string" } },
+        "blockers": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "mutation_scope_level": {
+      "type": "string",
+      "enum": ["none", "proposal-only", "reviewed-mutation", "bounded-external-execution"]
+    },
+    "external_execution_presence": { "type": "boolean" },
+    "receipt_lineage_refs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "stale_or_invalid_state": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "source_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "present", "valid"],
+        "properties": {
+          "path": { "type": "string" },
+          "present": { "type": "boolean" },
+          "valid": { "type": "boolean" }
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mutation", "execution"],
+      "properties": {
+        "mutation": { "type": "string", "const": "read-only" },
+        "execution": { "type": "string", "const": "unchanged" }
+      }
+    }
+  }
+}

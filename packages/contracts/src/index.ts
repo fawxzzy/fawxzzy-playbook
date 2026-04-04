@@ -60,5 +60,6 @@ export const PLAYBOOK_SCHEMA_PATHS = {
   interopFollowups: 'packages/contracts/src/interop-followups.schema.json',
   interopPlanHints: 'packages/contracts/src/interop-plan-hints.schema.json',
   interopDocsStoryFollowups: 'packages/contracts/src/interop-docs-story-followups.schema.json',
-  changeScope: 'packages/contracts/src/change-scope.schema.json'
+  changeScope: 'packages/contracts/src/change-scope.schema.json',
+  controlPlane: 'packages/contracts/src/control-plane.schema.json'
 } as const;

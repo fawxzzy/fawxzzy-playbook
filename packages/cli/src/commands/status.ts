@@ -28,7 +28,9 @@ import {
   buildMemoryPressureStatusArtifact,
   loadConfig,
   listOrchestrationExecutionRuns,
-  readSession
+  readSession,
+  writeControlPlaneState,
+  type ControlPlaneStateArtifact
 } from '@zachariahredfield/playbook-engine';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -154,6 +156,7 @@ type StatusProofResult = {
     latest_receipt_refs: string[];
     stale_or_missing_state: string[];
   };
+  control_plane: ControlPlaneStateArtifact | null;
   interpretation: InterpretationLayer;
 };
 
@@ -516,6 +519,14 @@ const toTimeMs = (value: string | null | undefined): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const safeControlPlaneState = (cwd: string): ControlPlaneStateArtifact | null => {
+  try {
+    return writeControlPlaneState(cwd);
+  } catch {
+    return null;
+  }
+};
+
 const readContinuitySummary = (cwd: string): StatusProofResult['continuity'] => {
   const session = readSession(cwd) as SessionLike | null;
   const runs = listOrchestrationExecutionRuns(cwd);
@@ -573,6 +584,7 @@ const toProofStatusResult = (cwd: string): StatusProofResult => {
     domainBlockers: failureDomainSummary.domainBlockers,
     domainNextActions: failureDomainSummary.domainNextActions,
     continuity,
+    control_plane: safeControlPlaneState(cwd),
     interpretation: buildProofInterpretation(proof)
   };
 };

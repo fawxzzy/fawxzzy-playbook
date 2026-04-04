@@ -839,3 +839,22 @@ Docs command references:
 - Rule: Worker execution outputs must enter Playbook through explicit result artifacts, not inferred file diffs.
 - Pattern: Assign -> submit -> consolidate -> plan -> apply is the safe parallel-doc/runtime loop.
 - Failure Mode: Parallel workers without a receipt/submit seam force humans to reconstruct state manually and break deterministic orchestration.
+
+## Control-plane state (additive runtime context)
+
+Playbook now emits `.playbook/control-plane.json` as an explicit read-only control-plane contract artifact.
+
+In v1, this state is surfaced additively (without introducing a new top-level command family) through:
+
+- `status proof`
+- `query runs`
+- `agent run --from-plan ... --dry-run`
+
+Authority remains unchanged: this artifact does not grant new mutation behavior.
+
+- Rule: Any intentional CLI contract surface change must ship with regenerated committed snapshots.
+- Pattern: New artifact surfaces are not complete until contract snapshot drift is reconciled and reviewed.
+- Failure Mode: Passing build + failing contracts:check usually means schema/contract evolution was intentional but snapshot artifacts were not updated.
+- Rule: New read-only control-plane artifacts may extend contract registries, but must not silently change report-vs-enforce CLI exit semantics.
+- Pattern: Serialize operator-facing proof/control-plane output first, then apply exit-policy decisions at the final boundary.
+- Failure Mode: Early fail-closed branching in shared status/agent helpers can erase expected JSON/text payloads and make report mode behave like enforce mode.

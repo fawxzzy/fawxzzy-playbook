@@ -379,6 +379,9 @@ describe('runQuery', () => {
       staleSignals: []
     });
 
+    expect(payload.control_plane.kind).toBe('playbook-control-plane-state');
+    expect(payload.control_plane.receipt_lineage_refs).toContain('execution-state:pb-exec-0001:lane:lane-1:worker:worker-lane-1');
+
     logSpy.mockRestore();
   });
 
