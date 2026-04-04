@@ -171,6 +171,9 @@ Do not hand-edit entries inside the managed markers.
 - Rule: Status proof mode must preserve additive-safe enrichment even when the base status envelope is valid.
 - Pattern: Separate “state is bad” from “command failed” so status proof can report blocked/conflicted operator states without turning readable state into a command execution failure.
 - Failure Mode: Returning a base status envelope before proof enrichment causes contract shrinkage and incorrect non-zero exits in operator brief rendering paths.
+- Rule: Any existing `--json` read surface is a contract surface and must not drift silently.
+- Pattern: For CLI read surfaces, update implementation + contract schema + focused regression test in the same PR.
+- Failure Mode: Adding longitudinal/state metadata to an existing JSON surface without reconciling the registered schema causes late CI failure in contract snapshot generation.
 
 ### Implemented control-plane command docs
 
@@ -465,7 +468,6 @@ Command boundary note:
 
 - `knowledge list` enumerates all record types.
 - `knowledge query` filters by type, status, module, rule, or text.
-- `knowledge list/query` now include additive `longitudinal_state` JSON (and a single-line text brief) so operators can inspect unresolved risk, recurring clusters, verification lineage, and candidate/promoted/superseded totals without a new command family.
 - `knowledge inspect <id>` reads one record.
 - `knowledge provenance <id>` resolves direct evidence and related records.
 - `knowledge stale` returns stale, retired, and superseded records.

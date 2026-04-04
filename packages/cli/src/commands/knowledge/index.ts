@@ -11,7 +11,6 @@ import { printKnowledgeHelp, printKnowledgePortabilityHelp, type KnowledgeComman
 import { runKnowledgeStale } from './stale.js';
 import { runKnowledgeSupersession } from './supersession.js';
 import { runKnowledgeTimeline } from './timeline.js';
-import { formatLongitudinalThinText, readLongitudinalStateSummary } from '../longitudinalState.js';
 
 const renderPortabilityText = (payload: Record<string, unknown>): string => {
   const portability = payload.portability as Array<Record<string, unknown>> | undefined;
@@ -333,23 +332,10 @@ export const runKnowledge = async (cwd: string, args: string[], options: Knowled
       );
     })();
 
-
-    const payloadWithLongitudinal = {
-      ...(payload as Record<string, unknown>),
-      longitudinal_state: readLongitudinalStateSummary(cwd, {
-        knowledgeLifecycleSummary: {
-          candidate: Number(((payload as Record<string, unknown>).summary as Record<string, unknown> | undefined)?.byType && (((payload as Record<string, unknown>).summary as Record<string, unknown>).byType as Record<string, unknown>).candidate) || 0,
-          promoted: Number(((payload as Record<string, unknown>).summary as Record<string, unknown> | undefined)?.byType && (((payload as Record<string, unknown>).summary as Record<string, unknown>).byType as Record<string, unknown>).promoted) || 0,
-          superseded: Number(((payload as Record<string, unknown>).summary as Record<string, unknown> | undefined)?.byType && (((payload as Record<string, unknown>).summary as Record<string, unknown>).byType as Record<string, unknown>).superseded) || 0
-        }
-      })
-    };
-
     if (options.format === 'json') {
-      emitJsonOutput({ cwd, command: `knowledge ${subcommand}`, payload: payloadWithLongitudinal });
+      emitJsonOutput({ cwd, command: `knowledge ${subcommand}`, payload });
     } else if (!options.quiet) {
-      console.log(renderText(subcommand, payloadWithLongitudinal as Record<string, unknown>));
-      console.log(formatLongitudinalThinText(payloadWithLongitudinal.longitudinal_state));
+      console.log(renderText(subcommand, payload as Record<string, unknown>));
     }
 
     return ExitCode.Success;
