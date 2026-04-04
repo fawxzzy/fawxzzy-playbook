@@ -976,3 +976,5 @@ export { evaluateRuntimeCapabilityAuthorization } from './interop/launchCapabili
 export type { RuntimeCapabilityAuthorizationResult, RuntimeCapabilityAuthorizationBlocker } from './interop/launchCapabilityAuthorization.js';
 export { readControlPlaneState, writeControlPlaneState, CONTROL_PLANE_STATE_RELATIVE_PATH } from './controlPlane/controlPlaneState.js';
 export type { ControlPlaneStateArtifact } from './controlPlane/controlPlaneState.js';
+export { readLongitudinalState, writeLongitudinalState, LONGITUDINAL_STATE_RELATIVE_PATH } from './controlPlane/longitudinalState.js';
+export type { LongitudinalStateArtifact } from './controlPlane/longitudinalState.js';

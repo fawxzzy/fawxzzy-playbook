@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/longitudinal-state.schema.json",
+  "title": "Playbook Longitudinal State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "generatedAt",
+    "session_review_timelines",
+    "recurring_evidence",
+    "verification_outcomes",
+    "approvals_governance_refs",
+    "unresolved_risks",
+    "knowledge_lifecycle",
+    "source_artifacts",
+    "authority"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "kind": { "type": "string", "const": "playbook-longitudinal-state" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "session_review_timelines": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["session", "review"],
+      "properties": {
+        "session": { "$ref": "#/$defs/timelineEvents" },
+        "review": { "$ref": "#/$defs/timelineEvents" }
+      }
+    },
+    "recurring_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["failure_clusters", "finding_clusters"],
+      "properties": {
+        "failure_clusters": { "$ref": "#/$defs/recurringClusters" },
+        "finding_clusters": { "$ref": "#/$defs/recurringClusters" }
+      }
+    },
+    "verification_outcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verify", "verify_preflight", "execution_runs"],
+      "properties": {
+        "verify": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["present", "ok", "finding_count"],
+          "properties": {
+            "present": { "type": "boolean" },
+            "ok": { "type": ["boolean", "null"] },
+            "finding_count": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "verify_preflight": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["present", "ok"],
+          "properties": {
+            "present": { "type": "boolean" },
+            "ok": { "type": ["boolean", "null"] }
+          }
+        },
+        "execution_runs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["total", "completed", "failed", "running"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "completed": { "type": "integer", "minimum": 0 },
+            "failed": { "type": "integer", "minimum": 0 },
+            "running": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "approvals_governance_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "blocked", "refs"],
+      "properties": {
+        "required": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "blocked": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "refs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "unresolved_risks": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "knowledge_lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidates", "promoted", "superseded"],
+      "properties": {
+        "candidates": { "$ref": "#/$defs/knowledgeBucket" },
+        "promoted": { "$ref": "#/$defs/knowledgeBucket" },
+        "superseded": { "$ref": "#/$defs/knowledgeBucket" }
+      }
+    },
+    "source_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "present", "valid"],
+        "properties": {
+          "path": { "type": "string" },
+          "present": { "type": "boolean" },
+          "valid": { "type": "boolean" }
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mutation", "execution"],
+      "properties": {
+        "mutation": { "type": "string", "const": "read-only" },
+        "execution": { "type": "string", "const": "unchanged" }
+      }
+    }
+  },
+  "$defs": {
+    "timelineEvents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ts", "source", "event", "ref"],
+        "properties": {
+          "ts": { "type": "string", "format": "date-time" },
+          "source": { "type": "string" },
+          "event": { "type": "string" },
+          "ref": { "type": "string" }
+        }
+      }
+    },
+    "recurringClusters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "count", "latest_ts", "refs"],
+        "properties": {
+          "key": { "type": "string" },
+          "count": { "type": "integer", "minimum": 1 },
+          "latest_ts": { "type": ["string", "null"], "format": "date-time" },
+          "refs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+        }
+      }
+    },
+    "knowledgeBucket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "ids"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    }
+  }
+}
