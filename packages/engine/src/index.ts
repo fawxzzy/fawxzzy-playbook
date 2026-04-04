@@ -583,9 +583,17 @@ export type {
   CommandQualityEvent
 } from './memory/events.js';
 export { generateLifecycleCandidatesArtifact, generateAndWriteLifecycleCandidatesArtifact, readLifecycleCandidatesArtifact, writeLifecycleCandidatesArtifact } from './memory/lifecycleCandidates.js';
+export {
+  OUTCOME_FEEDBACK_SCHEMA_VERSION,
+  OUTCOME_FEEDBACK_RELATIVE_PATH,
+  buildOutcomeFeedbackArtifact,
+  writeOutcomeFeedbackArtifact,
+  buildAndWriteOutcomeFeedbackArtifact
+} from './memory/outcomeFeedback.js';
 export { DOCTRINE_TRANSFORM_SCHEMA_VERSION, DOCTRINE_TRANSFORM_KINDS, assertPatternEligibleForDoctrineTransform, buildPatternStoryDoctrineTransform, generateDoctrineTransformArtifact } from './doctrineTransforms.js';
 export type { DoctrineTransformKind, DoctrineTransformProposal, DoctrineTransformArtifact } from './doctrineTransforms.js';
 export type { LifecycleCandidatesArtifact, LifecycleCandidateRecord, LifecycleEvidenceRef, LifecycleRecommendationAction, LifecycleEvidenceKind } from './schema/lifecycleCandidate.js';
+export type { OutcomeFeedbackArtifact } from './memory/outcomeFeedback.js';
 export { lookupMemoryEventTimeline, lookupMemoryCandidateKnowledge, lookupPromotedMemoryKnowledge, expandMemoryProvenance } from './memory/inspection.js';
 export type { MemoryTimelineLookupOptions, MemoryCandidateLookupOptions, MemoryKnowledgeLookupOptions, ExpandedMemoryProvenance } from './memory/inspection.js';
 export type { DocsAuditResult, DocsAuditFinding, DocsAuditStatus, DocsAuditLevel } from './docs/audit.js';

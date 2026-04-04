@@ -32,20 +32,15 @@ Outcome Feedback + Automation Runtime Learning should:
 - improve future synthesis template/pattern selection safely
 - preserve human review for any promotion into enforced governance or upstream reusable knowledge
 
-## Canonical outcome classes
+## Canonical outcome classes (first deterministic slice)
 
-Playbook should model at least these canonical outcome classes:
+The first canonical deterministic slice fixes the class set to:
 
-1. successful execution with verified intended result
-2. successful execution with partial result
-3. verification failure
-4. policy rejection
-5. rollback / deactivation event
-6. runtime regression detected later
-7. false positive trigger
-8. false negative / missed opportunity
-9. stale template or stale knowledge input
-10. operator override / human correction
+1. `success`
+2. `bounded failure`
+3. `blocked/policy`
+4. `rollback/deactivation`
+5. `later regression`
 
 ## Canonical feedback pipeline
 
@@ -56,10 +51,10 @@ Canonical governed pipeline:
 3. runtime monitoring observation
 4. rollback/deactivation if needed
 5. outcome classification
-6. evidence bundle creation
+6. evidence bundle creation in `.playbook/outcome-feedback.json`
 7. repo-local longitudinal state update
-8. candidate knowledge / confidence update
-9. template-quality / pattern-quality feedback
+8. candidate-only confidence/trigger/staleness/trend updates
+9. template-quality / pattern-quality feedback as reviewable candidates
 10. optional human review for promotion, demotion, or supersession
 
 Trust requirements for this pipeline:
@@ -153,6 +148,7 @@ Illustrative repository-local layout:
 
 ```text
 .playbook/
+  outcome-feedback.json
   runtime-feedback/
     events/
       <run-id>.json
@@ -176,6 +172,13 @@ Separation requirements:
 - runtime event traces remain distinct from candidate learning artifacts
 - candidate learning remains distinct from promoted knowledge
 - committed demo/contract snapshots remain explicitly curated
+
+The canonical first slice must be assembled from existing canonical surfaces only:
+
+- execution receipts
+- updated truth artifacts
+- interop followups
+- remediation history/status
 
 ## Guardrails and non-goals
 
