@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/outcome-feedback.schema.json",
+  "title": "Playbook Outcome Feedback Artifact",
+  "description": "Deterministic, read-only, candidate-only runtime outcome feedback compiled from canonical execution and remediation artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "command",
+    "reviewOnly",
+    "authority",
+    "generatedAt",
+    "sourceArtifacts",
+    "outcomeCounts",
+    "outcomes",
+    "signals",
+    "governance"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "kind": { "const": "playbook-outcome-feedback" },
+    "command": { "const": "outcome-feedback" },
+    "reviewOnly": { "const": true },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mutation", "promotion"],
+      "properties": {
+        "mutation": { "const": "read-only" },
+        "promotion": { "const": "review-required" }
+      }
+    },
+    "generatedAt": { "type": "string", "minLength": 1 },
+    "sourceArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executionReceiptPath",
+        "interopUpdatedTruthPath",
+        "interopFollowupsPath",
+        "remediationStatusPath",
+        "remediationHistoryPath"
+      ],
+      "properties": {
+        "executionReceiptPath": { "const": ".playbook/execution-receipt.json" },
+        "interopUpdatedTruthPath": { "const": ".playbook/interop-updated-truth.json" },
+        "interopFollowupsPath": { "const": ".playbook/interop-followups.json" },
+        "remediationStatusPath": { "const": ".playbook/remediation-status.json" },
+        "remediationHistoryPath": { "const": ".playbook/test-autofix-history.json" }
+      }
+    },
+    "outcomeCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["success", "bounded-failure", "blocked-policy", "rollback-deactivation", "later-regression"],
+      "properties": {
+        "success": { "type": "integer", "minimum": 0 },
+        "bounded-failure": { "type": "integer", "minimum": 0 },
+        "blocked-policy": { "type": "integer", "minimum": 0 },
+        "rollback-deactivation": { "type": "integer", "minimum": 0 },
+        "later-regression": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "outcomeId",
+          "outcomeClass",
+          "sourceType",
+          "sourceRef",
+          "observedAt",
+          "summary",
+          "provenanceRefs",
+          "candidateSignals",
+          "candidateOnly"
+        ],
+        "properties": {
+          "outcomeId": { "type": "string", "minLength": 1 },
+          "outcomeClass": {
+            "enum": [
+              "success",
+              "bounded-failure",
+              "blocked-policy",
+              "rollback-deactivation",
+              "later-regression"
+            ]
+          },
+          "sourceType": {
+            "enum": [
+              "execution-receipt",
+              "interop-updated-truth",
+              "interop-followup",
+              "remediation-status",
+              "remediation-history"
+            ]
+          },
+          "sourceRef": { "type": "string", "minLength": 1 },
+          "observedAt": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 },
+          "provenanceRefs": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "candidateSignals": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["confidenceUpdate", "triggerQualityNotes", "staleKnowledgeFlags", "trendUpdates"],
+            "properties": {
+              "confidenceUpdate": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["direction", "magnitude", "rationale"],
+                "properties": {
+                  "direction": { "enum": ["up", "down", "flat"] },
+                  "magnitude": { "type": "number", "minimum": 0, "maximum": 1 },
+                  "rationale": { "type": "string", "minLength": 1 }
+                }
+              },
+              "triggerQualityNotes": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+              "staleKnowledgeFlags": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+              "trendUpdates": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+            }
+          },
+          "candidateOnly": { "const": true }
+        }
+      }
+    },
+    "signals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["confidence", "triggerQuality", "staleKnowledge", "trends"],
+      "properties": {
+        "confidence": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "triggerQuality": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "staleKnowledge": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "trends": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateOnly", "autoPromotion", "autoMutation", "reviewRequired"],
+      "properties": {
+        "candidateOnly": { "const": true },
+        "autoPromotion": { "const": false },
+        "autoMutation": { "const": false },
+        "reviewRequired": { "const": true }
+      }
+    }
+  }
+}
