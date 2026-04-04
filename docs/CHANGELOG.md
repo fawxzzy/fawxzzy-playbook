@@ -21,6 +21,9 @@
 - Rule: CI test environments must install native optional toolchain packages required by transform-based runners (esbuild/rollup) using frozen-lockfile installs with optional dependencies enabled.
 - Pattern: If TypeScript build passes but Vitest fails on esbuild native resolution, treat it as install/bootstrap drift first and validate the shared CI bootstrap action.
 - Failure Mode: Cross-platform cache reuse or optional-dependency suppression can preserve broken native-package state and create false regressions across Playbook/Lifeline pipelines.
+- Rule: Any intentional contract-surface change must land with regenerated committed snapshots in the same PR.
+- Pattern: Canonical artifact additions are governed as contract changes, not just implementation changes.
+- Failure Mode: Feature work that adds or reshapes emitted artifacts can pass build/test but still fail CI at the contract snapshot gate if snapshots are not refreshed.
 
 ## 0.39.0 - 2026-03-29
 - Recommended bump: minor
