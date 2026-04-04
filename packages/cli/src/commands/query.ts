@@ -13,6 +13,7 @@ import {
   listOrchestrationExecutionRuns,
   readOrchestrationExecutionRun,
   readSession,
+  writeControlPlaneState,
   SUPPORTED_QUERY_FIELDS,
   type DependenciesQueryResult,
   type ImpactQueryResult,
@@ -759,7 +760,7 @@ export const runQuery = async (cwd: string, commandArgs: string[], options: Quer
     try {
       const runs = listOrchestrationExecutionRuns(cwd);
       const continuity = buildContinuitySnapshot(cwd, runs);
-      const payload = { schemaVersion: '1.0', command: 'query', type: 'runs', runs, continuity };
+      const payload = { schemaVersion: '1.0', command: 'query', type: 'runs', runs, continuity, control_plane: writeControlPlaneState(cwd) };
       if (options.format === 'json') {
         emitJsonOutput({ cwd, command: 'query', payload, outFile: options.outFile });
         return ExitCode.Success;

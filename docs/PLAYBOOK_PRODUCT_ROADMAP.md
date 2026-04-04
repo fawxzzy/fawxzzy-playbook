@@ -2768,3 +2768,10 @@ Without centralized taxonomy, the app drifts from strength to other and teaches 
 
 Failure Mode
 Without a single presentation mapper, summary surfaces invent contradictory states like LOGGED + Skipped.
+
+## Control-plane contract (v1 explicit slice)
+
+- Rule: The control plane must be an explicit contract, not an implied behavior spread across adjacent artifacts.
+- Pattern: session/evidence -> control-plane state -> bounded runtime/execution decisions.
+- Failure Mode: Without a canonical control-plane contract, the system behaves coherently but remains hard to inspect, reason about, and extend safely.
+- Delivery: `.playbook/control-plane.json` is now the canonical additive control-plane state artifact (read-only authority, no new mutation path).

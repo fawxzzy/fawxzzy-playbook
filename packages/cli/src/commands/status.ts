@@ -28,7 +28,9 @@ import {
   buildMemoryPressureStatusArtifact,
   loadConfig,
   listOrchestrationExecutionRuns,
-  readSession
+  readSession,
+  writeControlPlaneState,
+  type ControlPlaneStateArtifact
 } from '@zachariahredfield/playbook-engine';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -154,6 +156,7 @@ type StatusProofResult = {
     latest_receipt_refs: string[];
     stale_or_missing_state: string[];
   };
+  control_plane: ControlPlaneStateArtifact;
   interpretation: InterpretationLayer;
 };
 
@@ -573,6 +576,7 @@ const toProofStatusResult = (cwd: string): StatusProofResult => {
     domainBlockers: failureDomainSummary.domainBlockers,
     domainNextActions: failureDomainSummary.domainNextActions,
     continuity,
+    control_plane: writeControlPlaneState(cwd),
     interpretation: buildProofInterpretation(proof)
   };
 };

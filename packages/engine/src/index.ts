@@ -972,3 +972,5 @@ export {
 export type { InteropUpdatedTruthArtifact } from './interop/playbookLifelineInterop.js';
 export { evaluateRuntimeCapabilityAuthorization } from './interop/launchCapabilityAuthorization.js';
 export type { RuntimeCapabilityAuthorizationResult, RuntimeCapabilityAuthorizationBlocker } from './interop/launchCapabilityAuthorization.js';
+export { readControlPlaneState, writeControlPlaneState, CONTROL_PLANE_STATE_RELATIVE_PATH } from './controlPlane/controlPlaneState.js';
+export type { ControlPlaneStateArtifact } from './controlPlane/controlPlaneState.js';

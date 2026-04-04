@@ -4,7 +4,8 @@ import {
   listRuntimeTasks,
   readRuntimeControlPlaneStatus,
   readRuntimeRun,
-  runAgentPlanDryRun
+  runAgentPlanDryRun,
+  writeControlPlaneState
 } from '@zachariahredfield/playbook-engine';
 import { emitJsonOutput } from '../lib/jsonArtifact.js';
 import { ExitCode } from '../lib/cliContract.js';
@@ -129,7 +130,8 @@ export const runAgent = async (cwd: string, args: string[], options: AgentOption
         ...runAgentPlanDryRun({
           repoRoot: cwd,
           fromPlanPath: fromPlan
-        })
+        }),
+        control_plane: writeControlPlaneState(cwd)
       };
 
       if (options.format === 'json') {
