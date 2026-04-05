@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/policy-improvement.schema.json",
+  "title": "Policy Improvement Artifact",
+  "description": "Deterministic additive candidate-only policy improvement suggestions derived from canonical reviewed outcome and learning artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "generatedAt",
+    "reviewOnly",
+    "proposalOnly",
+    "sourceArtifacts",
+    "authority",
+    "candidateRankingAdjustments",
+    "prioritizationImprovementSuggestions",
+    "repeatedBlockerInfluence",
+    "confidenceTrendNotes",
+    "reviewRequiredFlags",
+    "provenanceRefs"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "kind": { "const": "policy-improvement" },
+    "generatedAt": { "type": "string", "minLength": 1 },
+    "reviewOnly": { "const": true },
+    "proposalOnly": { "const": true },
+    "sourceArtifacts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          ".playbook/outcome-feedback.json",
+          ".playbook/learning-state.json",
+          ".playbook/learning-clusters.json",
+          ".playbook/graph-informed-learning.json",
+          ".playbook/policy-evaluation.json",
+          ".playbook/remediation-status.json",
+          ".playbook/test-autofix-history.json",
+          ".playbook/pr-review.json"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mutation", "promotion", "ruleMutation"],
+      "properties": {
+        "mutation": { "const": "read-only" },
+        "promotion": { "const": "review-required" },
+        "ruleMutation": { "const": "forbidden" }
+      }
+    },
+    "candidateRankingAdjustments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["candidateId", "adjustmentDirection", "adjustmentMagnitude", "rationale", "provenanceRefs", "reviewRequired"],
+        "properties": {
+          "candidateId": { "type": "string", "minLength": 1 },
+          "adjustmentDirection": { "enum": ["promote", "demote", "hold"] },
+          "adjustmentMagnitude": { "type": "number", "minimum": 0, "maximum": 1 },
+          "rationale": { "type": "string", "minLength": 1 },
+          "provenanceRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "reviewRequired": { "const": true }
+        }
+      }
+    },
+    "prioritizationImprovementSuggestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["suggestionId", "priority", "summary", "provenanceRefs", "reviewRequired"],
+        "properties": {
+          "suggestionId": { "type": "string", "minLength": 1 },
+          "priority": { "enum": ["high", "medium", "low"] },
+          "summary": { "type": "string", "minLength": 1 },
+          "provenanceRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "reviewRequired": { "const": true }
+        }
+      }
+    },
+    "repeatedBlockerInfluence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["blockerKey", "blockerType", "occurrences", "influenceScore", "recommendation", "provenanceRefs", "reviewRequired"],
+        "properties": {
+          "blockerKey": { "type": "string", "minLength": 1 },
+          "blockerType": { "enum": ["policy-decision", "failure-signature", "review-pressure"] },
+          "occurrences": { "type": "integer", "minimum": 0 },
+          "influenceScore": { "type": "number", "minimum": 0, "maximum": 1 },
+          "recommendation": { "type": "string", "minLength": 1 },
+          "provenanceRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "reviewRequired": { "const": true }
+        }
+      }
+    },
+    "confidenceTrendNotes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["noteId", "trend", "confidenceDelta", "summary", "provenanceRefs", "reviewRequired"],
+        "properties": {
+          "noteId": { "type": "string", "minLength": 1 },
+          "trend": { "enum": ["improving", "declining", "stable"] },
+          "confidenceDelta": { "type": "number" },
+          "summary": { "type": "string", "minLength": 1 },
+          "provenanceRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "reviewRequired": { "const": true }
+        }
+      }
+    },
+    "reviewRequiredFlags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requiresHumanReview",
+        "candidateOnly",
+        "noDirectPolicyMutation",
+        "noRuleMutation",
+        "noExecutionSideEffects"
+      ],
+      "properties": {
+        "requiresHumanReview": { "const": true },
+        "candidateOnly": { "const": true },
+        "noDirectPolicyMutation": { "const": true },
+        "noRuleMutation": { "const": true },
+        "noExecutionSideEffects": { "const": true }
+      }
+    },
+    "provenanceRefs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  }
+}

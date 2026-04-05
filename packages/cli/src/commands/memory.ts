@@ -19,7 +19,7 @@ type MemoryOptions = {
   quiet: boolean;
 };
 
-type MemorySubcommand = 'events' | 'query' | 'candidates' | 'knowledge' | 'outcome-feedback' | 'compaction' | 'pressure' | 'show' | 'promote' | 'retire';
+type MemorySubcommand = 'events' | 'query' | 'candidates' | 'knowledge' | 'outcome-feedback' | 'policy-improvement' | 'compaction' | 'pressure' | 'show' | 'promote' | 'retire';
 type MemoryPressureBand = 'normal' | 'warm' | 'pressure' | 'critical';
 type MemoryPressureActionFilter = 'dedupe' | 'compact' | 'summarize' | 'evict';
 type MemoryClassFilter = 'canonical' | 'compactable' | 'disposable';
@@ -36,6 +36,7 @@ Subcommands:
   candidates                       List replayed memory candidates
   knowledge                        List promoted memory knowledge
   outcome-feedback                 Inspect read-only runtime outcome feedback
+  policy-improvement               Inspect candidate-only policy improvement suggestions
   compaction                       Review deterministic compaction decisions
   pressure                         Inspect read-only memory pressure status + plan
   show <id>                        Show a candidate or knowledge record by id
@@ -129,7 +130,7 @@ const parseSubcommand = (args: string[]): MemorySubcommand | null => {
     return null;
   }
 
-  if (['events', 'query', 'candidates', 'knowledge', 'outcome-feedback', 'compaction', 'pressure', 'show', 'promote', 'retire'].includes(subcommand)) {
+  if (['events', 'query', 'candidates', 'knowledge', 'outcome-feedback', 'policy-improvement', 'compaction', 'pressure', 'show', 'promote', 'retire'].includes(subcommand)) {
     return subcommand as MemorySubcommand;
   }
 
@@ -231,7 +232,7 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
   }
 
   if (!subcommand) {
-    emitMemoryError(options, requestedSubcommand, 'playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, outcome-feedback, compaction, pressure, show, promote, or retire.');
+    emitMemoryError(options, requestedSubcommand, 'playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, outcome-feedback, policy-improvement, compaction, pressure, show, promote, or retire.');
     return ExitCode.Failure;
   }
 
@@ -489,6 +490,88 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
         'memory outcome-feedback',
         payload,
         `Outcome feedback outcomes=${outcomes.length} trend_updates=${trendUpdates.length} next_review_action=${nextReviewAction}`
+      );
+      return ExitCode.Success;
+    }
+
+    if (subcommand === 'policy-improvement') {
+      const artifactPath = path.join(cwd, '.playbook/policy-improvement.json');
+      if (!fs.existsSync(artifactPath)) {
+        throw new Error('playbook memory policy-improvement: missing required artifact .playbook/policy-improvement.json');
+      }
+
+      const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8')) as {
+        candidateRankingAdjustments?: Array<{ candidateId?: string; adjustmentDirection?: string; adjustmentMagnitude?: number; rationale?: string; provenanceRefs?: string[] }>;
+        prioritizationImprovementSuggestions?: Array<{ suggestionId?: string; priority?: string; summary?: string; provenanceRefs?: string[] }>;
+        repeatedBlockerInfluence?: Array<{ blockerKey?: string; blockerType?: string; occurrences?: number; influenceScore?: number; provenanceRefs?: string[] }>;
+        confidenceTrendNotes?: Array<{ noteId?: string; trend?: string; confidenceDelta?: number; summary?: string; provenanceRefs?: string[] }>;
+        reviewRequiredFlags?: Record<string, unknown>;
+        authority?: { mutation?: string; promotion?: string; ruleMutation?: string };
+        provenanceRefs?: string[];
+      };
+
+      const ranking = [...(artifact.candidateRankingAdjustments ?? [])].sort((a, b) =>
+        String(a.candidateId ?? '').localeCompare(String(b.candidateId ?? ''))
+      );
+      const priorities = [...(artifact.prioritizationImprovementSuggestions ?? [])].sort((a, b) =>
+        String(a.suggestionId ?? '').localeCompare(String(b.suggestionId ?? ''))
+      );
+      const blockers = [...(artifact.repeatedBlockerInfluence ?? [])].sort((a, b) =>
+        (Number(b.occurrences ?? 0) - Number(a.occurrences ?? 0)) ||
+        String(a.blockerKey ?? '').localeCompare(String(b.blockerKey ?? ''))
+      );
+      const trends = [...(artifact.confidenceTrendNotes ?? [])].sort((a, b) =>
+        String(a.noteId ?? '').localeCompare(String(b.noteId ?? ''))
+      );
+      const provenanceRefs = [...new Set([...(artifact.provenanceRefs ?? []), ...ranking.flatMap((row) => row.provenanceRefs ?? []), ...priorities.flatMap((row) => row.provenanceRefs ?? []), ...blockers.flatMap((row) => row.provenanceRefs ?? []), ...trends.flatMap((row) => row.provenanceRefs ?? [])])].sort((a, b) => a.localeCompare(b));
+
+      const payload = {
+        schemaVersion: '1.0',
+        command: 'memory-policy-improvement',
+        artifactPath: '.playbook/policy-improvement.json',
+        candidate_ranking_adjustments: ranking.map((entry) => ({
+          candidate_id: entry.candidateId ?? null,
+          adjustment_direction: entry.adjustmentDirection ?? null,
+          adjustment_magnitude: entry.adjustmentMagnitude ?? null,
+          rationale: entry.rationale ?? null,
+          provenance_refs: entry.provenanceRefs ?? []
+        })),
+        prioritization_suggestions: priorities.map((entry) => ({
+          suggestion_id: entry.suggestionId ?? null,
+          priority: entry.priority ?? null,
+          summary: entry.summary ?? null,
+          provenance_refs: entry.provenanceRefs ?? []
+        })),
+        repeated_blocker_influence: blockers.map((entry) => ({
+          blocker_key: entry.blockerKey ?? null,
+          blocker_type: entry.blockerType ?? null,
+          occurrences: entry.occurrences ?? 0,
+          influence_score: entry.influenceScore ?? 0,
+          provenance_refs: entry.provenanceRefs ?? []
+        })),
+        confidence_trend_notes: trends.map((entry) => ({
+          note_id: entry.noteId ?? null,
+          trend: entry.trend ?? null,
+          confidence_delta: entry.confidenceDelta ?? 0,
+          summary: entry.summary ?? null,
+          provenance_refs: entry.provenanceRefs ?? []
+        })),
+        review_required_flags: artifact.reviewRequiredFlags ?? {},
+        authority: {
+          mutation: artifact.authority?.mutation ?? 'read-only',
+          promotion: artifact.authority?.promotion ?? 'review-required',
+          rule_mutation: artifact.authority?.ruleMutation ?? 'forbidden'
+        },
+        provenance_refs: provenanceRefs,
+        full_policy_improvement_artifact: artifact
+      };
+
+      emitMemoryResult(
+        cwd,
+        options,
+        'memory policy-improvement',
+        payload,
+        `Policy improvement ranking=${ranking.length} prioritization=${priorities.length} blockers=${blockers.length} trends=${trends.length}`
       );
       return ExitCode.Success;
     }
@@ -773,7 +856,7 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
       emitMemoryResult(cwd, options, 'memory retire', payload, `Retired knowledge ${knowledgeId}.`);
       return ExitCode.Success;
     }
-    throw new Error('playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, outcome-feedback, compaction, pressure, show, promote, or retire.');
+    throw new Error('playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, outcome-feedback, policy-improvement, compaction, pressure, show, promote, or retire.');
 
   } catch (error) {
     emitMemoryError(options, subcommand, error);

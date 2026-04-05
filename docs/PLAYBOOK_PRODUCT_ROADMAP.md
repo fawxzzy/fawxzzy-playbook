@@ -190,9 +190,13 @@ Recent implementation note: deterministic promotion receipts now accompany top-l
 Recent implementation note: promoted reusable patterns now treat lifecycle state as canonical truth (`active`, `superseded`, `retired`, `demoted`), lifecycle mutations reuse audited receipt behavior, and advisory story-backed pattern context excludes non-active promoted knowledge by default to prevent silent guidance drift.
 Recent implementation note: runtime outcome feedback now emits provenance-linked lifecycle recommendation candidates at `.playbook/memory/lifecycle-candidates.json`, so receipts, drift, rollback/deactivation evidence, and later outcomes can suggest freshness/demotion/supersession review without mutating promoted doctrine automatically.
 Recent implementation note: the first canonical Outcome Feedback + Automation Runtime Learning slice now emits deterministic read-only `.playbook/outcome-feedback.json` artifacts from canonical execution receipts, interop updated-truth, interop followups, remediation status, and remediation history surfaces only. This surface classifies outcomes into `success`, `bounded failure`, `blocked/policy`, `rollback/deactivation`, and `later regression`, and emits provenance-linked candidate-only confidence/trigger/staleness/trend signals without widening mutation authority.
+Recent implementation note: canonical candidate-only outcome-policy aggregation is now materialized as `.playbook/policy-improvement.json`, generated deterministically from existing outcome-feedback, learning-state/clusters, graph-informed learning, policy-evaluation, remediation status/history, and pr-review artifacts. The contract emits ranking/prioritization improvement suggestions plus repeated-blocker/confidence trend notes while preserving explicit non-mutation authority (`read-only`, `review-required`, `rule-mutation=forbidden`).
 - Rule: Runtime outcomes may inform future governance, but remain candidate knowledge until explicit review.
+- Rule: Reviewed outcomes may improve ranking/prioritization, but may not mutate governance directly.
 - Pattern: execution -> receipt -> updated truth -> feedback artifact -> reviewed learning.
+- Pattern: outcome feedback -> learning signals -> policy improvement candidates -> human-reviewed promotion.
 - Failure Mode: Runtime learning without explicit candidate boundaries turns outcome signals into silent governance drift.
+- Failure Mode: Treating outcome learning as direct policy mutation bypasses the same review boundaries the rest of the system already enforces.
 
 Recent implementation note: fleet-level readiness aggregation is now available in current command surfaces (`pnpm playbook status fleet --json`, Observer `GET /api/readiness/fleet`, and Observer dashboard fleet summary card) to prioritize cross-repo adoption without replacing repo-first workflows.
 Recent implementation note: deterministic adoption work-queue planning is also available (`pnpm playbook status queue --json`, Observer `GET /api/readiness/queue`, and Observer dashboard work-queue panel) to translate readiness state into ordered, wave-based, parallel-safe execution plans.
@@ -1641,9 +1645,13 @@ Phase 16 allowed vs forbidden input examples:
 17. **Phase 17 â€” Outcome Feedback + Automation Runtime Learning (Human-Reviewed)**  
     Governed feedback loops that convert verified runtime outcomes, rollback/deactivation events, and later regressions into provenance-linked repo-local candidate learning artifacts (confidence, template suitability, trigger quality, rollback heuristics, stale-knowledge flags, and trend updates). Outputs remain candidate artifacts until explicit human-reviewed promotion/demotion/supersession.
     - Operator-visible read surface (implemented): `pnpm playbook memory outcome-feedback --json` now exposes the canonical `.playbook/outcome-feedback.json` artifact as a first-class read-only runtime surface with compact text mode and additive JSON fields for outcome class, confidence/trigger/stale-knowledge signals, trend updates, provenance refs, and deterministic next-review guidance.
+    - Operator-visible read surface (implemented): `pnpm playbook memory policy-improvement --json` now exposes canonical `.playbook/policy-improvement.json` as a read-only runtime surface for deterministic ranking/prioritization candidate suggestions and repeated-blocker/confidence-trend review notes.
     - Rule: Runtime outcome learning must remain candidate-only until explicit review.
+    - Rule: Reviewed outcomes may improve ranking/prioritization, but may not mutate governance directly.
     - Pattern: execution -> receipt -> updated truth -> outcome feedback -> reviewed learning.
+    - Pattern: outcome feedback -> learning signals -> policy improvement candidates -> human-reviewed promotion.
     - Failure Mode: Outcome feedback that exists only as an internal artifact never becomes an operator-visible learning loop.
+    - Failure Mode: Treating outcome learning as direct policy mutation bypasses the same review boundaries the rest of the system already enforces.
 18. **Phase 18 â€” Governed Cross-Repo Pattern Promotion / Transfer**  
     Controlled compounding of reusable engineering knowledge across repositories through explicit, provenance-preserving, sanitization-verified, compatibility-gated transfer packages. Imported patterns are candidate inputs until locally reviewed; no hidden telemetry or automatic global sync.
 19. **Phase 19 â€” Governed Interface / API Surfaces for Multi-Repo Control Planes**  

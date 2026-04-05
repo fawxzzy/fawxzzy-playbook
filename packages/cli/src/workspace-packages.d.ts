@@ -512,6 +512,11 @@ declare module "@zachariahredfield/playbook-engine" {
     artifact: HigherOrderSynthesisArtifact;
     artifactPath: string;
   };
+  export type PolicyImprovementArtifact = any;
+  export const buildAndWritePolicyImprovementArtifact: (...args: any[]) => {
+    artifact: PolicyImprovementArtifact;
+    artifactPath: string;
+  };
   export type PortabilityOutcomesArtifact = any;
   export const readPortabilityOutcomesArtifact: (
     ...args: any[]
