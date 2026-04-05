@@ -366,6 +366,33 @@ const writeTelemetryArtifacts = (repo: string): void => {
       2
     )
   );
+
+  fs.writeFileSync(
+    path.join(repo, '.playbook', 'repo-graph.json'),
+    JSON.stringify(
+      {
+        schemaVersion: '1.0',
+        kind: 'repository-graph',
+        generatedAt: '2026-03-16T02:30:00.000Z',
+        nodes: [
+          { id: 'repository:root', kind: 'repository', name: 'root' },
+          { id: 'module:@fawxzzy/playbook', kind: 'module', name: '@fawxzzy/playbook' },
+          { id: 'module:@zachariahredfield/playbook-engine', kind: 'module', name: '@zachariahredfield/playbook-engine' },
+          { id: 'module:@zachariahredfield/playbook-core', kind: 'module', name: '@zachariahredfield/playbook-core' }
+        ],
+        edges: [
+          { from: 'repository:root', to: 'module:@fawxzzy/playbook', kind: 'contains' },
+          { from: 'repository:root', to: 'module:@zachariahredfield/playbook-engine', kind: 'contains' },
+          { from: 'repository:root', to: 'module:@zachariahredfield/playbook-core', kind: 'contains' },
+          { from: 'module:@fawxzzy/playbook', to: 'module:@zachariahredfield/playbook-engine', kind: 'depends_on' },
+          { from: 'module:@fawxzzy/playbook', to: 'module:@zachariahredfield/playbook-core', kind: 'depends_on' },
+          { from: 'module:@zachariahredfield/playbook-engine', to: 'module:@zachariahredfield/playbook-core', kind: 'depends_on' }
+        ]
+      },
+      null,
+      2
+    )
+  );
 };
 
 describe('runTelemetry', () => {
@@ -441,6 +468,21 @@ describe('runTelemetry', () => {
         next_review_action: expect.any(String)
       })
     );
+    const graphInformed = learningClusters.graph_informed as Record<string, unknown>;
+    expect(graphInformed.affected_modules).toEqual([
+      '@fawxzzy/playbook',
+      '@zachariahredfield/playbook-core',
+      '@zachariahredfield/playbook-engine'
+    ]);
+    expect(graphInformed.next_review_action).toContain('Review affected modules in parallel');
+    expect(graphInformed.structural_spread).toEqual({
+      module_count: 3,
+      affected_module_count: 3,
+      affected_module_ratio: 1,
+      dependency_edge_count: 3,
+      concentration_index: 0.3333,
+      concentration_label: 'distributed'
+    });
 
     logSpy.mockRestore();
   });
@@ -483,6 +525,9 @@ describe('runTelemetry', () => {
     const text = logSpy.mock.calls.flat().join('\n');
     expect(text).toContain('Learning clusters: 1');
     expect(text).toContain('Next review: Translate recurring signal failure.retry-heavy.engine_scoring');
+    expect(text).toContain('Graph-informed affected modules: @fawxzzy/playbook, @zachariahredfield/playbook-core, @zachariahredfield/playbook-engine');
+    expect(text).toContain('Structural spread: distributed (affected=3/3, concentration=0.3333)');
+    expect(text).toContain('Next review action: Review affected modules in parallel and preserve proposal-only follow-up gates.');
 
     logSpy.mockRestore();
   });
