@@ -156,6 +156,10 @@ Failure Mode: A backlog without deterministic priority and dependency ordering b
 - Temporal memory is now formalized under `.playbook/memory/*` with first-class contracts for the memory index, append-only event records, and session/replay evidence used for deterministic candidate generation.
 - Loaders and writers must stay deterministic and scope-first so replay, inspection, and promotion review can reason over module/rule-scoped history without mutating graph artifacts.
 - This phase does **not** widen mutation authority or doctrine promotion: replay evidence remains read-only and promotion remains explicit review-required behavior.
+- Recent implementation note: `.playbook/memory-system.json` now serves as the first canonical repository memory architecture contract, deterministically aggregating structural graph, temporal/episodic memory, candidate knowledge, and promoted doctrine layers from canonical artifacts only while keeping replay/consolidation/compaction/promotion boundaries explicit and read-only.
+- Rule: Structural graph, temporal memory, candidate knowledge, and promoted doctrine must remain separate explicit layers.
+- Pattern: observe -> store episodic evidence -> cluster/compact -> review -> promote doctrine.
+- Failure Mode: Without a canonical memory-system contract, adjacent memory artifacts drift into overlapping authority and unclear lifecycle boundaries.
 
 ### Initial compact-memory retention class matrix (policy input)
 

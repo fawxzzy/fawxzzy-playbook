@@ -1039,6 +1039,8 @@ export { readControlPlaneState, writeControlPlaneState, CONTROL_PLANE_STATE_RELA
 export type { ControlPlaneStateArtifact } from './controlPlane/controlPlaneState.js';
 export { readLongitudinalState, writeLongitudinalState, LONGITUDINAL_STATE_RELATIVE_PATH } from './controlPlane/longitudinalState.js';
 export type { LongitudinalStateArtifact } from './controlPlane/longitudinalState.js';
+export { readRepositoryMemorySystem, writeRepositoryMemorySystem, REPOSITORY_MEMORY_SYSTEM_RELATIVE_PATH } from './controlPlane/repositoryMemorySystem.js';
+export type { RepositoryMemorySystemArtifact } from './controlPlane/repositoryMemorySystem.js';
 export { readMaintenancePlan, writeMaintenancePlan, MAINTENANCE_PLAN_RELATIVE_PATH, MAINTENANCE_PLAN_SCHEMA_VERSION } from './controlPlane/maintenancePlan.js';
 export type { MaintenancePlanArtifact, MaintenancePlanRow } from './controlPlane/maintenancePlan.js';
 export { buildApprovedMaintenanceTasks, parseMaintenanceApprovals, writeMaintenanceExecutionArtifacts, MAINTENANCE_APPROVALS_RELATIVE_PATH, MAINTENANCE_EXECUTION_RECEIPT_RELATIVE_PATH, MAINTENANCE_EXECUTION_STATE_RELATIVE_PATH } from './controlPlane/maintenanceExecution.js';

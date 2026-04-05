@@ -90,6 +90,7 @@ const runtimeDefaults: RuntimeDefaultArtifact[] = [
   { path: '.playbook/pr-review.json', producer: 'review-pr' },
   { path: '.playbook/session.json', producer: 'session' },
   { path: '.playbook/longitudinal-state.json', producer: 'session' },
+  { path: '.playbook/memory-system.json', producer: 'memory' },
   { path: '.playbook/module-digests.json', producer: 'index' },
   { path: '.playbook/repo-graph.json', producer: 'index' },
   { path: '.playbook/repo-index.json', producer: 'index' },

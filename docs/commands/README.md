@@ -443,11 +443,15 @@ Doctrine summary anchors:
 - `memory pressure` exposes read-only pressure/operator inspection from canonical `.playbook/memory-pressure.json` + `.playbook/memory-pressure-plan.json`, with lightweight `--band` and `--action` filters.
 - `memory show <id>` resolves either a candidate id or knowledge id, including provenance expansion for candidates.
 - `memory promote <candidate-id>` and `memory retire <knowledge-id>` provide explicit, human-driven lifecycle actions.
+- `.playbook/memory-system.json` is the canonical read-only repository memory architecture contract. It deterministically summarizes layer boundaries (structural graph vs temporal memory, episodic vs doctrine), current class inventory, replay/consolidation/promotion boundary refs, pressure/retention classes, and stale/superseded/candidate summaries.
 - Postmortem reconsolidation stays inside this existing review boundary: incidents/changes should produce a structured postmortem, explicit candidate extraction, and then reviewed movement through `memory` / `promote` surfaces rather than any new command family or auto-promotion path.
 - `status` now exposes additive read-only memory pressure inspection (`memory_pressure`) with score, band, hysteresis thresholds, usage totals, recommended actions, and an action-plan summary (`current_band`, highest-priority actions, and counts by action type) sourced from `.playbook/memory-pressure-plan.json`; canonical pressure artifact path remains `.playbook/memory-pressure.json`.
 - Rule: Runtime outcome learning must remain candidate-only until explicit review.
+- Rule: Structural graph, temporal memory, candidate knowledge, and promoted doctrine must remain separate explicit layers.
 - Pattern: execution -> receipt -> updated truth -> outcome feedback -> reviewed learning.
+- Pattern: observe -> store episodic evidence -> cluster/compact -> review -> promote doctrine.
 - Failure Mode: Outcome feedback that exists only as an internal artifact never becomes an operator-visible learning loop.
+- Failure Mode: Without a canonical memory-system contract, adjacent memory artifacts drift into overlapping authority and unclear lifecycle boundaries.
 - Rule: Postmortems must separate observed facts from interpretation and promotion candidates.
 - Pattern: Recall -> reinterpret -> promote -> restabilize becomes concrete through structured postmortems.
 - Failure Mode: Blending fact, explanation, and doctrine in one narrative rewrites history and weakens promotion quality.

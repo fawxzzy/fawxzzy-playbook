@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/memory-system.schema.json",
+  "title": "Playbook Repository Memory System",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "generatedAt",
+    "layers",
+    "boundaries",
+    "inventory_by_class",
+    "replay_consolidation_promotion_refs",
+    "pressure_retention_class_summary",
+    "state_summaries",
+    "source_artifacts",
+    "authority"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "kind": { "type": "string", "const": "playbook-repository-memory-system" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "layers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["structural_graph", "temporal_episodic", "candidate_knowledge", "promoted_doctrine"],
+      "properties": {
+        "structural_graph": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["boundary", "artifacts", "modules", "graphNodes", "graphEdges"],
+          "properties": {
+            "boundary": { "type": "string", "const": "repository-shape-intelligence" },
+            "artifacts": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "string", "const": ".playbook/repo-index.json" },
+                { "type": "string", "const": ".playbook/repo-graph.json" }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "modules": { "type": "integer", "minimum": 0 },
+            "graphNodes": { "type": "integer", "minimum": 0 },
+            "graphEdges": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "temporal_episodic": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["boundary", "artifacts", "eventCount", "replayCandidateCount", "consolidationCandidateCount"],
+          "properties": {
+            "boundary": { "type": "string", "const": "execution-observation-events" },
+            "artifacts": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "eventCount": { "type": "integer", "minimum": 0 },
+            "replayCandidateCount": { "type": "integer", "minimum": 0 },
+            "consolidationCandidateCount": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "candidate_knowledge": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["boundary", "artifacts", "total", "stale", "byState"],
+          "properties": {
+            "boundary": { "type": "string", "const": "candidate-only-review-required" },
+            "artifacts": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "total": { "type": "integer", "minimum": 0 },
+            "stale": { "type": "integer", "minimum": 0 },
+            "byState": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["candidate", "stale", "superseded"],
+              "properties": {
+                "candidate": { "type": "integer", "minimum": 0 },
+                "stale": { "type": "integer", "minimum": 0 },
+                "superseded": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        },
+        "promoted_doctrine": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["boundary", "artifacts", "total", "active", "superseded", "retired"],
+          "properties": {
+            "boundary": { "type": "string", "const": "reviewed-promoted-doctrine" },
+            "artifacts": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "string", "const": ".playbook/memory/knowledge/decisions.json" },
+                { "type": "string", "const": ".playbook/memory/knowledge/patterns.json" },
+                { "type": "string", "const": ".playbook/memory/knowledge/failure-modes.json" },
+                { "type": "string", "const": ".playbook/memory/knowledge/invariants.json" }
+              ],
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "total": { "type": "integer", "minimum": 0 },
+            "active": { "type": "integer", "minimum": 0 },
+            "superseded": { "type": "integer", "minimum": 0 },
+            "retired": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["graph_vs_temporal", "episodic_vs_doctrine"],
+      "properties": {
+        "graph_vs_temporal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["policy", "structuralRefs", "temporalRefs"],
+          "properties": {
+            "policy": { "type": "string", "const": "must-remain-explicitly-separated" },
+            "structuralRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "temporalRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+          }
+        },
+        "episodic_vs_doctrine": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["policy", "episodicRefs", "doctrineRefs"],
+          "properties": {
+            "policy": { "type": "string", "const": "episodic-evidence-cannot-auto-promote" },
+            "episodicRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "doctrineRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+          }
+        }
+      }
+    },
+    "inventory_by_class": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["class", "artifactCount", "recordCount", "refs"],
+        "properties": {
+          "class": { "enum": ["structural_graph", "temporal_episodic", "candidate_knowledge", "promoted_doctrine"] },
+          "artifactCount": { "type": "integer", "minimum": 0 },
+          "recordCount": { "type": "integer", "minimum": 0 },
+          "refs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+        }
+      }
+    },
+    "replay_consolidation_promotion_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["replay", "consolidation", "compactionReview", "promotionReview"],
+      "properties": {
+        "replay": { "$ref": "#/$defs/reviewSurfaceRef" },
+        "consolidation": { "$ref": "#/$defs/reviewSurfaceRef" },
+        "compactionReview": { "$ref": "#/$defs/reviewSurfaceRef" },
+        "promotionReview": { "$ref": "#/$defs/reviewSurfaceRef" }
+      }
+    },
+    "pressure_retention_class_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statusPath", "band", "classes", "recommendedActions"],
+      "properties": {
+        "statusPath": { "type": "string", "const": ".playbook/memory-pressure.json" },
+        "band": { "enum": ["normal", "warm", "pressure", "critical", "unknown"] },
+        "classes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["canonical", "compactable", "disposable"],
+          "properties": {
+            "canonical": { "type": "integer", "minimum": 0 },
+            "compactable": { "type": "integer", "minimum": 0 },
+            "disposable": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "recommendedActions": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "state_summaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidates", "promoted", "superseded"],
+      "properties": {
+        "candidates": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["total", "stale"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "stale": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "promoted": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["total", "superseded", "retired"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "superseded": { "type": "integer", "minimum": 0 },
+            "retired": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "superseded": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["total", "refs"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "refs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+          }
+        }
+      }
+    },
+    "source_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "present", "valid"],
+        "properties": {
+          "path": { "type": "string" },
+          "present": { "type": "boolean" },
+          "valid": { "type": "boolean" }
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mutation", "promotion", "execution"],
+      "properties": {
+        "mutation": { "type": "string", "const": "read-only" },
+        "promotion": { "type": "string", "const": "review-required" },
+        "execution": { "type": "string", "const": "unchanged" }
+      }
+    }
+  },
+  "$defs": {
+    "reviewSurfaceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "present", "count"],
+      "properties": {
+        "path": { "type": "string" },
+        "present": { "type": "boolean" },
+        "count": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}
