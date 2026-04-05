@@ -69,6 +69,18 @@ type LearningClustersReadModel = {
     confidence: number;
     next_review_action: string;
   }>;
+  graph_informed: {
+    affected_modules: string[];
+    structural_spread: {
+      module_count: number;
+      affected_module_count: number;
+      affected_module_ratio: number;
+      dependency_edge_count: number;
+      concentration_index: number;
+      concentration_label: 'none' | 'concentrated' | 'distributed';
+    };
+    next_review_action: string;
+  };
 };
 
 const OUTCOME_TELEMETRY_PATH = ['.playbook', 'outcome-telemetry.json'] as const;
@@ -78,6 +90,7 @@ const COMMAND_QUALITY_PATH = ['.playbook', 'telemetry', 'command-quality.json'] 
 const CYCLE_HISTORY_PATH = ['.playbook', 'cycle-history.json'] as const;
 const CYCLE_STATE_PATH = ['.playbook', 'cycle-state.json'] as const;
 const LEARNING_CLUSTERS_PATH = ['.playbook', 'learning-clusters.json'] as const;
+const REPO_GRAPH_PATH = ['.playbook', 'repo-graph.json'] as const;
 
 type LearningClustersArtifactRead = {
   clusters?: Array<{
@@ -85,6 +98,19 @@ type LearningClustersArtifactRead = {
     repeatedSignalSummary?: string;
     confidence?: number;
     nextActionText?: string;
+  }>;
+};
+
+type RepoGraphArtifactRead = {
+  nodes?: Array<{
+    id?: string;
+    kind?: string;
+    name?: string;
+  }>;
+  edges?: Array<{
+    from?: string;
+    to?: string;
+    kind?: string;
   }>;
 };
 
@@ -150,7 +176,49 @@ const renderTextLearningState = (artifact: LearningStateSnapshotArtifact): void 
 
 const deriveLearningClustersReadModel = (cwd: string): LearningClustersReadModel => {
   const artifact = readJsonArtifact<LearningClustersArtifactRead>(cwd, LEARNING_CLUSTERS_PATH);
+  const repoGraph = tryReadJsonArtifact<RepoGraphArtifactRead>(cwd, REPO_GRAPH_PATH);
   const clusters = artifact?.clusters ?? [];
+  const moduleNodes = (repoGraph?.nodes ?? []).filter((node) => node.kind === 'module' && typeof node.id === 'string');
+  const moduleIds = new Set(moduleNodes.map((node) => node.id as string));
+  const moduleNameById = new Map(
+    moduleNodes.map((node) => [node.id as string, node.name ?? String(node.id).replace(/^module:/, '')])
+  );
+  const dependencyEdges = (repoGraph?.edges ?? []).filter(
+    (edge) =>
+      edge.kind === 'depends_on' &&
+      typeof edge.from === 'string' &&
+      typeof edge.to === 'string' &&
+      moduleIds.has(edge.from) &&
+      moduleIds.has(edge.to)
+  );
+  const degreeByModule = new Map<string, number>();
+  for (const moduleId of moduleIds) {
+    degreeByModule.set(moduleId, 0);
+  }
+  for (const edge of dependencyEdges) {
+    degreeByModule.set(edge.from as string, (degreeByModule.get(edge.from as string) ?? 0) + 1);
+    degreeByModule.set(edge.to as string, (degreeByModule.get(edge.to as string) ?? 0) + 1);
+  }
+  const modulesByDegree = Array.from(degreeByModule.entries())
+    .map(([moduleId, degree]) => ({ moduleId, degree, name: moduleNameById.get(moduleId) ?? moduleId.replace(/^module:/, '') }))
+    .sort((a, b) => b.degree - a.degree || a.name.localeCompare(b.name));
+  const affectedModules = modulesByDegree.filter((entry) => entry.degree > 0).slice(0, 5).map((entry) => entry.name);
+  const totalDegree = modulesByDegree.reduce((sum, entry) => sum + entry.degree, 0);
+  const maxDegree = modulesByDegree[0]?.degree ?? 0;
+  const concentrationIndex = totalDegree === 0 ? 0 : Number((maxDegree / totalDegree).toFixed(4));
+  const moduleCount = moduleNodes.length;
+  const affectedModuleCount = affectedModules.length;
+  const affectedModuleRatio = moduleCount === 0 ? 0 : Number((affectedModuleCount / moduleCount).toFixed(4));
+  const concentrationLabel: 'none' | 'concentrated' | 'distributed' =
+    affectedModuleCount === 0 ? 'none' : concentrationIndex >= 0.6 ? 'concentrated' : 'distributed';
+  const topAffectedModule = affectedModules[0];
+  const graphReviewAction =
+    affectedModuleCount === 0
+      ? 'No graph-informed module concentration detected; refresh repository index before the next review window.'
+      : concentrationLabel === 'concentrated'
+        ? `Prioritize review around ${topAffectedModule} before broadening to adjacent modules.`
+        : 'Review affected modules in parallel and preserve proposal-only follow-up gates.';
+
   return {
     cluster_count: clusters.length,
     clusters: clusters.map((cluster) => ({
@@ -158,7 +226,19 @@ const deriveLearningClustersReadModel = (cwd: string): LearningClustersReadModel
       repeated_signal_summary: cluster.repeatedSignalSummary ?? 'No repeated signal summary available.',
       confidence: typeof cluster.confidence === 'number' ? cluster.confidence : 0,
       next_review_action: cluster.nextActionText ?? 'Review supporting evidence before proposing candidate-only follow-up.'
-    }))
+    })),
+    graph_informed: {
+      affected_modules: affectedModules,
+      structural_spread: {
+        module_count: moduleCount,
+        affected_module_count: affectedModuleCount,
+        affected_module_ratio: affectedModuleRatio,
+        dependency_edge_count: dependencyEdges.length,
+        concentration_index: concentrationIndex,
+        concentration_label: concentrationLabel
+      },
+      next_review_action: graphReviewAction
+    }
   };
 };
 
@@ -166,17 +246,26 @@ const renderTextLearningClusters = (readModel: LearningClustersReadModel): void 
   console.log(`Learning clusters: ${readModel.cluster_count}`);
   if (readModel.cluster_count === 0) {
     console.log('Cluster highlights: none');
-    return;
+  } else {
+    const preview = readModel.clusters.slice(0, 3);
+    for (const cluster of preview) {
+      console.log(`- ${cluster.cluster_type} (confidence ${cluster.confidence}): ${cluster.repeated_signal_summary}`);
+      console.log(`  Next review: ${cluster.next_review_action}`);
+    }
+    if (readModel.cluster_count > preview.length) {
+      console.log(`- ... ${readModel.cluster_count - preview.length} additional cluster(s) omitted from text preview`);
+    }
   }
 
-  const preview = readModel.clusters.slice(0, 3);
-  for (const cluster of preview) {
-    console.log(`- ${cluster.cluster_type} (confidence ${cluster.confidence}): ${cluster.repeated_signal_summary}`);
-    console.log(`  Next review: ${cluster.next_review_action}`);
-  }
-  if (readModel.cluster_count > preview.length) {
-    console.log(`- ... ${readModel.cluster_count - preview.length} additional cluster(s) omitted from text preview`);
-  }
+  console.log(
+    `Graph-informed affected modules: ${
+      readModel.graph_informed.affected_modules.length > 0 ? readModel.graph_informed.affected_modules.join(', ') : 'none'
+    }`
+  );
+  console.log(
+    `Structural spread: ${readModel.graph_informed.structural_spread.concentration_label} (affected=${readModel.graph_informed.structural_spread.affected_module_count}/${readModel.graph_informed.structural_spread.module_count}, concentration=${readModel.graph_informed.structural_spread.concentration_index})`
+  );
+  console.log(`Next review action: ${readModel.graph_informed.next_review_action}`);
 };
 
 const renderTextLearningCompaction = (artifact: LearningCompactionArtifact): void => {
@@ -218,7 +307,7 @@ export const runTelemetry = async (
       usage: 'playbook telemetry <subcommand> [options]',
       description: 'Inspect deterministic telemetry artifacts and cross-run learning summaries.',
       options: ['outcomes                  Inspect .playbook/outcome-telemetry.json', 'process                   Inspect .playbook/process-telemetry.json', 'learning-state            Show compacted deterministic learning snapshot', 'learning                  Compact cross-run learning signals and write artifact', 'summary                   Show combined deterministic telemetry summary', 'cycle                     Show cycle runtime summary from governed cycle artifacts', '  --detect-regressions      Add deterministic cycle regression warnings from governed cycle evidence', 'commands                  Show command-quality summary for core execution commands', '--json                    Alias for --format=json', '--format <text|json>      Output format', '--quiet                   Suppress success output in text mode', '--help                    Show help'],
-      artifacts: ['.playbook/outcome-telemetry.json (read)', '.playbook/process-telemetry.json (read)', '.playbook/task-execution-profile.json (optional read)', '.playbook/telemetry/command-quality.json (read for commands)', '.playbook/cycle-history.json (read for cycle)', '.playbook/cycle-state.json (optional read for cycle)', '.playbook/cycle-history.json (read for cycle regression detection)', '.playbook/learning-compaction.json (write for learning)']
+      artifacts: ['.playbook/outcome-telemetry.json (read)', '.playbook/process-telemetry.json (read)', '.playbook/task-execution-profile.json (optional read)', '.playbook/repo-graph.json (optional read for learning-state graph context)', '.playbook/telemetry/command-quality.json (read for commands)', '.playbook/cycle-history.json (read for cycle)', '.playbook/cycle-state.json (optional read for cycle)', '.playbook/cycle-history.json (read for cycle regression detection)', '.playbook/learning-compaction.json (write for learning)']
     });
     const exitCode = options.help || hasHelpFlag(args) ? ExitCode.Success : ExitCode.Failure;
     tracker.finish({ inputsSummary: `subcommand=${subcommand ?? 'none'}`, successStatus: exitCode === ExitCode.Success ? 'success' : 'failure', warningsCount: exitCode === ExitCode.Success ? 0 : 1 });
@@ -305,7 +394,7 @@ export const runTelemetry = async (
       });
       tracker.finish({
         inputsSummary: 'subcommand=learning-state',
-        artifactsRead: ['.playbook/outcome-telemetry.json', '.playbook/process-telemetry.json', '.playbook/task-execution-profile.json'],
+        artifactsRead: ['.playbook/outcome-telemetry.json', '.playbook/process-telemetry.json', '.playbook/task-execution-profile.json', '.playbook/repo-graph.json'],
         successStatus: 'success',
         openQuestionsCount: learningState.confidenceSummary.open_questions.length
       });
@@ -325,7 +414,7 @@ export const runTelemetry = async (
 
     tracker.finish({
       inputsSummary: 'subcommand=learning-state',
-      artifactsRead: ['.playbook/outcome-telemetry.json', '.playbook/process-telemetry.json', '.playbook/task-execution-profile.json'],
+      artifactsRead: ['.playbook/outcome-telemetry.json', '.playbook/process-telemetry.json', '.playbook/task-execution-profile.json', '.playbook/repo-graph.json'],
       successStatus: 'success',
       openQuestionsCount: learningState.confidenceSummary.open_questions.length
     });
