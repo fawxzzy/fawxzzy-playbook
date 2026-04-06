@@ -81,12 +81,13 @@ describe('collectScmContext', () => {
 
   it('reports rename summary from diff base', () => {
     const repo = makeRepo('playbook-scm-renames');
-    git(repo, ['update-ref', 'refs/remotes/origin/main', git(repo, ['rev-parse', 'HEAD'])]);
-    git(repo, ['checkout', '-b', 'feature/rename']);
 
     fs.writeFileSync(path.join(repo, 'old-name.txt'), 'value\n', 'utf8');
     git(repo, ['add', '.']);
-    git(repo, ['commit', '-m', 'add old file']);
+    git(repo, ['commit', '-m', 'add old file on main']);
+
+    git(repo, ['update-ref', 'refs/remotes/origin/main', git(repo, ['rev-parse', 'HEAD'])]);
+    git(repo, ['checkout', '-b', 'feature/rename']);
     git(repo, ['mv', 'old-name.txt', 'new-name.txt']);
     git(repo, ['commit', '-m', 'rename file']);
 
