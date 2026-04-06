@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   buildAndWriteHigherOrderSynthesisArtifact,
+  buildAndWritePolicyImprovementArtifact,
   buildCommandQualitySummaryArtifact,
   deriveLearningStateSnapshot,
   generateLearningCompactionArtifact,
@@ -347,7 +348,7 @@ export const runTelemetry = async (
       usage: 'playbook telemetry <subcommand> [options]',
       description: 'Inspect deterministic telemetry artifacts and cross-run learning summaries.',
       options: ['outcomes                  Inspect .playbook/outcome-telemetry.json', 'process                   Inspect .playbook/process-telemetry.json', 'learning-state            Show compacted deterministic learning snapshot', 'learning                  Compact cross-run learning signals and write artifact', 'summary                   Show combined deterministic telemetry summary', 'cycle                     Show cycle runtime summary from governed cycle artifacts', '  --detect-regressions      Add deterministic cycle regression warnings from governed cycle evidence', 'commands                  Show command-quality summary for core execution commands', '--json                    Alias for --format=json', '--format <text|json>      Output format', '--quiet                   Suppress success output in text mode', '--help                    Show help'],
-      artifacts: ['.playbook/outcome-telemetry.json (read)', '.playbook/process-telemetry.json (read)', '.playbook/task-execution-profile.json (optional read)', '.playbook/repo-graph.json (optional read for learning-state graph context)', '.playbook/higher-order-synthesis.json (optional read for learning-state synthesis view)', '.playbook/telemetry/command-quality.json (read for commands)', '.playbook/cycle-history.json (read for cycle)', '.playbook/cycle-state.json (optional read for cycle)', '.playbook/cycle-history.json (read for cycle regression detection)', '.playbook/learning-compaction.json (write for learning)', '.playbook/higher-order-synthesis.json (write for learning)']
+      artifacts: ['.playbook/outcome-telemetry.json (read)', '.playbook/process-telemetry.json (read)', '.playbook/task-execution-profile.json (optional read)', '.playbook/repo-graph.json (optional read for learning-state graph context)', '.playbook/higher-order-synthesis.json (optional read for learning-state synthesis view)', '.playbook/telemetry/command-quality.json (read for commands)', '.playbook/cycle-history.json (read for cycle)', '.playbook/cycle-state.json (optional read for cycle)', '.playbook/cycle-history.json (read for cycle regression detection)', '.playbook/learning-compaction.json (write for learning)', '.playbook/higher-order-synthesis.json (write for learning)', '.playbook/policy-improvement.json (write for learning)']
     });
     const exitCode = options.help || hasHelpFlag(args) ? ExitCode.Success : ExitCode.Failure;
     tracker.finish({ inputsSummary: `subcommand=${subcommand ?? 'none'}`, successStatus: exitCode === ExitCode.Success ? 'success' : 'failure', warningsCount: exitCode === ExitCode.Success ? 0 : 1 });
@@ -588,13 +589,14 @@ export const runTelemetry = async (
     const learningCompaction = generateLearningCompactionArtifact(cwd);
     writeLearningCompactionArtifact(cwd, learningCompaction);
     buildAndWriteHigherOrderSynthesisArtifact(cwd);
+    buildAndWritePolicyImprovementArtifact(cwd);
 
     if (options.format === 'json') {
       emitJsonOutput({ cwd, command: 'telemetry', payload: learningCompaction });
       tracker.finish({
         inputsSummary: 'subcommand=learning',
-        artifactsWritten: ['.playbook/learning-compaction.json', '.playbook/higher-order-synthesis.json'],
-        downstreamArtifactsProduced: ['.playbook/learning-compaction.json', '.playbook/higher-order-synthesis.json'],
+        artifactsWritten: ['.playbook/learning-compaction.json', '.playbook/higher-order-synthesis.json', '.playbook/policy-improvement.json'],
+        downstreamArtifactsProduced: ['.playbook/learning-compaction.json', '.playbook/higher-order-synthesis.json', '.playbook/policy-improvement.json'],
         successStatus: 'success',
         openQuestionsCount: learningCompaction.summary.open_questions.length
       });
@@ -611,12 +613,13 @@ export const runTelemetry = async (
       }
       console.log('Artifact: .playbook/learning-compaction.json');
       console.log('Artifact: .playbook/higher-order-synthesis.json');
+      console.log('Artifact: .playbook/policy-improvement.json');
     }
 
     tracker.finish({
       inputsSummary: 'subcommand=learning',
-      artifactsWritten: ['.playbook/learning-compaction.json', '.playbook/higher-order-synthesis.json'],
-      downstreamArtifactsProduced: ['.playbook/learning-compaction.json', '.playbook/higher-order-synthesis.json'],
+      artifactsWritten: ['.playbook/learning-compaction.json', '.playbook/higher-order-synthesis.json', '.playbook/policy-improvement.json'],
+      downstreamArtifactsProduced: ['.playbook/learning-compaction.json', '.playbook/higher-order-synthesis.json', '.playbook/policy-improvement.json'],
       successStatus: 'success',
       openQuestionsCount: learningCompaction.summary.open_questions.length
     });

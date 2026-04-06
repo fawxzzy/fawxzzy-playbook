@@ -334,6 +334,84 @@ describe('runMemory', () => {
     logSpy.mockRestore();
   });
 
+  it('supports policy-improvement subcommand and emits deterministic candidate-only summary', async () => {
+    const { runMemory } = await import('./memory.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-memory-policy-improvement-'));
+
+    fs.mkdirSync(path.join(repoRoot, '.playbook'), { recursive: true });
+    fs.writeFileSync(
+      path.join(repoRoot, '.playbook', 'policy-improvement.json'),
+      `${JSON.stringify({
+        schemaVersion: '1.0',
+        kind: 'policy-improvement',
+        reviewOnly: true,
+        proposalOnly: true,
+        authority: { mutation: 'read-only', promotion: 'review-required', ruleMutation: 'forbidden' },
+        candidateRankingAdjustments: [
+          {
+            candidateId: 'candidate:a',
+            adjustmentDirection: 'demote',
+            adjustmentMagnitude: 0.6,
+            rationale: 'blocked evidence',
+            provenanceRefs: ['.playbook/policy-evaluation.json#evaluations'],
+            reviewRequired: true
+          }
+        ],
+        prioritizationImprovementSuggestions: [
+          {
+            suggestionId: 'priority:blockers-first',
+            priority: 'high',
+            summary: 'review blockers first',
+            provenanceRefs: ['.playbook/remediation-status.json#blocked_signatures'],
+            reviewRequired: true
+          }
+        ],
+        repeatedBlockerInfluence: [
+          {
+            blockerKey: 'sig-a',
+            blockerType: 'failure-signature',
+            occurrences: 3,
+            influenceScore: 0.6,
+            recommendation: 'keep in review lane',
+            provenanceRefs: ['.playbook/remediation-status.json#telemetry/blocked_signature_rollup/sig-a'],
+            reviewRequired: true
+          }
+        ],
+        confidenceTrendNotes: [
+          {
+            noteId: 'trend:a',
+            trend: 'declining',
+            confidenceDelta: -0.2,
+            summary: 'confidence down',
+            provenanceRefs: ['.playbook/outcome-feedback.json#outcomes'],
+            reviewRequired: true
+          }
+        ],
+        reviewRequiredFlags: {
+          requiresHumanReview: true,
+          candidateOnly: true,
+          noDirectPolicyMutation: true,
+          noRuleMutation: true,
+          noExecutionSideEffects: true
+        },
+        provenanceRefs: ['.playbook/policy-evaluation.json#evaluations']
+      }, null, 2)}\n`,
+      'utf8'
+    );
+
+    const exitCode = await runMemory(repoRoot, ['policy-improvement'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Success);
+
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.command).toBe('memory-policy-improvement');
+    expect(payload.candidate_ranking_adjustments).toHaveLength(1);
+    expect(payload.authority.mutation).toBe('read-only');
+    expect(payload.authority.rule_mutation).toBe('forbidden');
+    expect(payload.repeated_blocker_influence[0].occurrences).toBe(3);
+    logSpy.mockRestore();
+  });
+
   it('returns deterministic failure envelope when outcome-feedback artifact is missing', async () => {
     const { runMemory } = await import('./memory.js');
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);

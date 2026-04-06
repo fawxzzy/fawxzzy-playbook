@@ -860,6 +860,14 @@ export type {
   HigherOrderSynthesisArtifact,
   HigherOrderSynthesisProposal
 } from './learning/higherOrderSynthesis.js';
+export {
+  POLICY_IMPROVEMENT_SCHEMA_VERSION,
+  POLICY_IMPROVEMENT_RELATIVE_PATH,
+  buildPolicyImprovementArtifact,
+  writePolicyImprovementArtifact,
+  buildAndWritePolicyImprovementArtifact
+} from './learning/policyImprovement.js';
+export type { PolicyImprovementArtifact } from './learning/policyImprovement.js';
 export { GLOBAL_PATTERNS_RELATIVE_PATH, readCanonicalPatternsArtifact, materializeStoryFromSource, materializePatternFromCandidate, transitionPatternLifecycle } from './promotion.js';
 export { exportPatternTransferPackage, importPatternTransferPackage, PATTERN_TRANSFER_PACKAGES_RELATIVE_DIR } from './patternTransfer.js';
 export type { PromotionSourceRef, StoryRecordWithProvenance, StoryPromotionProvenance as PromotionStoryProvenance, PromotedPatternRecord, CanonicalPatternsArtifact, PreparedPromotion } from './promotion.js';

@@ -588,6 +588,7 @@ describe('runTelemetry', () => {
     const written = JSON.parse(fs.readFileSync(path.join(repo, '.playbook', 'learning-compaction.json'), 'utf8')) as Record<string, unknown>;
     expect((written.summary as Record<string, unknown>).summary_id).toBe(summary.summary_id);
     expect(fs.existsSync(path.join(repo, '.playbook', 'higher-order-synthesis.json'))).toBe(true);
+    expect(fs.existsSync(path.join(repo, '.playbook', 'policy-improvement.json'))).toBe(true);
 
     logSpy.mockRestore();
   });

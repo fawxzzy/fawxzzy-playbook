@@ -143,6 +143,7 @@ Do not hand-edit entries inside the managed markers.
 - Knowledge review note: `pnpm playbook knowledge review followups` exposes compiled downstream follow-up suggestions through the existing read-only knowledge review family (`.playbook/review-downstream-followups.json`).
 - Memory pressure note: `pnpm playbook memory pressure followups` exposes canonical deterministic pressure followups through the existing read-only memory family (`.playbook/memory-pressure-followups.json`) with thin text output and full JSON detail.
 - Telemetry learning note: `pnpm playbook telemetry learning-state --json` includes additive `learning_clusters` read-model fields for `cluster_count`, cluster rows (`cluster_type`, repeated signal summary, confidence, next review action), and a graph-informed sibling (`graph_informed.affected_modules`, `graph_informed.structural_spread`, `graph_informed.next_review_action`). Text mode remains compact/thin with brief highlights and no new execution/mutation path.
+- Telemetry policy-improvement note: `pnpm playbook telemetry learning --json` now also emits canonical `.playbook/policy-improvement.json`, a deterministic candidate-only runtime contract derived from existing outcome/learning/policy/remediation/review artifacts. It contains ranking/prioritization suggestions and blocker/confidence notes with explicit review-required and no-mutation flags.
 - AI bootstrap/context: [`ai-context`](ai-context.md), [`ai-contract`](ai-contract.md), [`ai`](ai.md), [`context`](overview.md)
 - Runtime manifest note: `context` and `ai-context` consume `.playbook/runtime-manifests.json` as a read-only additive control-plane context surface for integrated subapps.
 - Module digest note: `index` now emits deterministic `.playbook/module-digests.json` from `.playbook/repo-index.json` + `.playbook/repo-graph.json` (+ optional ownership metadata) as the compact architecture context-transfer artifact consumed by `context`, `ai-context`, and module-scoped `ask`/`explain` flows.
@@ -440,6 +441,7 @@ Doctrine summary anchors:
 - replay/consolidation remain candidate-only: replay is derived from memory evidence, and consolidation writes `.playbook/memory/consolidation-candidates.json` for explicit review without auto-promotion.
 - `memory knowledge` lists promoted knowledge records.
 - `memory outcome-feedback` exposes `.playbook/outcome-feedback.json` as a first-class read-only operator surface with compact text output and additive JSON fields for outcome class, confidence/trigger/stale-knowledge signals, trend updates, provenance refs, and a deterministic next review action.
+- `memory policy-improvement` exposes `.playbook/policy-improvement.json` as a first-class read-only operator surface with deterministic candidate ranking adjustments, prioritization suggestions, repeated blocker influence, confidence trend notes, review-required flags, and provenance refs.
 - `memory pressure` exposes read-only pressure/operator inspection from canonical `.playbook/memory-pressure.json` + `.playbook/memory-pressure-plan.json`, with lightweight `--band` and `--action` filters.
 - `memory show <id>` resolves either a candidate id or knowledge id, including provenance expansion for candidates.
 - `memory promote <candidate-id>` and `memory retire <knowledge-id>` provide explicit, human-driven lifecycle actions.
@@ -447,10 +449,13 @@ Doctrine summary anchors:
 - Postmortem reconsolidation stays inside this existing review boundary: incidents/changes should produce a structured postmortem, explicit candidate extraction, and then reviewed movement through `memory` / `promote` surfaces rather than any new command family or auto-promotion path.
 - `status` now exposes additive read-only memory pressure inspection (`memory_pressure`) with score, band, hysteresis thresholds, usage totals, recommended actions, and an action-plan summary (`current_band`, highest-priority actions, and counts by action type) sourced from `.playbook/memory-pressure-plan.json`; canonical pressure artifact path remains `.playbook/memory-pressure.json`.
 - Rule: Runtime outcome learning must remain candidate-only until explicit review.
+- Rule: Reviewed outcomes may improve ranking/prioritization, but may not mutate governance directly.
 - Rule: Structural graph, temporal memory, candidate knowledge, and promoted doctrine must remain separate explicit layers.
 - Pattern: execution -> receipt -> updated truth -> outcome feedback -> reviewed learning.
+- Pattern: outcome feedback -> learning signals -> policy improvement candidates -> human-reviewed promotion.
 - Pattern: observe -> store episodic evidence -> cluster/compact -> review -> promote doctrine.
 - Failure Mode: Outcome feedback that exists only as an internal artifact never becomes an operator-visible learning loop.
+- Failure Mode: Treating outcome learning as direct policy mutation bypasses the same review boundaries the rest of the system already enforces.
 - Failure Mode: Without a canonical memory-system contract, adjacent memory artifacts drift into overlapping authority and unclear lifecycle boundaries.
 - Rule: Postmortems must separate observed facts from interpretation and promotion candidates.
 - Pattern: Recall -> reinterpret -> promote -> restabilize becomes concrete through structured postmortems.
@@ -464,6 +469,7 @@ pnpm playbook memory candidates --json
 pnpm playbook memory candidates --source interop-followup --json
 pnpm playbook memory knowledge --json
 pnpm playbook memory outcome-feedback --json
+pnpm playbook memory policy-improvement --json
 pnpm playbook memory pressure --json
 pnpm playbook memory pressure --band pressure --action summarize --json
 pnpm playbook memory show <id> --json
