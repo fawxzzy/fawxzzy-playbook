@@ -13,6 +13,12 @@
     "policy": {
       "rules": []
     },
+    "local": {
+      "enabled": true,
+      "scriptName": "verify:local",
+      "fallbackScriptName": null,
+      "command": null
+    },
     "rules": {
       "requireNotesOnChanges": [
         {

@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/local-verification-receipt.schema.json",
+  "title": "Local Verification Receipt",
+  "description": "Durable local-first verification evidence with explicit separation between verification, publishing, and deployment concerns.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "receipt_id",
+    "generated_at",
+    "repo_root",
+    "verification_mode",
+    "provider",
+    "workflow",
+    "local_verification",
+    "governance",
+    "summary"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "kind": { "const": "local-verification-receipt" },
+    "receipt_id": { "type": "string", "minLength": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "repo_root": { "type": "string", "minLength": 1 },
+    "verification_mode": { "enum": ["governance-only", "combined", "local-only"] },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "remote_name", "remote_url", "remote_configured", "optional", "status_authority"],
+      "properties": {
+        "kind": { "enum": ["none", "github", "gitlab", "bitbucket", "generic-git"] },
+        "remote_name": { "type": ["string", "null"] },
+        "remote_url": { "type": ["string", "null"] },
+        "remote_configured": { "type": "boolean" },
+        "optional": { "const": true },
+        "status_authority": { "enum": ["local-receipt", "provider-status", "handoff-record", "not-applicable"] }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verification", "publishing", "deployment"],
+      "properties": {
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "status_authority", "receipt_path", "summary"],
+          "properties": {
+            "state": { "enum": ["passed", "failed", "not-run"] },
+            "status_authority": { "const": "local-receipt" },
+            "receipt_path": { "type": ["string", "null"] },
+            "summary": { "type": "string", "minLength": 1 }
+          }
+        },
+        "publishing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "status_authority", "summary"],
+          "properties": {
+            "state": { "enum": ["not-configured", "not-observed", "synced", "failed"] },
+            "status_authority": { "enum": ["provider-status", "not-applicable"] },
+            "summary": { "type": "string", "minLength": 1 }
+          }
+        },
+        "deployment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "status_authority", "summary"],
+          "properties": {
+            "state": { "enum": ["not-configured", "not-observed", "promoted", "failed"] },
+            "status_authority": { "enum": ["handoff-record", "not-applicable"] },
+            "summary": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "local_verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "configured",
+        "status",
+        "command",
+        "exit_code",
+        "duration_ms",
+        "stdout_path",
+        "stderr_path",
+        "started_at",
+        "completed_at"
+      ],
+      "properties": {
+        "configured": { "type": "boolean" },
+        "status": { "enum": ["passed", "failed", "not-configured"] },
+        "command": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["source", "package_manager", "command"],
+              "properties": {
+                "source": { "type": "string", "minLength": 1 },
+                "package_manager": { "enum": ["pnpm", "npm", "yarn", "bun", "unknown"] },
+                "command": { "type": "string", "minLength": 1 }
+              }
+            },
+            { "type": "null" }
+          ]
+        },
+        "exit_code": { "type": ["integer", "null"] },
+        "duration_ms": { "type": ["integer", "null"], "minimum": 0 },
+        "stdout_path": { "type": ["string", "null"] },
+        "stderr_path": { "type": ["string", "null"] },
+        "started_at": { "type": ["string", "null"], "format": "date-time" },
+        "completed_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evaluated", "ok", "failures", "warnings", "base_ref", "base_sha"],
+      "properties": {
+        "evaluated": { "type": "boolean" },
+        "ok": { "type": ["boolean", "null"] },
+        "failures": { "type": "integer", "minimum": 0 },
+        "warnings": { "type": "integer", "minimum": 0 },
+        "base_ref": { "type": ["string", "null"] },
+        "base_sha": { "type": ["string", "null"] }
+      }
+    },
+    "summary": { "type": "string", "minLength": 1 }
+  }
+}

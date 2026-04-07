@@ -17,6 +17,10 @@ export const loadConfig = (repoRoot: string): { config: PlaybookConfig; warning?
     verify: {
       ...defaultConfig.verify,
       ...parsed.verify,
+      local: {
+        ...defaultConfig.verify.local,
+        ...parsed.verify?.local
+      },
       rules: {
         ...defaultConfig.verify.rules,
         ...parsed.verify?.rules

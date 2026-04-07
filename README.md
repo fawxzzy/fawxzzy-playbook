@@ -21,6 +21,8 @@ Playbook is best understood as **deterministic repo intelligence + governance + 
 
 This framing is the core promise: deterministic evidence over ad-hoc inference, and reviewed intent before execution.
 
+Playbook now treats verification, publishing, and deployment as separate workflow concepts. Verification truth can be produced entirely locally through a repo-defined `verify:local` gate and durable `.playbook/local-verification-receipt.json` evidence. Remote providers such as GitHub remain optional transports for PR review, CI orchestration, and publishing sync.
+
 Operator-facing text surfaces should stay brief-thin: lead with decision/status, affected surfaces, blockers, and next action, while leaving machine-heavy state in JSON contracts and `.playbook/*` artifacts.
 
 - Rule: Human surfaces should show decision, action, and why — not raw machine state.
@@ -150,6 +152,7 @@ pnpm playbook query modules --json
 pnpm playbook explain architecture --json
 pnpm playbook ask "where should a new feature live?" --repo-context --json
 pnpm playbook verify --json
+pnpm playbook verify --local --json
 pnpm playbook plan --json --out .playbook/plan.json
 pnpm playbook apply --from-plan .playbook/plan.json
 pnpm playbook apply --from-plan .playbook/test-fix-plan.json
@@ -158,6 +161,15 @@ pnpm playbook verify --json
 ```
 
 `analyze` remains available for compatibility and lightweight stack inspection, but it is no longer the sole serious quick-start path.
+
+For a fully local verification loop, run:
+
+```bash
+pnpm playbook verify --local --json
+pnpm playbook verify --local-only --json
+```
+
+If the repository defines `package.json#scripts.verify:local`, Playbook uses that command as the local verification gate. The receipt written to `.playbook/local-verification-receipt.json` is the source of truth for verification in this mode.
 
 For local branch-accurate validation inside this repository, prefer:
 
@@ -627,6 +639,8 @@ Or view architecture docs here:
 This ensures architecture documentation always reflects the actual repository structure.
 
 ## Using Playbook with GitHub Actions
+
+GitHub Actions is an optional provider integration. It is not required for Playbook verification truth.
 
 Playbook includes an official composite action that supports deterministic CI automation for the canonical flow:
 

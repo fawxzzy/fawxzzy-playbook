@@ -20,9 +20,11 @@ const appendCommandExecutionQualityRecord = vi.fn();
 const recordCommandExecution = vi.fn();
 const safeRecordRepositoryEvent = vi.fn((callback: () => void) => callback());
 const recordCommandQuality = vi.fn();
+const resolveLocalVerificationCommand = vi.fn();
+const runLocalVerification = vi.fn();
 const VERIFY_PHASE_RULES = { preflight: ['release.version-governance'] } as const;
 
-vi.mock('@zachariahredfield/playbook-engine', () => ({ verifyRepo, loadConfig, formatHuman, getLatestMutableRun, createExecutionIntent, createExecutionRun, appendExecutionStep, completeExecutionRun, executionRunPath, attachSessionRunState, appendCommandExecutionQualityRecord, safeRecordRepositoryEvent, recordCommandExecution, recordCommandQuality, VERIFY_PHASE_RULES }));
+vi.mock('@zachariahredfield/playbook-engine', () => ({ verifyRepo, loadConfig, formatHuman, getLatestMutableRun, createExecutionIntent, createExecutionRun, appendExecutionStep, completeExecutionRun, executionRunPath, attachSessionRunState, appendCommandExecutionQualityRecord, safeRecordRepositoryEvent, recordCommandExecution, recordCommandQuality, resolveLocalVerificationCommand, runLocalVerification, VERIFY_PHASE_RULES }));
 vi.mock('../lib/loadVerifyRules.js', () => ({ loadVerifyRules }));
 
 describe('runVerify policy mode', () => {
@@ -38,10 +40,13 @@ describe('runVerify policy mode', () => {
     executionRunPath.mockReset();
     attachSessionRunState.mockReset();
     completeExecutionRun.mockReset();
+    resolveLocalVerificationCommand.mockReset();
+    runLocalVerification.mockReset();
     formatHuman.mockReturnValue('human report');
     loadConfig.mockReturnValue({ config: { verify: { policy: { rules: [] } } } });
     getLatestMutableRun.mockReturnValue({ id: 'run-test', steps: [] });
     appendExecutionStep.mockReturnValue({ id: 'run-test', steps: [] });
+    resolveLocalVerificationCommand.mockReturnValue(null);
     loadVerifyRules.mockResolvedValue([
       {
         id: 'requireNotesOnChanges',
@@ -57,6 +62,97 @@ describe('runVerify policy mode', () => {
         policy: { id: 'notes.empty' }
       }
     ]);
+  });
+
+  it('emits a local verification receipt in local-only mode', async () => {
+    const { runVerify } = await import('./verify.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    loadConfig.mockReturnValue({
+      config: {
+        verify: {
+          policy: { rules: [] },
+          local: { enabled: true, scriptName: 'verify:local', fallbackScriptName: null, command: null }
+        }
+      }
+    });
+    runLocalVerification.mockReturnValue({
+      receiptPath: '.playbook/local-verification-receipt.json',
+      receiptLogPath: '.playbook/local-verification-receipts.json',
+      receipt: {
+        provider: { kind: 'none', remote_name: null, remote_url: null, remote_configured: false, optional: true, status_authority: 'not-applicable' },
+        workflow: {
+          verification: { state: 'passed', status_authority: 'local-receipt', receipt_path: '.playbook/local-verification-receipt.json', summary: 'local receipt truth' },
+          publishing: { state: 'not-configured', status_authority: 'not-applicable', summary: 'publishing optional' },
+          deployment: { state: 'not-observed', status_authority: 'handoff-record', summary: 'deployment separate' }
+        },
+        local_verification: {
+          configured: true,
+          status: 'passed',
+          command: { source: 'package.json#scripts.verify:local', package_manager: 'pnpm', command: 'pnpm run verify:local' }
+        },
+        summary: 'Local verification passed.'
+      }
+    });
+
+    const exitCode = await runVerify('/repo', { format: 'json', ci: true, quiet: true, explain: false, policy: false, localOnly: true });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(verifyRepo).not.toHaveBeenCalled();
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.verificationMode).toBe('local-only');
+    expect(payload.workflow).toMatchObject({
+      verification: { state: 'passed' },
+      publishing: { state: 'not-configured' },
+      deployment: { state: 'not-observed' }
+    });
+    expect(payload.localVerification).toMatchObject({
+      status: 'passed',
+      receiptPath: '.playbook/local-verification-receipt.json'
+    });
+
+    logSpy.mockRestore();
+  });
+
+  it('fails combined mode when the local verification gate fails', async () => {
+    const { runVerify } = await import('./verify.js');
+
+    verifyRepo.mockReturnValue({
+      ok: true,
+      summary: { failures: 0, warnings: 0 },
+      failures: [],
+      warnings: []
+    });
+    loadConfig.mockReturnValue({
+      config: {
+        verify: {
+          policy: { rules: [] },
+          local: { enabled: true, scriptName: 'verify:local', fallbackScriptName: null, command: null }
+        }
+      }
+    });
+    runLocalVerification.mockReturnValue({
+      receiptPath: '.playbook/local-verification-receipt.json',
+      receiptLogPath: '.playbook/local-verification-receipts.json',
+      receipt: {
+        provider: { kind: 'github', remote_name: 'origin', remote_url: 'https://github.com/example/repo', remote_configured: true, optional: true, status_authority: 'provider-status' },
+        workflow: {
+          verification: { state: 'failed', status_authority: 'local-receipt', receipt_path: '.playbook/local-verification-receipt.json', summary: 'local receipt truth' },
+          publishing: { state: 'not-observed', status_authority: 'provider-status', summary: 'publishing optional' },
+          deployment: { state: 'not-observed', status_authority: 'handoff-record', summary: 'deployment separate' }
+        },
+        local_verification: {
+          configured: true,
+          status: 'failed',
+          command: { source: 'package.json#scripts.verify:local', package_manager: 'pnpm', command: 'pnpm run verify:local' }
+        },
+        summary: 'Local verification failed.'
+      }
+    });
+
+    const exitCode = await runVerify('/repo', { format: 'json', ci: true, quiet: true, explain: false, policy: false, local: true });
+
+    expect(exitCode).toBe(ExitCode.PolicyFailure);
   });
 
 
@@ -224,10 +320,13 @@ describe('runVerify text next actions', () => {
     executionRunPath.mockReset();
     attachSessionRunState.mockReset();
     completeExecutionRun.mockReset();
+    resolveLocalVerificationCommand.mockReset();
+    runLocalVerification.mockReset();
     formatHuman.mockReturnValue('human report');
     loadConfig.mockReturnValue({ config: { verify: { policy: { rules: [] } } } });
     getLatestMutableRun.mockReturnValue({ id: 'run-test', steps: [] });
     appendExecutionStep.mockReturnValue({ id: 'run-test', steps: [] });
+    resolveLocalVerificationCommand.mockReturnValue(null);
     loadVerifyRules.mockResolvedValue([
       {
         id: 'release.version-governance',

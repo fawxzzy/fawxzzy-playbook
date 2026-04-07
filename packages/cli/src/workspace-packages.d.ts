@@ -8,6 +8,8 @@ declare module "@zachariahredfield/playbook-core" {
   export const formatJson: (...args: any[]) => Promise<any>;
   export const runArchitectureAudit: (...args: any[]) => any;
   export const loadArchitecture: (...args: any[]) => any;
+  export const LOCAL_VERIFICATION_RECEIPT_RELATIVE_PATH: '.playbook/local-verification-receipt.json';
+  export const LOCAL_VERIFICATION_RECEIPT_LOG_RELATIVE_PATH: '.playbook/local-verification-receipts.json';
   export type CommandExecutionQualityArtifact = any;
   export const TEST_AUTOFIX_ARTIFACT_KIND: any;
   export const TEST_AUTOFIX_SCHEMA_VERSION: any;
@@ -27,6 +29,8 @@ declare module "@zachariahredfield/playbook-node" {
 
 declare module "@zachariahredfield/playbook-engine" {
   export const loadConfig: (...args: any[]) => Promise<any>;
+  export const resolveLocalVerificationCommand: (...args: any[]) => any;
+  export const runLocalVerification: (...args: any[]) => any;
   export const readControlPlaneState: (...args: any[]) => any;
   export const writeControlPlaneState: (...args: any[]) => any;
   export const readLongitudinalState: (...args: any[]) => any;

@@ -232,6 +232,8 @@ const commandRunners: Record<
       format,
       quiet,
       policy: parseFlag(commandArgs, "--policy"),
+      local: parseFlag(commandArgs, "--local"),
+      localOnly: parseFlag(commandArgs, "--local-only"),
       outFile: parseOptionValue(commandArgs, "--out"),
       runId: parseOptionValue(commandArgs, "--run-id"),
       phase: parseOptionValue(commandArgs, "--phase") as never,

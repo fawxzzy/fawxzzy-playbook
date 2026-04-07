@@ -34,6 +34,7 @@ This roadmap defines strategic product direction and sequencing only.
 Pattern: Product Story Follows Architecture.
 Rule: Roadmap sequencing must preserve CLI-first, offline-capable, private-first operation.
 Failure Mode: Business docs drifting away from runtime truth.
+Recent implementation note: `pnpm playbook verify --local --json` and `pnpm playbook verify --local-only --json` now provide the first local-first verification receipt contract, writing durable `.playbook/local-verification-receipt.json` evidence and separating verification, publishing, and deployment into distinct workflow fields without requiring GitHub status.
 Recent implementation note: `pnpm playbook interop emit-fitness-plan --from-draft .playbook/interop-request-draft.json` now closes the explicit bounded interop loop by consuming only the canonical draft artifact, re-validating canonical Fitness metadata, and reusing the existing bounded emit runtime path without widening runtime authority.
 Recent implementation note: deterministic change-scope bundles are now emitted at `.playbook/change-scope.json` from plan/analyze-pr/workers launch-plan/ai propose so mutation-scope declarations (`allowedFiles`, `patchSizeBudget`, `boundaryChecks`) can be carried as explicit governed artifacts without widening mutation authority in this slice.
 Recent implementation note: `apply` now enforces declared change-scope bundles before reporting success, with fail-closed checks for out-of-scope files, patch-budget overflow, and missing/red boundary checks.
@@ -52,6 +53,18 @@ Rule: Updated truth should feed existing governed review surfaces before inventi
 Pattern: AI proposal -> request draft -> explicit interop emit -> receipt -> updated truth -> review cue.
 Failure Mode: Manual proposal-to-request translation recreates hidden session state and weakens auditability.
 Failure Mode: The loop claims to derive next action, but that action remains trapped in a followup artifact no operator workflow actually consumes.
+
+## Local-first workflow resilience milestone
+
+Status: in progress
+
+- Local verification receipts now let Playbook prove a repo-local gate without GitHub CI.
+- SCM and provider state are additive and optional; they no longer define verification truth.
+- Publishing and deployment remain separate workflow concerns so future provider integrations can stay optional.
+
+Rule: CI is a release gate, not a place. If the commands are known, the gate can run locally.
+Pattern: local receipt -> optional publish sync -> optional deployment handoff.
+Failure Mode: Treating GitHub as required for verification, publishing, and deployment keeps Playbook operationally dependent on one external platform.
 
 
 ## Architecture doctrine status

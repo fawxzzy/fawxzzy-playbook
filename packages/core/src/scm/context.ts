@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
+import type { WorkflowProviderKind, WorkflowStatusAuthority } from '../contracts/localVerification.js';
 
 type GitRef = string;
 
@@ -20,6 +21,14 @@ export type ScmContext = {
   schemaVersion: '1.0';
   kind: 'playbook-scm-context';
   repoRoot: string;
+  provider: {
+    kind: WorkflowProviderKind;
+    remoteName: string | null;
+    remoteUrl: string | null;
+    remoteConfigured: boolean;
+    optional: true;
+    statusAuthority: WorkflowStatusAuthority;
+  };
   git: {
     isRepository: boolean;
     branch: string | null;
@@ -181,6 +190,30 @@ const resolveDirtyState = (repoRoot: string): ScmContext['workingTree'] => {
   };
 };
 
+const detectProviderKind = (remoteUrl: string | undefined): WorkflowProviderKind => {
+  if (!remoteUrl) return 'none';
+  const normalized = remoteUrl.toLowerCase();
+  if (normalized.includes('github.com')) return 'github';
+  if (normalized.includes('gitlab')) return 'gitlab';
+  if (normalized.includes('bitbucket')) return 'bitbucket';
+  return 'generic-git';
+};
+
+const resolveProviderContext = (repoRoot: string): ScmContext['provider'] => {
+  const remoteName = tryGit(repoRoot, ['remote']);
+  const selectedRemote = remoteName?.split('\n').map((entry) => entry.trim()).find(Boolean) ?? null;
+  const remoteUrl = selectedRemote ? tryGit(repoRoot, ['remote', 'get-url', selectedRemote]) ?? null : null;
+  const remoteConfigured = Boolean(selectedRemote && remoteUrl);
+  return {
+    kind: detectProviderKind(remoteUrl ?? undefined),
+    remoteName: selectedRemote,
+    remoteUrl,
+    remoteConfigured,
+    optional: true,
+    statusAuthority: remoteConfigured ? 'provider-status' : 'not-applicable'
+  };
+};
+
 export const collectScmContext = (
   repoRoot: string,
   options: {
@@ -199,6 +232,14 @@ export const collectScmContext = (
       schemaVersion: '1.0',
       kind: 'playbook-scm-context',
       repoRoot: normalizedRoot,
+      provider: {
+        kind: 'none',
+        remoteName: null,
+        remoteUrl: null,
+        remoteConfigured: false,
+        optional: true,
+        statusAuthority: 'not-applicable'
+      },
       git: {
         isRepository: false,
         branch: null,
@@ -242,6 +283,7 @@ export const collectScmContext = (
     schemaVersion: '1.0',
     kind: 'playbook-scm-context',
     repoRoot: normalizedRoot,
+    provider: resolveProviderContext(repoRoot),
     git: {
       isRepository,
       branch,

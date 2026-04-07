@@ -14,6 +14,12 @@ export type PlaybookConfig = {
     policy: {
       rules: string[];
     };
+    local: {
+      enabled: boolean;
+      scriptName: string;
+      fallbackScriptName: string | null;
+      command: string | null;
+    };
     rules: {
       requireNotesOnChanges: Array<{
         whenChanged: string[];
@@ -51,6 +57,12 @@ export const defaultConfig: PlaybookConfig = {
   verify: {
     policy: {
       rules: ['protected-doc.governance']
+    },
+    local: {
+      enabled: true,
+      scriptName: 'verify:local',
+      fallbackScriptName: null,
+      command: null
     },
     rules: {
       requireNotesOnChanges: [

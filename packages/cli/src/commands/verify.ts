@@ -37,6 +37,8 @@ type VerifyRunOptions = {
   quiet: boolean;
   explain: boolean;
   policy: boolean;
+  local?: boolean;
+  localOnly?: boolean;
   outFile?: string;
   runId?: string;
   help?: boolean;
@@ -81,6 +83,18 @@ const parseRuleIds = (ruleIds: string[] | undefined): string[] | undefined => {
 };
 
 const validateVerifyOptions = (options: VerifyRunOptions): void => {
+  if (options.local && options.localOnly) {
+    throw new Error('playbook verify: --local and --local-only cannot be used together.');
+  }
+  if (options.localOnly && options.policy) {
+    throw new Error('playbook verify: --local-only cannot be combined with --policy because policy mode requires governance evaluation.');
+  }
+  if (options.localOnly && options.phase) {
+    throw new Error('playbook verify: --local-only cannot be combined with --phase because phase selection applies to governance evaluation only.');
+  }
+  if (options.localOnly && options.ruleIds && options.ruleIds.length > 0) {
+    throw new Error('playbook verify: --local-only cannot be combined with --rule because rule selection applies to governance evaluation only.');
+  }
   if (options.phase && !(options.phase in VERIFY_PHASE_RULES)) {
     const supported = Object.keys(VERIFY_PHASE_RULES).sort().join(', ');
     throw new Error(`playbook verify: unsupported phase "${options.phase}". Supported phases: ${supported}.`);
@@ -114,6 +128,8 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
         '--phase <name>             Run a named low-cost verify subset (currently: preflight)',
         '--rule <id>                Restrict verify to one or more rule ids (repeatable or comma-separated)',
         '--policy                   Enable policy mode for configured policy rules',
+        '--local                    Run repo-defined local verification in addition to governance checks',
+        '--local-only               Run only repo-defined local verification and emit a local receipt',
         '--ci                       CI mode summary in text output',
         '--explain                  Show why findings matter and remediation in text mode',
         '--out <path>               Write JSON artifact envelope for verify result',
@@ -133,10 +149,18 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
   const tracker = createCommandQualityTracker(cwd, 'verify');
 
   const verifyRules = await loadVerifyRules(cwd);
-  const report = await collectVerifyReport(cwd, { phase: options.phase, ruleIds: normalizedRuleIds });
-  const nextActions = collectNextActions(report, verifyRules);
-
   const { config } = await Promise.resolve(engine.loadConfig(cwd));
+  const verificationMode = options.localOnly ? 'local-only' : options.local ? 'combined' : 'governance-only';
+  const governanceRequested = !options.localOnly;
+  const report = governanceRequested
+    ? await collectVerifyReport(cwd, { phase: options.phase, ruleIds: normalizedRuleIds })
+    : {
+        ok: true,
+        summary: { failures: 0, warnings: 0, phase: options.phase, ruleIds: normalizedRuleIds },
+        failures: [],
+        warnings: [],
+      };
+  const nextActions = governanceRequested ? collectNextActions(report, verifyRules) : [];
   const configuredPolicyRules = new Set(config.verify.policy.rules);
   const policyEvaluation: PolicyEvaluation[] = report.failures
     .map((failure: VerifyFailure): PolicyEvaluation | undefined => {
@@ -175,20 +199,35 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
     });
 
   const inPolicyMode = options.policy;
-  const ok = inPolicyMode ? policyViolations.length === 0 : report.ok;
+  const governanceOk = inPolicyMode ? policyViolations.length === 0 : report.ok;
+  const localVerification = options.local || options.localOnly
+    ? engine.runLocalVerification(cwd, config, {
+        mode: options.localOnly ? 'local-only' : 'combined',
+        governanceReport: options.localOnly ? undefined : report,
+      })
+    : null;
+  const ok = options.localOnly
+    ? localVerification?.receipt.local_verification.status === 'passed'
+    : governanceOk && (!localVerification || localVerification.receipt.local_verification.status === 'passed');
   const exitCode = ok ? ExitCode.Success : ExitCode.PolicyFailure;
   const runId = resolveRunId(cwd, options.runId);
   const run = engine.appendExecutionStep(cwd, runId, {
     kind: 'verify',
     status: ok ? 'passed' : 'failed',
-    inputs: { policyMode: inPolicyMode, phase: options.phase, ruleIds: normalizedRuleIds },
+    inputs: { policyMode: inPolicyMode, phase: options.phase, ruleIds: normalizedRuleIds, verificationMode },
     outputs: {
       failures: report.failures.length,
       warnings: report.warnings.length,
-      ok
+      ok,
+      verificationMode,
+      localVerificationStatus: localVerification?.receipt.local_verification.status ?? null,
     },
     evidence: [
       ...(options.outFile ? [{ id: 'evidence-findings-artifact', kind: 'artifact' as const, ref: options.outFile }] : []),
+      ...(localVerification ? [
+        { id: 'evidence-local-verification-receipt', kind: 'artifact' as const, ref: localVerification.receiptPath },
+        { id: 'evidence-local-verification-receipt-log', kind: 'artifact' as const, ref: localVerification.receiptLogPath },
+      ] : []),
       ...report.failures.map((failure, index) => ({
         id: `evidence-finding-${String(index + 1).padStart(3, '0')}`,
         kind: 'finding' as const,
@@ -205,7 +244,8 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
     goal: inPolicyMode ? 'verify repository policy posture' : 'verify repository governance',
     artifacts: [
       { artifact: runArtifactPath, kind: 'run' },
-      ...(options.outFile ? [{ artifact: options.outFile, kind: 'finding' as const }] : [])
+      ...(options.outFile ? [{ artifact: options.outFile, kind: 'finding' as const }] : []),
+      ...(localVerification ? [{ artifact: localVerification.receiptPath, kind: 'finding' as const }] : []),
     ]
   });
   const hasApplyStep = run.steps.some((step: { kind: string }) => step.kind === 'apply');
@@ -216,14 +256,26 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
   }
 
   if (options.format === 'text' && !options.ci && !options.explain && !inPolicyMode) {
-    console.log(engine.formatHuman(report));
-    if (!report.ok) {
+    if (options.localOnly) {
+      console.log(ok ? 'playbook verify --local-only: PASS' : 'playbook verify --local-only: FAIL');
+      if (localVerification) {
+        console.log(`Local verification receipt: ${localVerification.receiptPath}`);
+        console.log(`Command: ${localVerification.receipt.local_verification.command?.command ?? 'unconfigured'}`);
+      }
+    } else {
+      console.log(engine.formatHuman(report));
+      if (localVerification) {
+        console.log(`Local verification: ${localVerification.receipt.local_verification.status.toUpperCase()}`);
+        console.log(`Local verification receipt: ${localVerification.receiptPath}`);
+      }
+    }
+    if (!ok) {
       printCompactNextActions(nextActions);
     }
     tracker.finish({
-      inputsSummary: `policy=${inPolicyMode ? 'on' : 'off'}; phase=${options.phase ?? 'full'}; rules=${normalizedRuleIds?.join(',') ?? 'all'}`,
-      artifactsWritten: options.outFile ? [options.outFile] : [],
-      downstreamArtifactsProduced: options.outFile ? [options.outFile] : [],
+      inputsSummary: `policy=${inPolicyMode ? 'on' : 'off'}; mode=${verificationMode}; phase=${options.phase ?? 'full'}; rules=${normalizedRuleIds?.join(',') ?? 'all'}`,
+      artifactsWritten: [options.outFile, localVerification?.receiptPath, localVerification?.receiptLogPath].filter((entry): entry is string => Boolean(entry)),
+      downstreamArtifactsProduced: [options.outFile, localVerification?.receiptPath, localVerification?.receiptLogPath].filter((entry): entry is string => Boolean(entry)),
       successStatus: ok ? 'success' : 'failure',
       warningsCount: report.warnings.length,
       confidenceScore: ok ? 0.9 : 0.3
@@ -233,15 +285,20 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
 
   if (options.format === 'text' && options.ci && !options.explain && !inPolicyMode) {
     if (!options.quiet || !ok) {
-      console.log(ok ? 'playbook verify: PASS' : 'playbook verify: FAIL');
+      console.log(options.localOnly
+        ? (ok ? 'playbook verify --local-only: PASS' : 'playbook verify --local-only: FAIL')
+        : (ok ? 'playbook verify: PASS' : 'playbook verify: FAIL'));
+      if (localVerification) {
+        console.log(`Local verification: ${localVerification.receipt.local_verification.status}`);
+      }
       if (!ok) {
         printCompactNextActions(nextActions);
       }
     }
     tracker.finish({
-      inputsSummary: `policy=${inPolicyMode ? 'on' : 'off'}; phase=${options.phase ?? 'full'}; rules=${normalizedRuleIds?.join(',') ?? 'all'}`,
-      artifactsWritten: options.outFile ? [options.outFile] : [],
-      downstreamArtifactsProduced: options.outFile ? [options.outFile] : [],
+      inputsSummary: `policy=${inPolicyMode ? 'on' : 'off'}; mode=${verificationMode}; phase=${options.phase ?? 'full'}; rules=${normalizedRuleIds?.join(',') ?? 'all'}`,
+      artifactsWritten: [options.outFile, localVerification?.receiptPath, localVerification?.receiptLogPath].filter((entry): entry is string => Boolean(entry)),
+      downstreamArtifactsProduced: [options.outFile, localVerification?.receiptPath, localVerification?.receiptLogPath].filter((entry): entry is string => Boolean(entry)),
       successStatus: ok ? 'success' : 'failure',
       warningsCount: report.warnings.length,
       confidenceScore: ok ? 0.9 : 0.3
@@ -253,7 +310,9 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
     command: 'verify',
     ok,
     exitCode,
-    summary: ok ? 'Verification passed.' : inPolicyMode ? 'Policy verification failed.' : 'Verification failed.',
+    summary: options.localOnly
+      ? (ok ? 'Local verification passed.' : 'Local verification failed.')
+      : (ok ? 'Verification passed.' : inPolicyMode ? 'Policy verification failed.' : 'Verification failed.'),
     phase: options.phase,
     selectedRules: normalizedRuleIds ?? report.summary.ruleIds,
     findings: [
@@ -271,15 +330,30 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
       }))
     ],
     nextActions,
-    policyViolations: inPolicyMode ? policyViolations : undefined
+    policyViolations: inPolicyMode ? policyViolations : undefined,
+    verificationMode,
+    workflow: localVerification ? {
+      provider: localVerification.receipt.provider,
+      verification: localVerification.receipt.workflow.verification,
+      publishing: localVerification.receipt.workflow.publishing,
+      deployment: localVerification.receipt.workflow.deployment,
+    } : undefined,
+    localVerification: localVerification ? {
+      configured: localVerification.receipt.local_verification.configured,
+      status: localVerification.receipt.local_verification.status,
+      receiptPath: localVerification.receiptPath,
+      receiptLogPath: localVerification.receiptLogPath,
+      command: localVerification.receipt.local_verification.command,
+      summary: localVerification.receipt.summary,
+    } : undefined,
   };
 
   if (options.format === 'json' && options.outFile) {
     emitJsonOutput({ cwd, command: 'verify', payload: buildResult(resultPayload), outFile: options.outFile });
     tracker.finish({
-      inputsSummary: `policy=${inPolicyMode ? 'on' : 'off'}; phase=${options.phase ?? 'full'}; rules=${normalizedRuleIds?.join(',') ?? 'all'}`,
-      artifactsWritten: options.outFile ? [options.outFile] : [],
-      downstreamArtifactsProduced: options.outFile ? [options.outFile] : [],
+      inputsSummary: `policy=${inPolicyMode ? 'on' : 'off'}; mode=${verificationMode}; phase=${options.phase ?? 'full'}; rules=${normalizedRuleIds?.join(',') ?? 'all'}`,
+      artifactsWritten: [options.outFile, localVerification?.receiptPath, localVerification?.receiptLogPath].filter((entry): entry is string => Boolean(entry)),
+      downstreamArtifactsProduced: [options.outFile, localVerification?.receiptPath, localVerification?.receiptLogPath].filter((entry): entry is string => Boolean(entry)),
       successStatus: ok ? 'success' : 'failure',
       warningsCount: report.warnings.length,
       confidenceScore: ok ? 0.9 : 0.3
@@ -295,9 +369,9 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
   });
 
   tracker.finish({
-    inputsSummary: `policy=${inPolicyMode ? 'on' : 'off'}; phase=${options.phase ?? 'full'}; rules=${normalizedRuleIds?.join(',') ?? 'all'}`,
-    artifactsWritten: options.outFile ? [options.outFile] : [],
-    downstreamArtifactsProduced: options.outFile ? [options.outFile] : [],
+    inputsSummary: `policy=${inPolicyMode ? 'on' : 'off'}; mode=${verificationMode}; phase=${options.phase ?? 'full'}; rules=${normalizedRuleIds?.join(',') ?? 'all'}`,
+    artifactsWritten: [options.outFile, localVerification?.receiptPath, localVerification?.receiptLogPath].filter((entry): entry is string => Boolean(entry)),
+    downstreamArtifactsProduced: [options.outFile, localVerification?.receiptPath, localVerification?.receiptLogPath].filter((entry): entry is string => Boolean(entry)),
     successStatus: ok ? 'success' : 'failure',
     warningsCount: report.warnings.length,
     confidenceScore: ok ? 0.9 : 0.3

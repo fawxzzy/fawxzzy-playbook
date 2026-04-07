@@ -63,6 +63,7 @@ const normalizeArtifactType = (artifactPath: string, payload: JsonRecord): strin
   }
 
   const basename = path.basename(artifactPath).toLowerCase();
+  if (basename.includes('local-verification')) return 'playbook.artifact';
   if (basename.includes('plan')) return 'playbook.plan';
   if (basename.includes('findings') || basename.includes('verify')) return 'playbook.findings';
   if (basename.includes('index')) return 'playbook.index';

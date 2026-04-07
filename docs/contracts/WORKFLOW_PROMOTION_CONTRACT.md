@@ -2,6 +2,8 @@
 
 `packages/contracts/src/workflow-promotion.schema.json` is the shared contract for durable workflow outputs that stage, validate, and promote repo-visible state.
 
+For local-first workflow gating, use `docs/contracts/LOCAL_VERIFICATION_RECEIPT_CONTRACT.md`. Workflow promotion remains a separate mutation-state contract from verification, publishing, and deployment.
+
 ## Rule
 
 - Durable workflow outputs must expose normalized staged-promotion metadata when they write repo-visible state.

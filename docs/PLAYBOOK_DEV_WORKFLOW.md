@@ -25,6 +25,23 @@ This document defines the standard workflow for developing Playbook so changes r
 - Pattern: repository state -> shared SCM context -> governed read/change surfaces.
 - Failure Mode: Divergent merge-base/shallow/detached-head handling makes deterministic commands disagree about the same repository state.
 
+## Local-first workflow
+
+Playbook development should assume local verification is the primary gate and remote providers are optional transports.
+
+- Verification: repo-local gate result, proven by `pnpm playbook verify --local --json` or `pnpm playbook verify --local-only --json`.
+- Publishing: optional sync to a remote provider such as GitHub.
+- Deployment: separate runtime promotion or handoff concern.
+
+Temporary contract:
+
+```bash
+pnpm playbook verify --local --json
+pnpm playbook verify --local-only --json
+```
+
+`package.json#scripts.verify:local` is the default repo-defined local gate. If a repository needs a different command, set `playbook.config.json -> verify.local.command`.
+
 ## Development loop
 
 ```text
@@ -51,6 +68,7 @@ pnpm -r build
 ```bash
 pnpm -r build
 pnpm -r test
+pnpm verify:local
 pnpm agents:update
 pnpm agents:check
 node scripts/validate-roadmap-contract.mjs
@@ -62,7 +80,7 @@ For pull request metadata validation in CI contexts, use:
 node scripts/validate-roadmap-contract.mjs --ci --enforce-pr-feature-id
 ```
 
-The reusable Playbook CI action enforces this PR `feature_id` rule in `pull_request` workflows using deterministic precedence: PR title, then PR body, then `.playbook/pr-metadata.json` (`featureIds`).
+The reusable Playbook CI action enforces this PR `feature_id` rule in `pull_request` workflows using deterministic precedence: PR title, then PR body, then `.playbook/pr-metadata.json` (`featureIds`). GitHub is an optional provider transport here, not the source of verification truth.
 
 Optional sync surface: run `pnpm pr:sync-metadata` to project `.playbook/pr-metadata.json` into GitHub PR title/body when token permissions allow. The sync helper degrades with warnings and is not required for validator success.
 

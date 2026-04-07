@@ -1,4 +1,10 @@
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_START -->
+## Unreleased
+- WHAT: Added a first-class local verification receipt contract, `verify --local`, and `verify --local-only` so repo-defined `verify:local` gates produce durable `.playbook/local-verification-receipt.json` evidence with separate verification, publishing, and deployment workflow fields. WHY: This makes Playbook's verification loop local-first and provider-agnostic instead of depending on GitHub as mandatory status truth.
+- Rule: CI is a release gate, not a place. If the commands are known, the gate can run locally.
+- Pattern: Local receipt -> optional publish sync -> optional deployment handoff.
+- Failure Mode: Treating GitHub as required for verification, publishing, and deployment keeps Playbook operationally dependent on one external platform.
+
 ## 0.41.0 - 2026-04-05
 - Recommended bump: minor
 - @fawxzzy/playbook: 0.40.0 -> 0.41.0 (playbook-installable-workspace)

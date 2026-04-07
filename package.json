@@ -18,6 +18,7 @@
     "contracts:check": "node scripts/check-contract-surfaces.mjs",
     "sync:templates": "node scripts/sync-templates.mjs",
     "verify:repo": "pnpm -r build && pnpm -r test",
+    "verify:local": "pnpm lint && pnpm check:tests && pnpm test && pnpm smoke:ci && pnpm agents:update && pnpm agents:check && pnpm playbook docs audit --ci --json && node scripts/validate-roadmap-contract.mjs",
     "verify": "pnpm lint && pnpm check:tests && pnpm test && pnpm smoke:ci",
     "playbook": "node scripts/run-playbook.mjs",
     "playbook:help": "node scripts/run-playbook.mjs --help",

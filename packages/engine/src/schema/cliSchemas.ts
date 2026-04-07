@@ -506,6 +506,87 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
         type: 'array',
         items: { type: 'string' }
       },
+      verificationMode: {
+        enum: ['governance-only', 'combined', 'local-only']
+      },
+      workflow: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['provider', 'verification', 'publishing', 'deployment'],
+        properties: {
+          provider: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['kind', 'remote_name', 'remote_url', 'remote_configured', 'optional', 'status_authority'],
+            properties: {
+              kind: { enum: ['none', 'github', 'gitlab', 'bitbucket', 'generic-git'] },
+              remote_name: { type: ['string', 'null'] },
+              remote_url: { type: ['string', 'null'] },
+              remote_configured: { type: 'boolean' },
+              optional: { const: true },
+              status_authority: { enum: ['local-receipt', 'provider-status', 'handoff-record', 'not-applicable'] }
+            }
+          },
+          verification: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['state', 'status_authority', 'receipt_path', 'summary'],
+            properties: {
+              state: { enum: ['passed', 'failed', 'not-run'] },
+              status_authority: { const: 'local-receipt' },
+              receipt_path: { type: ['string', 'null'] },
+              summary: { type: 'string' }
+            }
+          },
+          publishing: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['state', 'status_authority', 'summary'],
+            properties: {
+              state: { enum: ['not-configured', 'not-observed', 'synced', 'failed'] },
+              status_authority: { enum: ['provider-status', 'not-applicable'] },
+              summary: { type: 'string' }
+            }
+          },
+          deployment: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['state', 'status_authority', 'summary'],
+            properties: {
+              state: { enum: ['not-configured', 'not-observed', 'promoted', 'failed'] },
+              status_authority: { enum: ['handoff-record', 'not-applicable'] },
+              summary: { type: 'string' }
+            }
+          }
+        }
+      },
+      localVerification: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['configured', 'status', 'receiptPath', 'receiptLogPath', 'command', 'summary'],
+        properties: {
+          configured: { type: 'boolean' },
+          status: { enum: ['passed', 'failed', 'not-configured'] },
+          receiptPath: { type: 'string' },
+          receiptLogPath: { type: 'string' },
+          command: {
+            anyOf: [
+              {
+                type: 'object',
+                additionalProperties: false,
+                required: ['source', 'package_manager', 'command'],
+                properties: {
+                  source: { type: 'string' },
+                  package_manager: { enum: ['pnpm', 'npm', 'yarn', 'bun', 'unknown'] },
+                  command: { type: 'string' }
+                }
+              },
+              { type: 'null' }
+            ]
+          },
+          summary: { type: 'string' }
+        }
+      },
       policyViolations: {
         type: 'array',
         items: {

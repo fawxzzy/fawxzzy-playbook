@@ -1,5 +1,38 @@
 export type { ScmContext, ScmDiffBase, ScmRenameEntry } from './scm/context.js';
 export { collectScmContext } from './scm/context.js';
+export type {
+  WorkflowProviderKind,
+  WorkflowStatusAuthority,
+  WorkflowVerificationState,
+  WorkflowPublishingState,
+  WorkflowDeploymentState,
+  LocalVerificationMode,
+  LocalVerificationExecutionStatus,
+  LocalVerificationPackageManager,
+  WorkflowProviderContext,
+  WorkflowVerificationContract,
+  WorkflowPublishingContract,
+  WorkflowDeploymentContract,
+  LocalVerificationCommandContract,
+  LocalVerificationReceipt,
+  LocalVerificationReceiptLog
+} from './contracts/localVerification.js';
+export {
+  LOCAL_VERIFICATION_RECEIPT_SCHEMA_VERSION,
+  LOCAL_VERIFICATION_RECEIPT_KIND,
+  LOCAL_VERIFICATION_RECEIPT_LOG_KIND,
+  LOCAL_VERIFICATION_RECEIPT_RELATIVE_PATH,
+  LOCAL_VERIFICATION_RECEIPT_LOG_RELATIVE_PATH,
+  LOCAL_VERIFICATION_OUTPUTS_RELATIVE_DIR,
+  workflowProviderKinds,
+  workflowStatusAuthorities,
+  workflowVerificationStates,
+  workflowPublishingStates,
+  workflowDeploymentStates,
+  localVerificationModes,
+  localVerificationExecutionStatuses,
+  localVerificationPackageManagers
+} from './contracts/localVerification.js';
 export type { TestAutofixArtifact, TestAutofixApplySummary, TestAutofixConfidenceDetails, TestAutofixExcludedFindingSummary, TestAutofixFinalStatus, TestAutofixHistorySummary, TestAutofixMode, TestAutofixRetryPolicyDecision, TestAutofixSourceReference, TestAutofixVerificationCommandResult, TestAutofixVerificationSummary } from './contracts/testAutofix.js';
 export { TEST_AUTOFIX_ARTIFACT_KIND, TEST_AUTOFIX_SCHEMA_VERSION, testAutofixFinalStatuses, testAutofixModes, testAutofixRetryPolicyDecisions } from './contracts/testAutofix.js';
 export type { TestFixPlanArtifact, TestFixPlanExclusion, TestFixPlanExclusionReason, TestFixPlanTask, TestFixPlanTaskKind, TestFixPlanTaskProvenance } from './contracts/testFixPlan.js';
