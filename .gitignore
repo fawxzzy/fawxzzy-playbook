@@ -14,3 +14,5 @@ packages/engine/.playbook/**
 merged*.json
 merged*.md
 test-chat*.md
+
+.codex/
