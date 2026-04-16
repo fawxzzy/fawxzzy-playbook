@@ -229,19 +229,19 @@ For machine-consumed JSON artifacts, use CLI-owned output flags (for example `--
 Canonical command:
 
 ```bash
-pnpm playbook pilot --repo "C:\Users\zjhre\dev\FawxzzyFitness"
+pnpm playbook pilot --repo "./target-repo"
 ```
 
 Optional convenience alias:
 
 ```bash
-pnpm playbook pilot --repo "C:\Users\zjhre\dev\FawxzzyFitness"
+pnpm playbook pilot --repo "./target-repo"
 ```
 
 Optional convenience alias:
 
 ```bash
-pnpm pilot "C:\Users\zjhre\dev\FawxzzyFitness"
+pnpm pilot "./target-repo"
 ```
 
 `playbook pilot` executes one deterministic baseline cycle (`context -> index -> query modules -> verify -> plan`), writes machine-readable artifacts directly, records one top-level runtime cycle with child phases, and emits a compact final summary.
@@ -275,8 +275,8 @@ External onboarding contract (minimal):
 Recommended follow-up after `pilot`:
 
 ```bash
-pnpm playbook ignore suggest --repo "C:\Users\zjhre\dev\FawxzzyFitness" --json
-pnpm playbook ignore apply --repo "C:\Users\zjhre\dev\FawxzzyFitness" --safe-defaults
+pnpm playbook ignore suggest --repo "./target-repo" --json
+pnpm playbook ignore apply --repo "./target-repo" --safe-defaults
 ```
 
 Rule - Apply Only Trusted Ignore Recommendations.
