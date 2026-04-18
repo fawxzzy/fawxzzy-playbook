@@ -1,0 +1,347 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://playbook.local/exports/playbook.contract.schema.v1.json",
+  "title": "Playbook Convergence Contract v1",
+  "description": "Canonical Playbook export for principles, patterns, continuity requirements, adoption checks, and verification hooks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "contract_version",
+    "status",
+    "intent",
+    "canonical_principles",
+    "operating_loop",
+    "owner_domains",
+    "conformance_classes",
+    "patterns",
+    "continuity_requirements",
+    "adoption_statuses",
+    "evidence_types",
+    "exception_requirements",
+    "adoption_checks",
+    "verification_hooks",
+    "anti_patterns"
+  ],
+  "properties": {
+    "contract_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{2,}$"
+    },
+    "contract_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.-]+)?$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "candidate", "stable", "deprecated"]
+    },
+    "intent": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonical_principles": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/principle"
+      }
+    },
+    "operating_loop": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      }
+    },
+    "owner_domains": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/owner_domain"
+      }
+    },
+    "conformance_classes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["core_required", "role_required", "supported_optional", "not_applicable", "exception_documented"]
+      }
+    },
+    "patterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/pattern"
+      }
+    },
+    "continuity_requirements": {
+      "$ref": "#/definitions/continuity_requirements"
+    },
+    "adoption_statuses": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["unassessed", "planned", "partial", "adopted", "verified", "exception"]
+      }
+    },
+    "evidence_types": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "unit_test",
+          "integration_test",
+          "validation_command",
+          "runbook_reference",
+          "receipt",
+          "observation",
+          "manual_proof",
+          "inventory_export",
+          "schema_validation",
+          "contract_example",
+          "status_surface"
+        ]
+      }
+    },
+    "exception_requirements": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["owner", "rationale", "risk", "compensating_control", "retirement_trigger"]
+      }
+    },
+    "adoption_checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/adoption_check"
+      }
+    },
+    "verification_hooks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/verification_hook"
+      }
+    },
+    "anti_patterns": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      }
+    }
+  },
+  "definitions": {
+    "principle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "owner_domain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "owner", "responsibilities"],
+      "properties": {
+        "role": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "responsibilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "must_not": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "pattern": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "class", "statement", "minimum_evidence"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "class": {
+          "type": "string",
+          "enum": ["core_required", "role_required", "supported_optional", "not_applicable", "exception_documented"]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "applicable_roles": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          }
+        },
+        "minimum_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "continuity_requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_transcript_role",
+        "raw_transcript_is_primary_memory",
+        "structured_handoff_required",
+        "promotion_targets",
+        "required_handoff_fields"
+      ],
+      "properties": {
+        "raw_transcript_role": {
+          "type": "string",
+          "enum": ["trace_only", "trace_plus_search", "discouraged"]
+        },
+        "raw_transcript_is_primary_memory": {
+          "type": "boolean"
+        },
+        "structured_handoff_required": {
+          "type": "boolean"
+        },
+        "promotion_targets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["initiative", "working_memory", "plan", "knowledge", "receipt"]
+          }
+        },
+        "required_handoff_fields": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "adoption_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement", "required_for", "minimum_evidence"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_for": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          }
+        },
+        "minimum_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "verification_hook": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement", "evidence_types", "failure_mode"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "failure_mode": {
+          "type": "string",
+          "enum": ["warn", "error", "block"]
+        },
+        "selector_hint": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

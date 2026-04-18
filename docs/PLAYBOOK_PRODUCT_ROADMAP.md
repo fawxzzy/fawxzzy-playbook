@@ -546,6 +546,30 @@ Failure Mode: Upgrade flows that cannot distinguish managed from local files eve
 
 Failure Mode: Framework upgrades that overwrite repo-local product intent create silent regression in UX, architecture, and operator trust.
 
+Next planned same-app backend cutover slice: **Same-App Backend-Provider Migrations**.
+
+This slice is distinct from a new-app migration. The app boundary stays fixed while the backend/provider contract changes underneath it, so the migration has to preserve identity continuity and app-data continuity at the same time. The tracked follow-up now lives in `docs/roadmap/ROADMAP.json` as `PB-V09-SAME-APP-BACKEND-CUTOVER-001`.
+
+Planned direction:
+
+- keep auth-provider/user-id continuity explicit in the cutover plan and receipts
+- require a deliberate legacy bridge strategy with a grace window and removal criteria
+- require clean preview proof before production cutover
+- require parity signoff against critical app paths before flipping the primary backend
+- inventory envs and map old backend, new backend, and legacy bridge envs explicitly
+- classify source-of-truth versus derived tables before import/cutover
+- verify auth reset/recovery flows after cutover
+
+Rule: Backend replacement is an identity-and-data migration, not just an infra swap.
+
+Pattern: Clean preview rehearsal -> parity signoff -> production cutover -> grace-window bridge.
+
+Pattern: Same-app backend cutovers preserve app identity while backend/provider ownership changes underneath it.
+
+Failure Mode: Dirty preview proof and undocumented auth/env assumptions create false confidence before production flips.
+
+Failure Mode: Treating a backend cutover like a new-app migration hides user-id continuity, merge/bridge behavior, derived-table drift, and recovery-flow regressions.
+
 Reference plan:
 
 - `docs/roadmap/EXTERNAL_PILOT_FAWXZZY_FITNESS.md`

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-04-06",
+  "updatedAt": "2026-04-17",
   "features": [
     {
       "feature_id": "PB-V03-INDEX-001",
@@ -1799,6 +1799,34 @@
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
         "@zachariahredfield/playbook-node"
+      ]
+    },
+    {
+      "feature_id": "PB-V09-SAME-APP-BACKEND-CUTOVER-001",
+      "version": "v0.9",
+      "title": "Same-app backend cutover and provider migration doctrine",
+      "goal": "Track same-app backend/provider cutovers as a reusable migration class with explicit auth-provider/user-id continuity, legacy bridge strategy, clean preview proof, parity signoff, grace-window retention, env inventory, source-of-truth versus derived table classification, and auth reset/recovery verification so the migration is not confused with a new-app migration.",
+      "commands": [],
+      "contracts": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "tests": [
+        "scripts/validate-roadmap-contract.mjs"
+      ],
+      "docs": [
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "dependencies": [],
+      "verification_commands": [
+        "node scripts/validate-roadmap-contract.mjs --ci",
+        "pnpm playbook docs audit --json"
+      ],
+      "status": "planned",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
       ]
     }
   ],

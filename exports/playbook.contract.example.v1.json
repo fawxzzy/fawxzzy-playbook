@@ -1,0 +1,371 @@
+{
+  "contract_id": "playbook_convergence_contract",
+  "contract_version": "1.0.0",
+  "status": "candidate",
+  "intent": "Canonical Playbook export for convergence across the ATLAS polyrepo without duplicating owner truth or collapsing repo boundaries.",
+  "canonical_principles": [
+    {
+      "id": "principle_awareness_before_action",
+      "statement": "Awareness before action",
+      "rationale": "Meaningful work starts from the current read model rather than stale residue or guesswork."
+    },
+    {
+      "id": "principle_memory_before_intelligence",
+      "statement": "Memory before intelligence",
+      "rationale": "Durable reviewed memory must exist before higher-order synthesis can stay trustworthy."
+    },
+    {
+      "id": "principle_federate_do_not_duplicate",
+      "statement": "Federate, do not duplicate",
+      "rationale": "Owner truth should be referenced from the owning repo rather than recopied downstream."
+    },
+    {
+      "id": "principle_determinism_over_ambiguity",
+      "statement": "Determinism over ambiguity",
+      "rationale": "Stable precedence beats improvised fallback when multiple surfaces could answer a question."
+    },
+    {
+      "id": "principle_nothing_meaningful_stays_dark",
+      "statement": "Nothing meaningful stays dark",
+      "rationale": "Meaningful work must remain observable through explicit state or evidence."
+    },
+    {
+      "id": "principle_nothing_meaningful_stays_unowned",
+      "statement": "Nothing meaningful stays unowned",
+      "rationale": "Meaningful work requires explicit responsibility and review boundaries."
+    },
+    {
+      "id": "principle_systems_over_prompts",
+      "statement": "Systems over prompts",
+      "rationale": "Operational trust comes from explicit contracts and workflows, not clever ad hoc prompting."
+    },
+    {
+      "id": "principle_not_everything_knows_everything",
+      "statement": "Not everything knows everything",
+      "rationale": "Bounded context keeps surfaces understandable and prevents accidental truth duplication."
+    }
+  ],
+  "operating_loop": [
+    "awareness",
+    "attention",
+    "initiative",
+    "proposed_session",
+    "approval",
+    "execution",
+    "receipt",
+    "memory_refinement"
+  ],
+  "owner_domains": [
+    {
+      "role": "atlas_root",
+      "owner": "ATLAS root",
+      "responsibilities": [
+        "coordination",
+        "selector_orchestration",
+        "repo_inventory_visibility",
+        "initiative_and_operator_surfaces"
+      ],
+      "must_not": [
+        "vendor_child_repo_truth",
+        "duplicate_owner_repo_doctrine",
+        "collapse_polyrepo_topology"
+      ]
+    },
+    {
+      "role": "playbook",
+      "owner": "Playbook repo",
+      "responsibilities": [
+        "governance",
+        "policy",
+        "verification",
+        "canonical_contract_export"
+      ]
+    },
+    {
+      "role": "lifeline",
+      "owner": "Lifeline repo",
+      "responsibilities": [
+        "capability_surfacing",
+        "approval_boundaries",
+        "execution",
+        "receipts"
+      ]
+    },
+    {
+      "role": "stack_orchestrator",
+      "owner": "_stack repo",
+      "responsibilities": [
+        "worker_flow",
+        "merge",
+        "resume",
+        "orchestration"
+      ]
+    },
+    {
+      "role": "atlas_platform_repo",
+      "owner": "Atlas repo",
+      "responsibilities": [
+        "architecture_doctrine",
+        "uapi_contracts",
+        "platform_contracts"
+      ]
+    },
+    {
+      "role": "knowledge_lane",
+      "owner": "Knowledge lane",
+      "responsibilities": [
+        "evidence_ingestion",
+        "reviewed_promotion",
+        "queryability"
+      ]
+    },
+    {
+      "role": "vertical_owner_repo",
+      "owner": "Vertical owner repo",
+      "responsibilities": [
+        "domain_truth",
+        "repo_local_workflows",
+        "repo_local_adoption_evidence"
+      ]
+    }
+  ],
+  "conformance_classes": [
+    "core_required",
+    "role_required",
+    "supported_optional",
+    "not_applicable",
+    "exception_documented"
+  ],
+  "patterns": [
+    {
+      "id": "pattern_ground_work_in_current_awareness",
+      "class": "core_required",
+      "statement": "Meaningful work starts from the current awareness surface or read model before execution or recommendation.",
+      "minimum_evidence": [
+        "runbook_reference",
+        "status_surface"
+      ]
+    },
+    {
+      "id": "pattern_proposal_before_execution",
+      "class": "role_required",
+      "statement": "Proposal state stays visible and separate from execution state until the governed approval boundary is crossed.",
+      "applicable_roles": [
+        "atlas_root",
+        "lifeline",
+        "stack_orchestrator"
+      ],
+      "minimum_evidence": [
+        "observation",
+        "receipt"
+      ]
+    },
+    {
+      "id": "pattern_explicit_trust_posture",
+      "class": "core_required",
+      "statement": "Visibility never implies trust, verification, or readiness.",
+      "minimum_evidence": [
+        "status_surface",
+        "manual_proof"
+      ]
+    },
+    {
+      "id": "pattern_owner_repo_keeps_owner_truth",
+      "class": "core_required",
+      "statement": "Owner-repo doctrine and implementation truth stay in the owning repo and are consumed read-only elsewhere.",
+      "minimum_evidence": [
+        "inventory_export",
+        "runbook_reference"
+      ]
+    },
+    {
+      "id": "pattern_convergence_is_measurable",
+      "class": "core_required",
+      "statement": "Adoption claims require explicit checks, verification hooks, and evidence rather than narrative assertion.",
+      "minimum_evidence": [
+        "unit_test",
+        "validation_command"
+      ]
+    },
+    {
+      "id": "pattern_structured_handoff_and_promotion",
+      "class": "core_required",
+      "statement": "Meaningful operator work emits structured handoff artifacts and promotable durable outputs.",
+      "minimum_evidence": [
+        "schema_validation",
+        "contract_example"
+      ]
+    }
+  ],
+  "continuity_requirements": {
+    "raw_transcript_role": "trace_only",
+    "raw_transcript_is_primary_memory": false,
+    "structured_handoff_required": true,
+    "promotion_targets": [
+      "initiative",
+      "working_memory",
+      "plan",
+      "knowledge",
+      "receipt"
+    ],
+    "required_handoff_fields": [
+      "artifact_id",
+      "created_at",
+      "source_channel",
+      "repo_refs",
+      "initiative_refs",
+      "durable_facts",
+      "decisions",
+      "next_actions",
+      "open_questions",
+      "risks",
+      "promotion_targets",
+      "transcript_refs"
+    ]
+  },
+  "adoption_statuses": [
+    "unassessed",
+    "planned",
+    "partial",
+    "adopted",
+    "verified",
+    "exception"
+  ],
+  "evidence_types": [
+    "unit_test",
+    "integration_test",
+    "validation_command",
+    "runbook_reference",
+    "receipt",
+    "observation",
+    "manual_proof",
+    "inventory_export",
+    "schema_validation",
+    "contract_example",
+    "status_surface"
+  ],
+  "exception_requirements": [
+    "owner",
+    "rationale",
+    "risk",
+    "compensating_control",
+    "retirement_trigger"
+  ],
+  "adoption_checks": [
+    {
+      "id": "adoption_playbook_exports_contract",
+      "statement": "Playbook ships both a human-readable contract and a machine-readable export with explicit versioning.",
+      "required_for": [
+        "playbook"
+      ],
+      "minimum_evidence": [
+        "contract_example",
+        "schema_validation",
+        "validation_command"
+      ]
+    },
+    {
+      "id": "adoption_atlas_consumes_owner_truth_read_only",
+      "statement": "ATLAS root consumes the Playbook export without copying owner truth into a second canonical store.",
+      "required_for": [
+        "atlas_root"
+      ],
+      "minimum_evidence": [
+        "inventory_export",
+        "status_surface",
+        "runbook_reference"
+      ]
+    },
+    {
+      "id": "adoption_proposal_and_execution_are_separate",
+      "statement": "Proposal state remains visible and distinct from execution state across governed boundaries.",
+      "required_for": [
+        "atlas_root",
+        "lifeline",
+        "stack_orchestrator"
+      ],
+      "minimum_evidence": [
+        "integration_test",
+        "receipt",
+        "observation"
+      ]
+    },
+    {
+      "id": "adoption_continuity_lane_is_structured",
+      "statement": "Meaningful Codex or chat work produces structured handoff artifacts and promotable durable outputs.",
+      "required_for": [
+        "atlas_root",
+        "playbook",
+        "lifeline",
+        "stack_orchestrator",
+        "atlas_platform_repo",
+        "vertical_owner_repo"
+      ],
+      "minimum_evidence": [
+        "schema_validation",
+        "contract_example",
+        "runbook_reference"
+      ]
+    },
+    {
+      "id": "adoption_trust_posture_is_negative_safe",
+      "statement": "Negative trust posture remains visible and cannot be mistaken for verified health.",
+      "required_for": [
+        "atlas_root",
+        "lifeline",
+        "vertical_owner_repo"
+      ],
+      "minimum_evidence": [
+        "status_surface",
+        "integration_test"
+      ]
+    }
+  ],
+  "verification_hooks": [
+    {
+      "id": "hook_validate_contract_schema",
+      "statement": "Validate the exported example contract against the published schema.",
+      "evidence_types": [
+        "schema_validation",
+        "contract_example"
+      ],
+      "failure_mode": "block",
+      "selector_hint": "exports/playbook.contract.example.v1.json"
+    },
+    {
+      "id": "hook_reject_duplicate_contract_ids",
+      "statement": "Reject duplicate ids across principles, patterns, adoption checks, and verification hooks.",
+      "evidence_types": [
+        "unit_test"
+      ],
+      "failure_mode": "block"
+    },
+    {
+      "id": "hook_require_continuity_layers",
+      "statement": "Reject continuity models that omit raw trace semantics, structured handoff, or promotion targets.",
+      "evidence_types": [
+        "unit_test",
+        "schema_validation"
+      ],
+      "failure_mode": "block"
+    },
+    {
+      "id": "hook_warn_on_duplicate_truth_or_transcript_memory",
+      "statement": "Warn when the contract drifts toward transcript-as-memory guidance or a second truth store for owner content.",
+      "evidence_types": [
+        "unit_test",
+        "runbook_reference"
+      ],
+      "failure_mode": "warn"
+    }
+  ],
+  "anti_patterns": [
+    "vendor_owner_repos_into_root",
+    "duplicate_truth_store_for_owner_content",
+    "transcript_as_primary_memory",
+    "read_visibility_widens_write_power",
+    "stale_residue_outranks_initiative_truth",
+    "implicit_trust_from_visibility",
+    "unmeasured_convergence_claims"
+  ]
+}
