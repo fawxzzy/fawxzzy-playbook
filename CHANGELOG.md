@@ -4,12 +4,16 @@
 
 ### WHAT
 
+- Added a reusable `.github/actions/atlas-ui-proof/action.yml` compatibility gate that reruns ATLAS semantic drift, reruns ATLAS visual proof, derives the combined proof summary, and exports completion-facing outputs for downstream workflow consumers.
+- Clarified workflow-pack reuse docs so consumer-side proof gating remains a read-only compatibility layer over owner reports rather than a replacement verification truth surface.
 - Introduced Simple Rule Theory and Triadic System Pattern as first-class architectural doctrines.
 - Expanded Simple Rule Theory to include data refinement, invariant extraction, and minimal sufficient representation.
 - Integrated these doctrines into architecture documentation, checklist guidance, and command metadata descriptions for `verify`, `plan`, and `apply`.
 
 ### WHY
 
+- Lets Playbook and `_stack` enforce proof-backed completion for the ATLAS UI-governance lane without creating a second UI truth store.
+- Keeps workflow-pack reuse explicit about the difference between canonical verification contracts and downstream compatibility projections.
 - Establish consistent design primitives for deterministic automation and governance.
 - Encourage storing compact invariant state and deriving redundant views/behavior on demand.
 - Align Playbook workflow framing with triadic system structure.

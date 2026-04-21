@@ -61,6 +61,7 @@ The reusable workflow pack has these input/output rules:
 - Outputs must remain deterministic, schema-versioned, and inspectable on disk.
 - Verification outputs and promotion outputs are separate contracts and must not be collapsed into one synthetic status field.
 - If a workflow needs both verification and promotion truth, it must compose the two contracts explicitly instead of inventing a third ad hoc summary format.
+- Consumer-side compatibility gates may also compose external proof artifacts, but those projections must stay read-only and must preserve refs back to the underlying owner reports instead of replacing them.
 
 ## Versioning
 
@@ -75,6 +76,7 @@ The reusable workflow pack has these input/output rules:
 - Consumer repos and stack operators must not duplicate or reinterpret workflow-pack contracts into divergent local specs.
 - Compatibility mirrors are allowed only when they preserve the same canonical fields, types, and semantics.
 - If a downstream surface cannot consume the canonical contract directly, it may publish a mirror or projection only as a clearly declared compatibility layer, not as new owner truth.
+- The reusable `.github/actions/atlas-ui-proof/action.yml` surface is one such compatibility layer: it consumes ATLAS-owned semantic drift and visual proof, then exposes a derived completion-facing summary without redefining Playbook verification truth.
 
 ## Non-goals
 

@@ -184,3 +184,8 @@ Mock runtime command family:
 - `pnpm playbook interop emit-fitness-plan --capability lifeline-remediation-v1 --action schedule_recovery_block --approved-plan --json`
 - `pnpm playbook interop run-mock --json`
 - `pnpm playbook interop reconcile --json`
+
+## Related docs
+
+- [Playbook Lifeline Wave 1 restart posture](./PLAYBOOK_LIFELINE_WAVE_1_RESTART_POSTURE.md)
+- [Control loop and layer ownership](./CONTROL_LOOP_AND_LAYER_OWNERSHIP.md)

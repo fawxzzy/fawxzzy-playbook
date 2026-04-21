@@ -3,6 +3,13 @@ import path from 'node:path';
 import os from 'node:os';
 
 const describePath = (targetPath) => targetPath || '.';
+const OVERLAY_RUNTIME_ROOTS = new Set(['.codex']);
+
+const isWindowsLinkError = (error) =>
+  Boolean(error) &&
+  typeof error === 'object' &&
+  'code' in error &&
+  ['EPERM', 'EACCES', 'EINVAL', 'UNKNOWN'].includes(String(error.code));
 
 const ensureStageExists = async (stagedPath, label = 'staged artifact') => {
   try {
@@ -20,6 +27,21 @@ const copyEntry = async (sourcePath, destinationPath, stats) => {
 
   await fs.mkdir(path.dirname(destinationPath), { recursive: true });
   await fs.copyFile(sourcePath, destinationPath);
+};
+
+const materializeEntry = async (sourcePath, destinationPath, stats) => {
+  const linkType = stats.isDirectory()
+    ? (process.platform === 'win32' ? 'junction' : 'dir')
+    : 'file';
+
+  try {
+    await fs.symlink(sourcePath, destinationPath, linkType);
+  } catch (error) {
+    if (stats.isDirectory() || !isWindowsLinkError(error)) {
+      throw error;
+    }
+    await copyEntry(sourcePath, destinationPath, stats);
+  }
 };
 
 const restoreEntry = async ({ backupPath, destinationPath, existed }) => {
@@ -92,14 +114,20 @@ export const withOverlayWorkspace = async ({ repoRoot, overrides, prefix = 'play
         const destinationPath = path.join(overlayRoot, childRelativePath);
         const isExactOverride = overridden.has(childRelativePath);
         const containsOverride = [...overridden].some((target) => target.startsWith(`${childRelativePath}${path.sep}`));
+        const isRuntimeOverlayRoot = relativePath.length === 0 && OVERLAY_RUNTIME_ROOTS.has(entry.name);
 
         if (isExactOverride) continue;
+        if (isRuntimeOverlayRoot) {
+          await fs.mkdir(destinationPath, { recursive: true });
+          continue;
+        }
         if (entry.isDirectory() && containsOverride) {
           await materializeTree(childRelativePath);
           continue;
         }
 
-        await fs.symlink(sourcePath, destinationPath, entry.isDirectory() ? 'dir' : 'file');
+        const sourceStats = await fs.lstat(sourcePath);
+        await materializeEntry(sourcePath, destinationPath, sourceStats);
       }
     };
 

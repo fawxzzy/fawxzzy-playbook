@@ -25,6 +25,8 @@ Playbook now treats verification, publishing, and deployment as separate workflo
 
 The reusable workflow-pack boundary is frozen through `docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md` and published for downstream discovery through `pnpm playbook contracts --json`, so consumer repos can adopt the same verification, promotion, versioning, and consumer-boundary contracts without inventing local dialects.
 
+For UI-governance stacks that already own semantic and visual proof lanes elsewhere, Playbook now also ships a reusable compatibility action at `.github/actions/atlas-ui-proof/action.yml`. That action reruns ATLAS semantic drift, reruns ATLAS visual proof, derives the combined `runtime/atlas/ui-proof/fitness/latest.json` summary, and fails closed when the proof summary is missing, unreadable, red, or empty.
+
 Operator-facing text surfaces should stay brief-thin: lead with decision/status, affected surfaces, blockers, and next action, while leaving machine-heavy state in JSON contracts and `.playbook/*` artifacts.
 
 - Rule: Human surfaces should show decision, action, and why — not raw machine state.
@@ -97,6 +99,8 @@ lifeline down playbook
 
 The app process started by Lifeline is `pnpm start:lifeline`, which preserves the normal local Playbook CLI and terminal-based development flow.
 Playbook routing inspection emits deterministic proposal-only execution plans at `.playbook/execution-plan.json` via `pnpm playbook route "<task>" --json`.
+
+Wave 1 restart posture shadow codification lives in [docs/architecture/PLAYBOOK_LIFELINE_WAVE_1_RESTART_POSTURE.md](docs/architecture/PLAYBOOK_LIFELINE_WAVE_1_RESTART_POSTURE.md). It records the proof-gated checklist, decisions, failure modes, and parity criteria Playbook should mirror without taking over Lifeline implementation.
 
 Layer ownership + closed-loop reference: [`docs/architecture/CONTROL_LOOP_AND_LAYER_OWNERSHIP.md`](docs/architecture/CONTROL_LOOP_AND_LAYER_OWNERSHIP.md).
 
@@ -174,6 +178,8 @@ pnpm playbook verify --local-only --json
 If the repository defines `package.json#scripts.verify:local`, Playbook uses that command as the local verification gate. The receipt written to `.playbook/local-verification-receipt.json` is the source of truth for verification in this mode.
 
 For downstream discovery of the reusable workflow-pack bundle, run `pnpm playbook contracts --json` and consume the registered workflow-pack docs plus schema entries rather than hard-coding artifact assumptions in each consumer repo.
+
+When a downstream control plane needs one completion-facing signal for UI work, prefer the read-only ATLAS proof summary projection over inventing a repo-local status dialect. The Playbook reusable action only consumes that projection; it does not redefine verification truth or move UI ownership into Playbook.
 
 For local branch-accurate validation inside this repository, prefer:
 

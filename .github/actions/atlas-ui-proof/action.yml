@@ -1,0 +1,93 @@
+name: ATLAS UI Proof Gate
+
+description: Reusable workflow step that reruns ATLAS semantic drift, reruns ATLAS visual proof, and derives one completion-ready proof summary.
+
+inputs:
+  atlas-root:
+    description: Working directory for the ATLAS root checkout.
+    required: false
+    default: "."
+  python-version:
+    description: Python version to use for the proof gate.
+    required: false
+    default: "3.13"
+  drift-command:
+    description: Command that regenerates the semantic drift report.
+    required: false
+    default: "python ops/atlas/ui_observe/drift.py"
+  visual-proof-command:
+    description: Command that regenerates the visual proof report.
+    required: false
+    default: "python ops/atlas/ui_visual_proof/fitness.py"
+  proof-summary-command:
+    description: Command that derives the combined proof summary.
+    required: false
+    default: "python ops/atlas/ui_proof/fitness.py"
+  proof-summary-artifact:
+    description: Path to the combined proof summary artifact relative to atlas-root.
+    required: false
+    default: "runtime/atlas/ui-proof/fitness/latest.json"
+
+outputs:
+  completion-ready:
+    description: Whether the ATLAS proof summary reports completion_ready=true.
+    value: ${{ steps.read-proof.outputs.completion-ready }}
+  proof-summary-status:
+    description: The top-level proof summary status.
+    value: ${{ steps.read-proof.outputs.proof-summary-status }}
+  proof-summary-report-ref:
+    description: Repo-relative path to the combined proof summary artifact.
+    value: ${{ steps.read-proof.outputs.proof-summary-report-ref }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Run semantic drift proof
+      shell: bash
+      working-directory: ${{ inputs.atlas-root }}
+      run: |
+        echo "+ ${{ inputs.drift-command }}"
+        eval "${{ inputs.drift-command }}"
+
+    - name: Run visual proof
+      shell: bash
+      working-directory: ${{ inputs.atlas-root }}
+      run: |
+        echo "+ ${{ inputs.visual-proof-command }}"
+        eval "${{ inputs.visual-proof-command }}"
+
+    - name: Derive combined proof summary
+      shell: bash
+      working-directory: ${{ inputs.atlas-root }}
+      run: |
+        echo "+ ${{ inputs.proof-summary-command }}"
+        eval "${{ inputs.proof-summary-command }}"
+
+    - name: Export proof summary outputs
+      id: read-proof
+      shell: bash
+      working-directory: ${{ inputs.atlas-root }}
+      env:
+        PLAYBOOK_ATLAS_PROOF_SUMMARY_ARTIFACT: ${{ inputs.proof-summary-artifact }}
+      run: |
+        python - <<'PY'
+        import json
+        import os
+        from pathlib import Path
+
+        summary_path = Path(os.environ["PLAYBOOK_ATLAS_PROOF_SUMMARY_ARTIFACT"])
+        if not summary_path.exists():
+            raise SystemExit(f"Combined proof summary is missing: {summary_path}")
+
+        payload = json.loads(summary_path.read_text(encoding="utf-8"))
+        summary = payload.get("summary", {})
+        with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as handle:
+            handle.write(f"completion-ready={str(bool(payload.get('completion_ready'))).lower()}\n")
+            handle.write(f"proof-summary-status={summary.get('status', '')}\n")
+            handle.write(f"proof-summary-report-ref={summary_path.as_posix()}\n")
+        PY
