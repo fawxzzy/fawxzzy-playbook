@@ -1,0 +1,80 @@
+name: event-contract-pack
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: Node.js version used by the consumer repo validation path.
+        required: false
+        type: string
+        default: "22"
+      working-directory:
+        description: Working directory for all validation commands.
+        required: false
+        type: string
+        default: "."
+      install-command:
+        description: Optional install/bootstrap command for the consumer repo.
+        required: false
+        type: string
+        default: ""
+      contract-check-command:
+        description: Required command that validates the repo-owned event contract surface.
+        required: true
+        type: string
+      warehouse-check-command:
+        description: Optional command that proves event arrival and schema conformance in shadow mode.
+        required: false
+        type: string
+        default: ""
+      artifact-name:
+        description: Optional artifact name for uploaded validation evidence.
+        required: false
+        type: string
+        default: "event-contract-pack-artifacts"
+      artifact-paths:
+        description: Optional newline-delimited artifact paths to upload after validation.
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout consumer repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Install consumer dependencies
+        if: inputs.install-command != ''
+        shell: bash
+        working-directory: ${{ inputs.working-directory }}
+        run: ${{ inputs.install-command }}
+
+      - name: Validate repo-owned event contract surface
+        shell: bash
+        working-directory: ${{ inputs.working-directory }}
+        run: ${{ inputs.contract-check-command }}
+
+      - name: Run shadow warehouse smoke checks
+        if: inputs.warehouse-check-command != ''
+        shell: bash
+        working-directory: ${{ inputs.working-directory }}
+        run: ${{ inputs.warehouse-check-command }}
+
+      - name: Upload validation artifacts
+        if: always() && inputs.artifact-paths != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: ${{ inputs.artifact-paths }}

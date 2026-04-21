@@ -28,6 +28,25 @@ Top-level object fields:
   - `schemaVersion`: roadmap schema version when available, otherwise `null`
   - `trackedFeatures`: deterministic subset of tracked roadmap features (`featureId`, `status`)
 
+## Workflow-pack discovery
+
+The registry is the canonical discovery surface for the reusable workflow-pack bundle.
+
+Registered workflow-pack docs include:
+
+- `docs/contracts/LOCAL_VERIFICATION_RECEIPT_CONTRACT.md`
+- `docs/contracts/WORKFLOW_PROMOTION_CONTRACT.md`
+- `docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md`
+- `docs/CONSUMER_INTEGRATION_CONTRACT.md`
+- `docs/contracts/ARTIFACT_EVOLUTION_POLICY.md`
+
+Registered runtime defaults include the local-first verification receipt artifacts:
+
+- `.playbook/local-verification-receipt.json`
+- `.playbook/local-verification-receipts.json`
+
+Workflow promotion remains a shared contract even when the committed output path varies by workflow. Consumers should discover the contract/schema through the registry and read the promoted artifact path from the workflow promotion payload itself.
+
 
 ## Schema registrations
 
@@ -37,6 +56,9 @@ The `schemas.commandOutputs` array includes additive command-output schema regis
 - `packages/contracts/src/pattern-graph.schema.json`
 - `packages/contracts/src/cross-repo-candidates.schema.json`
 - `packages/contracts/src/execution-plan.schema.json`
+- `packages/contracts/src/local-verification-receipt.schema.json`
+- `packages/contracts/src/workflow-promotion.schema.json`
+- `packages/contracts/src/promotion-receipt.schema.json`
 - `packages/contracts/src/learning-state.schema.json`
 
 ## Determinism guarantees

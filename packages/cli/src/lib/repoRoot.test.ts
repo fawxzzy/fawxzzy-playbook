@@ -49,8 +49,11 @@ describe('resolveTargetRepoRoot', () => {
 
 
   it('normalizes Windows absolute repo paths to WSL-style paths on non-Windows platforms', () => {
-    const windowsPath = 'C:\\Users\\example\\project';
-    const expectedRoot = process.platform === 'win32' ? windowsPath : '/mnt/c/Users/example/project';
+    const windowsPath = ['C:', 'Users', 'example', 'project'].join('\\');
+    const expectedRoot =
+      process.platform === 'win32'
+        ? windowsPath
+        : ['', 'mnt', 'c', 'Users', 'example', 'project'].join('/');
 
     const existsSpy = vi.spyOn(fs, 'existsSync').mockImplementation((candidate) => String(candidate) === expectedRoot);
     const realpathSpy = vi.spyOn(fs, 'realpathSync').mockImplementation(() => expectedRoot);

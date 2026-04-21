@@ -41,6 +41,7 @@ const additiveCommandOutputSchemas: RegisteredSchema[] = [
   { id: 'cross-repo-candidates', version: '1.0', path: 'packages/contracts/src/cross-repo-candidates.schema.json' },
   { id: 'task-execution-profile', version: '1.0', path: 'packages/contracts/src/task-execution-profile.schema.json' },
   { id: 'execution-plan', version: '1.0', path: 'packages/contracts/src/execution-plan.schema.json' },
+  { id: 'local-verification-receipt', version: '1.0', path: 'packages/contracts/src/local-verification-receipt.schema.json' },
   { id: 'workflow-promotion', version: '1.0', path: 'packages/contracts/src/workflow-promotion.schema.json' },
   { id: 'promotion-receipt', version: '1.0', path: 'packages/contracts/src/promotion-receipt.schema.json' },
   { id: 'workset-plan', version: '1.0', path: 'packages/contracts/src/workset-plan.schema.json' },

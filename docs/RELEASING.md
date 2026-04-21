@@ -102,3 +102,19 @@ git push origin v0.1.8
 - Pattern: machine-readable packaging/release validation should prove external installability, not just internal monorepo correctness.
 - Failure Mode: fallback artifacts that depend on unpublished workspace packages pass local assumptions but fail real external installation.
 - Rule: release validation must include a clean external consumer proof before considering fallback packaging complete.
+
+## 7) Reusable Workflow-Pack Consumers
+
+The event-contract validation workflow for downstream repos is documented in [docs/contracts/EVENT_CONTRACT_WORKFLOW_CONSUMERS.md](./contracts/EVENT_CONTRACT_WORKFLOW_CONSUMERS.md).
+
+Consumer release guidance:
+
+- prefer released Playbook refs for workflow consumers
+- treat `@main` as temporary proving-ground wiring only
+- keep repo-owned contract and warehouse commands stable across workflow ref upgrades
+
+Rollback guidance for a bad workflow release:
+
+1. repin consumer repos to the last known good Playbook tag or commit
+2. pause only the failing caller workflow if repinning is temporarily blocked
+3. patch forward in Playbook on a new ref instead of forking the workflow into each consumer repo

@@ -42,6 +42,14 @@
         "producer": "cycle"
       },
       {
+        "path": ".playbook/local-verification-receipt.json",
+        "producer": "verify"
+      },
+      {
+        "path": ".playbook/local-verification-receipts.json",
+        "producer": "verify"
+      },
+      {
         "path": ".playbook/policy-evaluation.json",
         "producer": "policy"
       },
@@ -92,6 +100,13 @@
     ],
     "contracts": [
       {
+        "path": "docs/CONSUMER_INTEGRATION_CONTRACT.md",
+        "availability": {
+          "available": false,
+          "reason": "missing"
+        }
+      },
+      {
         "path": "docs/contracts/ARTIFACT_EVOLUTION_POLICY.md",
         "availability": {
           "available": false,
@@ -100,6 +115,34 @@
       },
       {
         "path": "docs/contracts/COMMAND_CONTRACTS_V1.md",
+        "availability": {
+          "available": false,
+          "reason": "missing"
+        }
+      },
+      {
+        "path": "docs/contracts/CONTRACT_REGISTRY_V1.md",
+        "availability": {
+          "available": false,
+          "reason": "missing"
+        }
+      },
+      {
+        "path": "docs/contracts/LOCAL_VERIFICATION_RECEIPT_CONTRACT.md",
+        "availability": {
+          "available": false,
+          "reason": "missing"
+        }
+      },
+      {
+        "path": "docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md",
+        "availability": {
+          "available": false,
+          "reason": "missing"
+        }
+      },
+      {
+        "path": "docs/contracts/WORKFLOW_PROMOTION_CONTRACT.md",
         "availability": {
           "available": false,
           "reason": "missing"
@@ -214,6 +257,11 @@
         "id": "execution-plan",
         "version": "1.0",
         "path": "packages/contracts/src/execution-plan.schema.json"
+      },
+      {
+        "id": "local-verification-receipt",
+        "version": "1.0",
+        "path": "packages/contracts/src/local-verification-receipt.schema.json"
       },
       {
         "id": "workflow-promotion",

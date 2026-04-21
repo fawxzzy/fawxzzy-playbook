@@ -1,5 +1,9 @@
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_START -->
 ## Unreleased
+- WHAT: Froze the reusable Playbook workflow-pack boundary in `docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md`, expanded `pnpm playbook contracts --json` to register the local verification receipt schema plus workflow-pack owner docs, and published local verification receipt runtime defaults through the contracts registry. WHY: Downstream repos and operator layers can now adopt one discoverable workflow bundle for verification truth, staged promotion truth, versioning, and consumer boundaries instead of reassembling fragments into repo-local dialects.
+- Rule: Reusable workflow adoption must compose canonical verification, promotion, registry, and consumer contracts instead of creating repo-local workflow dialects.
+- Pattern: Freeze the reusable bundle once, then let downstream repos discover it through the contracts registry.
+- Failure Mode: Reusing only fragments of the workflow pack makes verification truth, promotion truth, versioning, and consumer boundaries drift apart behind familiar field names.
 - WHAT: Added a first-class local verification receipt contract, `verify --local`, and `verify --local-only` so repo-defined `verify:local` gates produce durable `.playbook/local-verification-receipt.json` evidence with separate verification, publishing, and deployment workflow fields. WHY: This makes Playbook's verification loop local-first and provider-agnostic instead of depending on GitHub as mandatory status truth.
 - Rule: CI is a release gate, not a place. If the commands are known, the gate can run locally.
 - Pattern: Local receipt -> optional publish sync -> optional deployment handoff.

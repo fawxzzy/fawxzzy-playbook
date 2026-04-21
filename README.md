@@ -23,6 +23,8 @@ This framing is the core promise: deterministic evidence over ad-hoc inference, 
 
 Playbook now treats verification, publishing, and deployment as separate workflow concepts. Verification truth can be produced entirely locally through a repo-defined `verify:local` gate and durable `.playbook/local-verification-receipt.json` evidence. Remote providers such as GitHub remain optional transports for PR review, CI orchestration, and publishing sync.
 
+The reusable workflow-pack boundary is frozen through `docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md` and published for downstream discovery through `pnpm playbook contracts --json`, so consumer repos can adopt the same verification, promotion, versioning, and consumer-boundary contracts without inventing local dialects.
+
 Operator-facing text surfaces should stay brief-thin: lead with decision/status, affected surfaces, blockers, and next action, while leaving machine-heavy state in JSON contracts and `.playbook/*` artifacts.
 
 - Rule: Human surfaces should show decision, action, and why — not raw machine state.
@@ -170,6 +172,8 @@ pnpm playbook verify --local-only --json
 ```
 
 If the repository defines `package.json#scripts.verify:local`, Playbook uses that command as the local verification gate. The receipt written to `.playbook/local-verification-receipt.json` is the source of truth for verification in this mode.
+
+For downstream discovery of the reusable workflow-pack bundle, run `pnpm playbook contracts --json` and consume the registered workflow-pack docs plus schema entries rather than hard-coding artifact assumptions in each consumer repo.
 
 For local branch-accurate validation inside this repository, prefer:
 

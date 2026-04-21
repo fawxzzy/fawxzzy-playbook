@@ -31,6 +31,13 @@ Registry output includes:
 - `schemas.memoryArtifacts` registrations
 - `schemas.commandOutputs` registrations for additive command-output contracts
 
+The reusable workflow-pack discovery surface is also exposed here. In particular, the registry now carries:
+
+- local verification receipt runtime defaults
+- local verification receipt schema registration
+- workflow promotion schema registrations
+- selected owner docs for workflow-pack reuse, versioning, and consumer integration boundaries
+
 Use `pnpm playbook schema contracts --json` to validate output shape.
 
 ## Replay / consolidation contracts

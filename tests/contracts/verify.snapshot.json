@@ -4,6 +4,7 @@
   "ok": true,
   "exitCode": 0,
   "summary": "Verification passed.",
+  "verificationMode": "governance-only",
   "findings": [
     {
       "id": "verify.warning.base-selection",

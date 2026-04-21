@@ -85,6 +85,8 @@ const runtimeDefaults: RuntimeDefaultArtifact[] = [
   { path: '.playbook/contracts-registry.json', producer: 'contracts' },
   { path: '.playbook/cycle-state.json', producer: 'cycle' },
   { path: '.playbook/cycle-history.json', producer: 'cycle' },
+  { path: '.playbook/local-verification-receipt.json', producer: 'verify' },
+  { path: '.playbook/local-verification-receipts.json', producer: 'verify' },
   { path: '.playbook/policy-evaluation.json', producer: 'policy' },
   { path: '.playbook/policy-apply-result.json', producer: 'apply' },
   { path: '.playbook/policy-improvement.json', producer: 'telemetry' },
@@ -99,7 +101,15 @@ const runtimeDefaults: RuntimeDefaultArtifact[] = [
   { path: '.playbook/stories.json', producer: 'story' }
 ];
 
-const contractArtifacts = ['docs/contracts/ARTIFACT_EVOLUTION_POLICY.md', 'docs/contracts/COMMAND_CONTRACTS_V1.md'] as const;
+const contractArtifacts = [
+  'docs/CONSUMER_INTEGRATION_CONTRACT.md',
+  'docs/contracts/ARTIFACT_EVOLUTION_POLICY.md',
+  'docs/contracts/COMMAND_CONTRACTS_V1.md',
+  'docs/contracts/CONTRACT_REGISTRY_V1.md',
+  'docs/contracts/LOCAL_VERIFICATION_RECEIPT_CONTRACT.md',
+  'docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md',
+  'docs/contracts/WORKFLOW_PROMOTION_CONTRACT.md'
+] as const;
 const trackedRoadmapFeatures = ['PB-V04-ANALYZEPR-001', 'PB-V04-PLAN-APPLY-001', 'PB-V1-DELIVERY-SYSTEM-001'] as const;
 
 const isRoadmapFeatureRecord = (value: unknown): value is RoadmapFeatureRecord => typeof value === 'object' && value !== null;
