@@ -1,4 +1,12 @@
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_START -->
+## 0.42.0 - 2026-04-22
+- Recommended bump: minor
+- @fawxzzy/playbook: 0.41.0 -> 0.42.0 (playbook-installable-workspace)
+- @fawxzzy/playbook-cli: 0.41.0 -> 0.42.0 (playbook-installable-workspace)
+- @zachariahredfield/playbook-core: 0.41.0 -> 0.42.0 (playbook-installable-workspace)
+- @zachariahredfield/playbook-engine: 0.41.0 -> 0.42.0 (playbook-installable-workspace)
+- @zachariahredfield/playbook-node: 0.41.0 -> 0.42.0 (playbook-installable-workspace)
+
 ## Unreleased
 - WHAT: Froze the reusable Playbook workflow-pack boundary in `docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md`, expanded `pnpm playbook contracts --json` to register the local verification receipt schema plus workflow-pack owner docs, and published local verification receipt runtime defaults through the contracts registry. WHY: Downstream repos and operator layers can now adopt one discoverable workflow bundle for verification truth, staged promotion truth, versioning, and consumer boundaries instead of reassembling fragments into repo-local dialects.
 - Rule: Reusable workflow adoption must compose canonical verification, promotion, registry, and consumer contracts instead of creating repo-local workflow dialects.
