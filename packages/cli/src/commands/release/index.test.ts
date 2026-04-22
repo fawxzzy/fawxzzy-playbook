@@ -9,7 +9,6 @@ const applySpy = vi.fn(async () => ExitCode.Success);
 const buildReleasePlanSpy = vi.fn();
 const assessReleaseSyncSpy = vi.fn();
 const summarizePlannedReleaseVersionsSpy = vi.fn();
-const classifyReleaseSyncReconciliationSpy = vi.fn();
 
 vi.mock('../apply.js', () => ({
   runApply: (...args: unknown[]) => applySpy(...args)
@@ -18,8 +17,7 @@ vi.mock('../apply.js', () => ({
 vi.mock('@zachariahredfield/playbook-engine', () => ({
   buildReleasePlan: (...args: unknown[]) => buildReleasePlanSpy(...args),
   assessReleaseSync: (...args: unknown[]) => assessReleaseSyncSpy(...args),
-  summarizePlannedReleaseVersions: (...args: unknown[]) => summarizePlannedReleaseVersionsSpy(...args),
-  classifyReleaseSyncReconciliation: (...args: unknown[]) => classifyReleaseSyncReconciliationSpy(...args)
+  summarizePlannedReleaseVersions: (...args: unknown[]) => summarizePlannedReleaseVersionsSpy(...args)
 }));
 
 const createRepo = (): string => fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-release-command-'));
@@ -29,70 +27,45 @@ describe('runRelease', () => {
     buildReleasePlanSpy.mockReset();
     assessReleaseSyncSpy.mockReset();
     summarizePlannedReleaseVersionsSpy.mockReset();
-    classifyReleaseSyncReconciliationSpy.mockReset();
     applySpy.mockReset();
     applySpy.mockResolvedValue(ExitCode.Success);
     summarizePlannedReleaseVersionsSpy.mockReturnValue([]);
-    classifyReleaseSyncReconciliationSpy.mockReturnValue({
-      status: 'no_drift',
-      taskCount: 0,
-      plannedVersions: [],
-      reason: 'release-governed state is already aligned'
-    });
   });
 
-  it('auto-applies release sync in --check when drift is auto-fixable', async () => {
+  it('keeps --check mode read-only when drift is auto-fixable', async () => {
     const repoRoot = createRepo();
-    assessReleaseSyncSpy
-      .mockReturnValueOnce({
-        schemaVersion: '1.0',
-        kind: 'playbook-release-sync',
-        hasDrift: true,
-        plan: {
-          summary: { recommendedBump: 'patch', reasons: [] },
-          tasks: [
-            {
-              id: 'task-release-alpha',
-              file: 'packages/alpha/package.json',
-              action: 'Update version',
-              task_kind: 'release-package-version',
-              provenance: { next_version: '0.41.0' }
-            }
-          ]
-        },
-        governanceFailures: [{ id: 'release.requiredVersionBump.missing', message: 'missing bump' }],
-        actionableTasks: [{ id: 'task-release-alpha', file: 'packages/alpha/package.json', action: 'Update version', task_kind: 'release-package-version' }],
-        drift: [],
-        generatedAt: '2026-03-27T00:00:00.000Z',
-        mode: 'check'
-      })
-      .mockReturnValueOnce({
-        schemaVersion: '1.0',
-        kind: 'playbook-release-sync',
-        hasDrift: false,
-        plan: { summary: { recommendedBump: 'patch', reasons: [] }, tasks: [] },
-        governanceFailures: [],
-        actionableTasks: [],
-        drift: [],
-        generatedAt: '2026-03-27T00:00:00.000Z',
-        mode: 'check'
-      });
-    classifyReleaseSyncReconciliationSpy.mockReturnValue({
-      status: 'auto_fixable_drift',
-      taskCount: 1,
-      plannedVersions: ['0.41.0'],
-      reason: 'release drift is auto-fixable via release sync'
+    assessReleaseSyncSpy.mockReturnValue({
+      schemaVersion: '1.0',
+      kind: 'playbook-release-sync',
+      hasDrift: true,
+      plan: {
+        summary: { recommendedBump: 'patch', reasons: [] },
+        tasks: [
+          {
+            id: 'task-release-alpha',
+            file: 'packages/alpha/package.json',
+            action: 'Update version',
+            task_kind: 'release-package-version',
+            provenance: { next_version: '0.41.0' }
+          }
+        ]
+      },
+      governanceFailures: [{ id: 'release.requiredVersionBump.missing', message: 'missing bump' }],
+      actionableTasks: [{ id: 'task-release-alpha', file: 'packages/alpha/package.json', action: 'Update version', task_kind: 'release-package-version' }],
+      drift: [],
+      generatedAt: '2026-03-27T00:00:00.000Z',
+      mode: 'check'
     });
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const exitCode = await runRelease(repoRoot, ['sync', '--check', '--json'], { format: 'json', quiet: false });
 
-    expect(exitCode).toBe(ExitCode.Success);
+    expect(exitCode).toBe(ExitCode.Failure);
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.kind).toBe('playbook-release-sync');
-    expect(payload.hasDrift).toBe(false);
-    expect(applySpy).toHaveBeenCalledTimes(1);
-    expect(assessReleaseSyncSpy).toHaveBeenCalledTimes(2);
+    expect(payload.hasDrift).toBe(true);
+    expect(applySpy).not.toHaveBeenCalled();
+    expect(assessReleaseSyncSpy).toHaveBeenCalledTimes(1);
     logSpy.mockRestore();
   });
 
@@ -109,13 +82,6 @@ describe('runRelease', () => {
       generatedAt: '2026-03-27T00:00:00.000Z',
       mode: 'check'
     });
-    classifyReleaseSyncReconciliationSpy.mockReturnValue({
-      status: 'blocked_drift',
-      taskCount: 0,
-      plannedVersions: [],
-      reason: 'lockstep mismatch'
-    });
-
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const exitCode = await runRelease(repoRoot, ['sync', '--check', '--json'], { format: 'json', quiet: false });
     expect(exitCode).toBe(ExitCode.Failure);
