@@ -477,6 +477,20 @@ export const commandMetadata: CommandMetadata[] = [
     machineReadable: true,
   },
   {
+    name: "changelog",
+    description:
+      "Generate, validate, and safely append deterministic WHAT/WHY changelog entries",
+    category: "Repository tools",
+    role: "governance",
+    lifecycle: "canonical",
+    discoverability: "secondary",
+    onboardingPriority: null,
+    canonicalSequence: null,
+    productFacing: true,
+    exampleArgs: "changelog generate --base HEAD~1 --format markdown",
+    machineReadable: true,
+  },
+  {
     name: "release",
     description: "Plan deterministic installable release/version decisions from repo evidence",
     category: "Repository tools",

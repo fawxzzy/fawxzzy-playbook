@@ -8,6 +8,20 @@ pnpm -r build
 pnpm test
 ```
 
+## Changelog Generator Contract
+
+Playbook's deterministic changelog-generator work is documented in [docs/CHANGELOG-GENERATOR.md](./CHANGELOG-GENERATOR.md).
+
+Current status:
+
+- generator engine/config/CLI/CI work is implemented in the current tree
+- the standalone `pnpm playbook changelog ...` CLI surface is implemented
+- repo-specific changelog config lives at `.playbook/changelog-config.json`
+- PR/manual CI integration now lives in `.github/workflows/changelog.yml`
+- existing release ownership remains with `pnpm playbook release plan` and `pnpm playbook release sync`
+- `docs/CHANGELOG.md` remains a managed release surface and changelog append stays blocked unless an explicit generated seam exists
+- CI validates and generates changelog output, but it does not append to `docs/CHANGELOG.md`
+
 ## 2) Publish from CI on a version tag
 
 Tag pushes (`v*`) trigger `.github/workflows/publish-npm.yml`, which publishes the public Playbook package (`@fawxzzy/playbook`) and the internal runtime distribution set used by the CLI wrapper/fallback path.

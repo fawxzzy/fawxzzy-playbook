@@ -116,6 +116,7 @@ Do not hand-edit entries inside the managed markers.
 | `interop` | Inspect and run remediation-first Playbook↔Lifeline interop contracts from rendezvous artifacts | canonical | remediation | secondary | Later | Current (implemented) | `pnpm playbook interop health --json` |
 | `ignore` | Suggest and safely apply ranked .playbookignore recommendations | canonical | remediation | primary | P12 | Current (implemented) | `pnpm playbook ignore suggest --repo ../target-repo --json` |
 | `contracts` | Emit deterministic contract registry for schemas, artifacts, and roadmap status | utility | utility | secondary | Later | Current (implemented) | `pnpm playbook contracts --json` |
+| `changelog` | Generate, validate, and safely append deterministic WHAT/WHY changelog entries | canonical | governance | secondary | Later | Current (implemented) | `pnpm playbook changelog generate --base HEAD~1 --format markdown` |
 | `release` | Plan deterministic installable release/version decisions from repo evidence | canonical | governance | secondary | Later | Current (implemented) | `pnpm playbook release plan --json --out .playbook/release-plan.json` |
 | `index` | Generate machine-readable repository intelligence index | canonical | repo-intelligence | primary | P4 | Current (implemented) | `pnpm playbook index --json` |
 | `graph` | Summarize machine-readable repository knowledge graph from .playbook/repo-graph.json | canonical | repo-intelligence | secondary | Later | Current (implemented) | `pnpm playbook graph --json` |

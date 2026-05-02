@@ -1,0 +1,111 @@
+{
+  "categoryOrder": [
+    "feature",
+    "fix",
+    "security",
+    "performance",
+    "refactor",
+    "docs",
+    "test",
+    "infra",
+    "chore",
+    "unknown"
+  ],
+  "pathRules": [
+    {
+      "pattern": "docs/**",
+      "category": "docs",
+      "confidence": 0.6
+    },
+    {
+      "pattern": "README.md",
+      "category": "docs",
+      "confidence": 0.6
+    },
+    {
+      "pattern": "tests/**",
+      "category": "test",
+      "confidence": 0.6
+    },
+    {
+      "pattern": "test/**",
+      "category": "test",
+      "confidence": 0.6
+    },
+    {
+      "pattern": "**/*.test.ts",
+      "category": "test",
+      "confidence": 0.6
+    },
+    {
+      "pattern": "**/*.spec.ts",
+      "category": "test",
+      "confidence": 0.6
+    },
+    {
+      "pattern": ".github/**",
+      "category": "infra",
+      "confidence": 0.6
+    },
+    {
+      "pattern": "scripts/**",
+      "category": "infra",
+      "confidence": 0.6
+    },
+    {
+      "pattern": "pnpm-lock.yaml",
+      "category": "infra",
+      "confidence": 0.6
+    },
+    {
+      "pattern": "package.json",
+      "category": "infra",
+      "confidence": 0.6
+    },
+    {
+      "pattern": "packages/*/package.json",
+      "category": "infra",
+      "confidence": 0.6
+    },
+    {
+      "pattern": "packages/cli/src/commands/**",
+      "category": "feature",
+      "confidence": 0.6
+    },
+    {
+      "pattern": "packages/engine/src/release/**",
+      "category": "feature",
+      "confidence": 0.5
+    },
+    {
+      "pattern": "packages/engine/src/**",
+      "category": "feature",
+      "confidence": 0.3
+    },
+    {
+      "pattern": "packages/contracts/src/**",
+      "category": "feature",
+      "confidence": 0.4
+    }
+  ],
+  "securityMarkers": [
+    "security",
+    "vulnerability",
+    "CVE",
+    "XSS",
+    "injection",
+    "auth bypass",
+    "secret leak",
+    "token leak",
+    "credential leak"
+  ],
+  "includeUnknown": true,
+  "failOnUnknown": false,
+  "includeSourceRefs": true,
+  "includeAuthors": false,
+  "lowConfidenceThreshold": 0.3,
+  "requireChanges": false,
+  "markdownHeading": "# Changelog",
+  "defaultTargetFile": "docs/CHANGELOG.md",
+  "removeTicketIds": false
+}
