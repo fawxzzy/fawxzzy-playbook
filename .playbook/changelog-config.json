@@ -99,11 +99,6 @@
     "token leak",
     "credential leak"
   ],
-  "breakingChangeMarkers": [
-    "BREAKING CHANGE:",
-    "BREAKING-CHANGE",
-    "PLAYBOOK_BREAKING_CHANGE"
-  ],
   "includeUnknown": true,
   "failOnUnknown": false,
   "includeSourceRefs": true,

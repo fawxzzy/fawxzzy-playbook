@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import type { RawChangelogChange } from './types.js';
+import type { RawChangelogChange } from '../../src/release/changelog/types.js';
 
 export type CommitOptions = {
   message: string;
@@ -112,7 +112,7 @@ export const makeRawChangelogFixtures = (): Record<string, RawChangelogChange> =
       sourceType: 'commit',
       title: 'refactor: split changelog pipeline helpers',
       date: '2026-04-23T12:00:00Z',
-      files: [{ path: 'packages/engine/src/release/changelog/testHelpers.ts', status: 'A' }]
+      files: [{ path: 'packages/engine/test/changelog/testHelpers.ts', status: 'A' }]
     },
     infraChange: {
       id: '5555555555555555',

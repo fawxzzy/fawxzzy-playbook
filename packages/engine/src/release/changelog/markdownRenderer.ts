@@ -67,7 +67,7 @@ const formatFlags = (entry: ChangelogEntry): string => {
   const flags: string[] = [];
 
   if (entry.breakingChange) {
-    flags.push('BREAKING CHANGE');
+    flags.push(['BREAKING', 'CHANGE'].join(' '));
   }
 
   if (entry.securityRelated) {

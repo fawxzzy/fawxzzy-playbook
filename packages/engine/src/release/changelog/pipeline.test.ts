@@ -15,7 +15,7 @@ import {
   makeRawChangelogFixtures,
   makeSimpleChangelog,
   repoRootFromEnginePackage
-} from './testHelpers.js';
+} from '../../../test/changelog/testHelpers.js';
 import { validateChangelogGeneration } from './validate.js';
 
 const tempDirs: string[] = [];
