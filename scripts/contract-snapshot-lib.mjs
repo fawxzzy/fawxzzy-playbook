@@ -2,8 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 
-export const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+export const repoRoot = path.resolve(scriptDir, '..');
 const cliEntry = path.join(repoRoot, 'packages', 'cli', 'dist', 'main.js');
 
 
