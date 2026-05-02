@@ -1,0 +1,176 @@
+name: changelog
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Base git ref for changelog generation"
+        required: false
+        default: "HEAD~1"
+        type: string
+      head:
+        description: "Head git ref for changelog generation"
+        required: false
+        default: "HEAD"
+        type: string
+      format:
+        description: "Output format for generated changelog artifacts"
+        required: false
+        default: "markdown"
+        type: choice
+        options:
+          - markdown
+          - json
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install
+        run: |
+          pnpm config set fetch-retries 5
+          pnpm config set fetch-retry-factor 2
+          pnpm config set fetch-retry-mintimeout 10000
+          pnpm config set fetch-retry-maxtimeout 60000
+          pnpm config set network-timeout 120000
+          pnpm config set registry https://registry.npmjs.org/
+          pnpm install --config.optional=true --frozen-lockfile
+
+      - name: Build
+        run: pnpm -r --workspace-concurrency=1 build
+
+      - name: Resolve pull request base ref
+        id: base
+        shell: bash
+        run: |
+          mkdir -p .playbook
+          base_ref="${{ github.base_ref }}"
+          if [ -z "$base_ref" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            cat <<'EOF' > .playbook/changelog-validation-skip.json
+          {
+            "schemaVersion": "1.0",
+            "command": "changelog validate",
+            "status": "skipped",
+            "reason": "github.base_ref was unavailable for pull request validation."
+          }
+          EOF
+            exit 0
+          fi
+
+          if git fetch --no-tags --depth=1 origin "$base_ref"; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "ref=origin/$base_ref" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "available=false" >> "$GITHUB_OUTPUT"
+          cat <<EOF > .playbook/changelog-validation-skip.json
+          {
+            "schemaVersion": "1.0",
+            "command": "changelog validate",
+            "status": "skipped",
+            "reason": "Unable to fetch origin/$base_ref for pull request validation."
+          }
+          EOF
+
+      - name: Validate changelog against pull request base
+        if: steps.base.outputs.available == 'true'
+        run: pnpm playbook changelog validate --base "${{ steps.base.outputs.ref }}" --head HEAD --json | tee .playbook/changelog-validation.json
+
+      - name: Upload changelog validation artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-validation
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            .playbook/changelog-validation.json
+            .playbook/changelog-validation-skip.json
+
+  generate:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install
+        run: |
+          pnpm config set fetch-retries 5
+          pnpm config set fetch-retry-factor 2
+          pnpm config set fetch-retry-mintimeout 10000
+          pnpm config set fetch-retry-maxtimeout 60000
+          pnpm config set network-timeout 120000
+          pnpm config set registry https://registry.npmjs.org/
+          pnpm install --config.optional=true --frozen-lockfile
+
+      - name: Build
+        run: pnpm -r --workspace-concurrency=1 build
+
+      - name: Generate changelog artifact
+        shell: bash
+        run: |
+          mkdir -p .playbook
+          format="${{ inputs.format || 'markdown' }}"
+          extension="md"
+          if [ "$format" = "json" ]; then
+            extension="json"
+          fi
+
+          output=".playbook/changelog-ci-output.${extension}"
+          pnpm playbook changelog generate --base "${{ inputs.base || 'HEAD~1' }}" --head "${{ inputs.head || 'HEAD' }}" --format "$format" --out "$output"
+          echo "Generated $output"
+
+      - name: Upload changelog artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-output-${{ inputs.format || 'markdown' }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            .playbook/changelog-ci-output.md
+            .playbook/changelog-ci-output.json

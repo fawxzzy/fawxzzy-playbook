@@ -124,6 +124,18 @@
       "example": "pnpm playbook audit architecture --json"
     },
     {
+      "name": "changelog",
+      "category": "Repository tools",
+      "role": "governance",
+      "lifecycle": "canonical",
+      "discoverability": "secondary",
+      "onboardingPriority": null,
+      "canonicalSequence": null,
+      "productFacing": true,
+      "machineReadable": true,
+      "example": "pnpm playbook changelog generate --base HEAD~1 --format markdown"
+    },
+    {
       "name": "commit",
       "category": "Utility",
       "role": "utility",
@@ -721,6 +733,7 @@
     "architecture",
     "ask",
     "audit",
+    "changelog",
     "context",
     "cycle",
     "deps",

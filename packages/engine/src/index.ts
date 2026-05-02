@@ -369,6 +369,7 @@ export type {
   ReleaseSyncReconciliation,
   ReleaseGovernanceFailure
 } from './release/index.js';
+export * from './release/changelog/index.js';
 
 export { getCliSchemas, getCliSchema, isCliSchemaCommand, CLI_SCHEMA_COMMANDS } from './schema/cliSchemas.js';
 

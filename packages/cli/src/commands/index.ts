@@ -405,6 +405,13 @@ const commandRunners: Record<
       quiet,
     });
   },
+  changelog: async ({ cwd, commandArgs, format, quiet }) => {
+    const { runChangelog } = await import("./changelog.js");
+    return runChangelog(cwd, commandArgs, {
+      format,
+      quiet,
+    });
+  },
   release: async ({ cwd, commandArgs, format, quiet }) => {
     const { runRelease } = await import("./release.js");
     return runRelease(cwd, commandArgs, { format, quiet });
@@ -714,6 +721,7 @@ const commandOrder = [
   "ai-contract",
   "ai",
   "contracts",
+  "changelog",
   "release",
   "docs",
   "audit",

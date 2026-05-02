@@ -222,6 +222,67 @@ declare module "@zachariahredfield/playbook-engine" {
   export const runDocsAudit: (...args: any[]) => any;
   export const runDocsConsolidation: (...args: any[]) => any;
   export const runDocsConsolidationPlan: (...args: any[]) => any;
+  export const collectGitChangelogChanges: (...args: any[]) => any;
+  export const classifyChangelogChanges: (...args: any[]) => any;
+  export const buildChangelogEntries: (...args: any[]) => any;
+  export const renderMarkdownChangelog: (...args: any[]) => string;
+  export const renderJsonChangelog: (...args: any[]) => any;
+  export const loadChangelogConfig: (...args: any[]) => any;
+  export const mergeChangelogConfig: (...args: any[]) => any;
+  export const validateChangelogConfig: (...args: any[]) => any[];
+  export const validateChangelogGeneration: (...args: any[]) => any;
+  export const planChangelogAppend: (...args: any[]) => any;
+  export type ChangelogCategory =
+    | 'feature'
+    | 'fix'
+    | 'refactor'
+    | 'docs'
+    | 'infra'
+    | 'test'
+    | 'security'
+    | 'performance'
+    | 'chore'
+    | 'unknown';
+  export type ChangelogEntry = {
+    category: ChangelogCategory;
+    what: string;
+    why: string;
+    sourceRefs: string[];
+    breakingChange: boolean;
+    securityRelated: boolean;
+    confidence?: number;
+    reasons?: string[];
+  };
+  export type ChangelogSection = {
+    category: ChangelogCategory;
+    entries: ChangelogEntry[];
+  };
+  export type ChangelogDocument = {
+    schemaVersion: '1.0';
+    kind: 'playbook-changelog';
+    generatedAt?: string;
+    baseRef?: string;
+    headRef?: string;
+    version?: string;
+    sections: ChangelogSection[];
+  };
+  export type ChangelogGeneratorConfig = {
+    includeUnknown: boolean;
+    failOnUnknown: boolean;
+    lowConfidenceThreshold: number;
+    requireChanges: boolean;
+    markdownHeading: string;
+    defaultTargetFile: string;
+  };
+  export type ChangelogValidationDiagnosticSeverity = 'info' | 'warning' | 'error';
+  export type ChangelogValidationDiagnostic = {
+    id: string;
+    severity: ChangelogValidationDiagnosticSeverity;
+    message: string;
+    category?: ChangelogCategory;
+    sourceRef?: string;
+    evidence?: string;
+  };
   export const MAINTENANCE_APPROVALS_RELATIVE_PATH: '.playbook/maintenance-approvals.json';
   export const parseMaintenanceApprovals: (...args: any[]) => any;
   export const buildApprovedMaintenanceTasks: (...args: any[]) => any;
