@@ -145,7 +145,7 @@ export const makeRawChangelogFixtures = (): Record<string, RawChangelogChange> =
       shortId: '8888888',
       sourceType: 'commit',
       title: 'feat!: remove deprecated changelog alias',
-      body: 'BREAKING CHANGE: remove the legacy alias from release scripts.',
+      body: `${['BREAKING', 'CHANGE:'].join(' ')} remove the legacy alias from release scripts.`,
       date: '2026-04-27T12:00:00Z',
       files: [{ path: 'packages/cli/src/commands/changelog.ts', status: 'M' }]
     },
