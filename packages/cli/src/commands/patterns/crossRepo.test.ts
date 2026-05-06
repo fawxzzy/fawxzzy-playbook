@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import { ExitCode } from '../../lib/cliContract.js';
 import {
@@ -11,16 +12,17 @@ import {
 } from './crossRepo.js';
 
 const createRepo = (name: string): string => fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`));
+const fixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', '..', 'tests', 'contracts');
 
 const writeContractPatternGraph = (repo: string): void => {
-  const source = path.join(process.cwd(), '..', '..', '..', 'tests', 'contracts', 'pattern-graph.fixture.json');
+  const source = path.join(fixturesDir, 'pattern-graph.fixture.json');
   const target = path.join(repo, '.playbook', 'pattern-graph.json');
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.copyFileSync(source, target);
 };
 
 const writePatternOutcomes = (repo: string): void => {
-  const source = path.join(process.cwd(), '..', '..', '..', 'tests', 'contracts', 'pattern-outcomes.fixture.json');
+  const source = path.join(fixturesDir, 'pattern-outcomes.fixture.json');
   const target = path.join(repo, '.playbook', 'pattern-outcomes.json');
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.copyFileSync(source, target);
