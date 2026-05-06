@@ -4,9 +4,17 @@ export const formatJson = (report: VerifyReport): string => JSON.stringify(repor
 
 export const formatHuman = (report: VerifyReport): string => {
   const lines: string[] = [];
-  lines.push(report.ok ? '✔ Verification passed' : '✖ Verification failed');
+  lines.push(report.ok ? 'Verification passed' : 'Verification failed');
   if (report.summary.baseRef || report.summary.baseSha) {
     lines.push(`Base: ${report.summary.baseRef ?? 'unknown'} (${report.summary.baseSha ?? 'unknown'})`);
+  }
+  if (report.summary.baselineRef) {
+    lines.push(`Baseline: ${report.summary.baselineRef}`);
+  }
+
+  if (report.findingState) {
+    const { summary } = report.findingState;
+    lines.push(`Finding state: new=${summary.new}, existing=${summary.existing}, resolved=${summary.resolved}, ignored=${summary.ignored}`);
   }
 
   if (report.failures.length) {

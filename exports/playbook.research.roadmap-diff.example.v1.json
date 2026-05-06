@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "playbook.research.roadmap-diff.v1",
+  "entries": [
+    {
+      "id": "research-contract-foundation",
+      "featureId": "PB-V10-RESEARCH-CONTRACT-FOUNDATION-001",
+      "repo": "Playbook",
+      "action": "promote_to_canonical",
+      "title": "Research artifact contract foundation",
+      "goal": "Create a deterministic, commandless artifact family for external-research outputs so project profiles, pattern sets, integration maps, and roadmap diffs can be reviewed and reused across repos.",
+      "commands": [],
+      "dependencies": [
+        "PB-V10-CONVERGENCE-SOURCE-INVENTORY-001"
+      ],
+      "rationale": "Wave One research should become reusable contract truth before any research command or runtime surface exists.",
+      "reviewSource": "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md"
+    },
+    {
+      "id": "repo-scorecard-foundation",
+      "featureId": "PB-V10-REPO-SCORECARD-001",
+      "repo": "Playbook",
+      "action": "sequence_after_dependency",
+      "title": "Repo scorecard engine and report contract",
+      "goal": "Turn Wave One repo standards into deterministic scorecard checks and stable report artifacts without introducing a portal clone or new command surface first.",
+      "commands": [],
+      "dependencies": [
+        "PB-V10-RESEARCH-CONTRACT-FOUNDATION-001"
+      ],
+      "rationale": "Scorecards should build on stable research artifact shapes instead of bespoke planning prose.",
+      "reviewSource": "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md"
+    },
+    {
+      "id": "golden-path-template-registry",
+      "featureId": "PB-V10-GOLDEN-PATH-TEMPLATE-REGISTRY-001",
+      "repo": "Playbook",
+      "action": "sequence_after_dependency",
+      "title": "Golden-path template registry",
+      "goal": "Publish checked-in template descriptors for common repo and feature archetypes so downstream adoption can reuse governed defaults instead of copy-pasted setup guidance.",
+      "commands": [],
+      "dependencies": [
+        "PB-V10-RESEARCH-CONTRACT-FOUNDATION-001"
+      ],
+      "rationale": "Template descriptors should consume stable project-profile and integration-map research outputs.",
+      "reviewSource": "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md"
+    }
+  ]
+}

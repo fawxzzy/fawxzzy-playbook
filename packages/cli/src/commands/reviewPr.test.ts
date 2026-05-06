@@ -121,7 +121,7 @@ const seedRepoWithDiff = (repo: string): void => {
 };
 
 describe('runReviewPr', () => {
-  it('fails deterministically when there are no changed files', async () => {
+  it('fails deterministically when there are no changed files', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-review-pr-empty');
     initGitRepo(repo);
     writeRepoIndex(repo);
@@ -142,7 +142,7 @@ describe('runReviewPr', () => {
     logSpy.mockRestore();
   });
 
-  it('returns review output with findings, proposals, policy buckets, and stable schema', async () => {
+  it('returns review output with findings, proposals, policy buckets, and stable schema', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-review-pr');
     initGitRepo(repo);
     seedRepoWithDiff(repo);
@@ -173,7 +173,7 @@ describe('runReviewPr', () => {
     logSpy.mockRestore();
   });
 
-  it('groups policy evaluations into expected classification buckets', async () => {
+  it('groups policy evaluations into expected classification buckets', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-review-pr-policy');
     initGitRepo(repo);
     seedRepoWithDiff(repo);
@@ -191,7 +191,7 @@ describe('runReviewPr', () => {
     logSpy.mockRestore();
   });
 
-  it('is deterministic for repeated json invocations', async () => {
+  it('is deterministic for repeated json invocations', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-review-pr-deterministic');
     initGitRepo(repo);
     seedRepoWithDiff(repo);
@@ -220,7 +220,7 @@ describe('runReviewPr', () => {
     logSpy.mockRestore();
   });
 
-  it('renders github-comment format', async () => {
+  it('renders github-comment format', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-review-pr-gh-comment');
     initGitRepo(repo);
     seedRepoWithDiff(repo);

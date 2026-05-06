@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "playbook.convergence.source-inventory.v1",
+  "generatedAt": "2026-05-03T00:00:00Z",
+  "summary": {
+    "sourceCount": 8,
+    "migrationCandidateCount": 4,
+    "referenceOnlyCount": 3
+  },
+  "sources": [
+    {
+      "id": "atlas-mission-context",
+      "repo": "fawxzzy/ATLAS",
+      "path": "docs/ops/ATLAS-MISSION-CONTEXT.md",
+      "classification": "mission_context",
+      "migrationDecision": "reference_only",
+      "rationale": "Mission context frames Playbook lane but remains stack-owned strategy.",
+      "targetSurface": "docs/roadmap references",
+      "guardrail": "Do not copy stack mission as Playbook canonical truth."
+    },
+    {
+      "id": "playbook-contract",
+      "repo": "fawxzzy/fawxzzy-playbook",
+      "path": "docs/contracts/PLAYBOOK-CONTRACT.md",
+      "classification": "owner_contract",
+      "migrationDecision": "migrate",
+      "rationale": "Already Playbook owner truth and should remain canonical.",
+      "targetSurface": "docs/contracts + exports",
+      "guardrail": "Keep schema/version validation green."
+    },
+    {
+      "id": "atlas-adoption-matrix",
+      "repo": "fawxzzy/ATLAS",
+      "path": "docs/ops/PLAYBOOK-ADOPTION-MATRIX.md",
+      "classification": "root_projection",
+      "migrationDecision": "template",
+      "rationale": "Status/evidence vocabulary should become reusable scan/report logic.",
+      "targetSurface": "convergence scan/report contract",
+      "guardrail": "Atlas keeps root projection truth."
+    },
+    {
+      "id": "fitness-adoption",
+      "repo": "fawxzzy/fawxzzy-fitness",
+      "path": "docs/ops/FITNESS-PLAYBOOK-ADOPTION.md",
+      "classification": "repo_adoption_evidence",
+      "migrationDecision": "template",
+      "rationale": "Strong repo-local adoption evidence pattern.",
+      "targetSurface": "repo adoption templates",
+      "guardrail": "Keep Fitness domain truth in Fitness."
+    },
+    {
+      "id": "mazer-adoption",
+      "repo": "fawxzzy/fawxzzy-mazer",
+      "path": "docs/ops/MAZER-PLAYBOOK-ADOPTION.md",
+      "classification": "repo_adoption_evidence",
+      "migrationDecision": "template",
+      "rationale": "Strong repo-local adoption evidence pattern with explicit not-applicable checks.",
+      "targetSurface": "repo adoption templates",
+      "guardrail": "Keep Mazer domain truth in Mazer."
+    },
+    {
+      "id": "atlas-playbook-ingest",
+      "repo": "fawxzzy/ATLAS",
+      "path": "docs/architecture/PLAYBOOK-INGEST-PIPELINE.md",
+      "classification": "external_pack",
+      "migrationDecision": "migrate",
+      "rationale": "Import/evaluate/normalize/catalog flow belongs in Playbook pack tooling.",
+      "targetSurface": "pack command docs + contracts",
+      "guardrail": "No active repo mutation during intake."
+    },
+    {
+      "id": "lifeline-playbook-export-loader",
+      "repo": "fawxzzy/fawxzzy-lifeline",
+      "path": "src/core/load-playbook-exports.ts",
+      "classification": "execution_boundary",
+      "migrationDecision": "reference_only",
+      "rationale": "Concrete consumer of Playbook export family/schema version.",
+      "targetSurface": "export compatibility tests",
+      "guardrail": "Do not move Lifeline execution into Playbook."
+    },
+    {
+      "id": "supabase-fawxzzyfitness",
+      "repo": "Supabase/FawxzzyFitness",
+      "path": "public schema metadata",
+      "classification": "production_observation",
+      "migrationDecision": "future_adapter",
+      "rationale": "Production-adjacent evidence can inform future structural observation adapter.",
+      "targetSurface": "production observation schema",
+      "guardrail": "No secrets or row data; evidence-only."
+    }
+  ]
+}

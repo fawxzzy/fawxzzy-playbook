@@ -24,15 +24,15 @@ import {
 } from "../../lib/workflowPromotion.js";
 import type { WorkflowPromotion } from "../../lib/workflowPromotion.js";
 
-export const EXECUTION_OUTCOME_INPUT_RELATIVE_PATH = path.join(
+export const EXECUTION_OUTCOME_INPUT_RELATIVE_PATH = path.posix.join(
   ".playbook",
   "execution-outcome-input.json",
 );
-export const UPDATED_STATE_RELATIVE_PATH = path.join(
+export const UPDATED_STATE_RELATIVE_PATH = path.posix.join(
   ".playbook",
   "execution-updated-state.json",
 );
-export const UPDATED_STATE_STAGING_RELATIVE_PATH = path.join(
+export const UPDATED_STATE_STAGING_RELATIVE_PATH = path.posix.join(
   ".playbook",
   "staged",
   "workflow-status-updated",
@@ -40,7 +40,7 @@ export const UPDATED_STATE_STAGING_RELATIVE_PATH = path.join(
 );
 
 const EXECUTION_PLAN_RELATIVE_PATH = path.join(".playbook", "execution-plan.json");
-const EXECUTION_RECEIPT_RELATIVE_PATH = path.join(".playbook", "execution-receipt.json");
+const EXECUTION_RECEIPT_RELATIVE_PATH = path.posix.join(".playbook", "execution-receipt.json");
 
 type ObserverRegistry = {
   repos: Array<{ id: string; name: string; root: string }>;

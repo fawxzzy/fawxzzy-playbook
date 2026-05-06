@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fawxzzy.dev/schemas/playbook.research.project-profile.v1.json",
+  "title": "Playbook Research Project Profile v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "project"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "playbook.research.project-profile.v1"
+    },
+    "project": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "repo",
+        "role",
+        "currentPosture",
+        "architectureFit",
+        "researchFocus"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "enum": [
+            "standardization_engine",
+            "governed_signal_producer",
+            "bounded_executor"
+          ]
+        },
+        "currentPosture": {
+          "type": "string",
+          "minLength": 1
+        },
+        "architectureFit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "researchFocus": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "highConfidenceComparators": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

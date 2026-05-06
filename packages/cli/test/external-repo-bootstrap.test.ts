@@ -24,9 +24,16 @@ function createFixtureRepo(): string {
 }
 
 function runCli(args: readonly string[]) {
+  const pathValue = process.env.Path ?? process.env.PATH ?? '';
   return spawnSync(process.execPath, [cliEntry, ...args], {
     cwd: repoRoot,
-    encoding: 'utf8'
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      PATH: pathValue,
+      Path: pathValue,
+      PATHEXT: process.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD'
+    }
   });
 }
 

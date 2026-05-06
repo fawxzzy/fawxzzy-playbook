@@ -1,0 +1,111 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { buildContractRegistry } from '@zachariahredfield/playbook-engine';
+import { ExitCode } from '../lib/cliContract.js';
+const DEFAULT_OUTPUT_PATH = '.playbook/contracts-registry.json';
+const memoryArtifactSchemas = [
+    { id: 'repository-memory-event', version: '1.0', path: '.playbook/memory/events/*.json' },
+    { id: 'repository-memory-index', version: '1.0', path: '.playbook/memory/index.json' },
+    { id: 'session-replay-evidence', version: '1.0', path: '.playbook/memory/replay-candidates.json#replayEvidence' },
+    { id: 'replay-candidates', version: '1.0', path: '.playbook/memory/replay-candidates.json' },
+    { id: 'consolidation-candidates', version: '1.0', path: '.playbook/memory/consolidation-candidates.json' },
+    { id: 'memory-compaction-review', version: '1.0', path: '.playbook/memory/compaction-review.json' },
+    { id: 'memory-event', version: '1.0.0', path: '.playbook/memory/events/runtime/*.json' },
+    { id: 'candidate-knowledge-record', version: '1.0.0', path: '.playbook/memory/knowledge/candidates/*.json' },
+    { id: 'promoted-knowledge-record', version: '1.0.0', path: '.playbook/memory/knowledge/promoted/*.json' },
+    { id: 'retired-knowledge-record', version: '1.0.0', path: '.playbook/memory/knowledge/promoted/*.json' },
+    { id: 'knowledge-candidate-output', version: '1.0', path: '.playbook/knowledge/candidates.json' },
+    { id: 'stories-backlog', version: '1.0', path: '.playbook/stories.json' },
+    { id: 'test-autofix-remediation-history', version: '1.0', path: '.playbook/test-autofix-history.json' }
+];
+const additiveCommandOutputSchemas = [
+    { id: 'query.memoryKnowledge', version: '1.0', path: 'schema://cli/query' },
+    { id: 'knowledge', version: '1.0', path: 'packages/contracts/src/knowledge.schema.json' },
+    { id: 'pattern-graph', version: '1.0', path: 'packages/contracts/src/pattern-graph.schema.json' },
+    { id: 'cross-repo-candidates', version: '1.0', path: 'packages/contracts/src/cross-repo-candidates.schema.json' },
+    { id: 'task-execution-profile', version: '1.0', path: 'packages/contracts/src/task-execution-profile.schema.json' },
+    { id: 'execution-plan', version: '1.0', path: 'packages/contracts/src/execution-plan.schema.json' },
+    { id: 'local-verification-receipt', version: '1.0', path: 'packages/contracts/src/local-verification-receipt.schema.json' },
+    { id: 'workflow-promotion', version: '1.0', path: 'packages/contracts/src/workflow-promotion.schema.json' },
+    { id: 'promotion-receipt', version: '1.0', path: 'packages/contracts/src/promotion-receipt.schema.json' },
+    { id: 'workset-plan', version: '1.0', path: 'packages/contracts/src/workset-plan.schema.json' },
+    { id: 'outcome-telemetry', version: '1.0', path: 'packages/contracts/src/outcome-telemetry.schema.json' },
+    { id: 'learning-state', version: '1.0', path: 'packages/contracts/src/learning-state.schema.json' },
+    { id: 'improvement-candidates', version: '1.0', path: 'packages/contracts/src/improvement-candidates.schema.json' },
+    { id: 'policy-evaluation', version: '1.0', path: 'packages/contracts/src/policy-evaluation.schema.json' },
+    { id: 'policy-apply-result', version: '1.0', path: 'packages/contracts/src/policy-apply-result.schema.json' },
+    { id: 'policy-improvement', version: '1.0', path: 'packages/contracts/src/policy-improvement.schema.json' },
+    { id: 'lane-state', version: '1.0', path: 'packages/contracts/src/lane-state.schema.json' },
+    { id: 'worker-assignments', version: '1.0', path: 'packages/contracts/src/worker-assignments.schema.json' },
+    { id: 'worker-fragment', version: '1.0', path: 'packages/contracts/src/worker-fragment.schema.json' },
+    { id: 'worker-results', version: '1.0', path: 'packages/contracts/src/worker-results.schema.json' },
+    { id: 'docs-consolidation-plan', version: '1.0', path: 'packages/contracts/src/docs-consolidation-plan.schema.json' },
+    { id: 'repository-events', version: '1.0', path: 'packages/contracts/src/repository-events.schema.json' },
+    { id: 'cycle-state', version: '1.0', path: 'packages/contracts/src/cycle-state.schema.json' },
+    { id: 'cycle-history', version: '1.0', path: 'packages/contracts/src/cycle-history.schema.json' },
+    { id: 'memory-index', version: '1.0', path: 'packages/contracts/src/memory-index.schema.json' },
+    { id: 'memory-event', version: '1.0', path: 'packages/contracts/src/memory-event.schema.json' },
+    { id: 'session-evidence-envelope', version: '1.0', path: 'packages/contracts/src/session-evidence-envelope.schema.json' },
+    { id: 'session-replay-evidence', version: '1.0', path: 'packages/contracts/src/session-replay-evidence.schema.json' },
+    { id: 'replay-candidates', version: '1.0', path: 'packages/contracts/src/replay-candidates.schema.json' },
+    { id: 'consolidation-candidates', version: '1.0', path: 'packages/contracts/src/consolidation-candidates.schema.json' },
+    { id: 'memory-compaction-review', version: '1.0', path: 'packages/contracts/src/memory-compaction-review.schema.json' },
+    { id: 'pr-review', version: '1.0', path: 'packages/contracts/src/pr-review.schema.json' },
+    { id: 'pr-review-loop', version: '1.0', path: 'packages/contracts/src/pr-review-loop.schema.json' },
+    { id: 'story', version: '1.0', path: 'packages/contracts/src/story.schema.json' },
+    { id: 'stories', version: '1.0', path: 'packages/contracts/src/stories.schema.json' },
+    { id: 'explain.memoryKnowledge', version: '1.0', path: 'schema://cli/explain' },
+    { id: 'plan.tasks[].advisory.outcomeLearning', version: '1.0', path: 'schema://cli/plan' },
+    { id: 'analyze-pr.preventionGuidance', version: '1.0', path: 'schema://cli/analyze-pr' },
+    { id: 'analyze-pr.context.sources[].promoted-knowledge', version: '1.0', path: 'schema://cli/analyze-pr' },
+    { id: 'test-triage', version: '1.0', path: 'packages/contracts/src/test-triage.schema.json' },
+    { id: 'test-fix-plan', version: '1.0', path: 'packages/contracts/src/test-fix-plan.schema.json' },
+    { id: 'test-autofix', version: '1.0', path: 'packages/contracts/src/test-autofix.schema.json' },
+    { id: 'test-autofix-remediation-history', version: '1.0', path: 'packages/contracts/src/test-autofix-remediation-history.schema.json' },
+    { id: 'version-policy', version: '1.0', path: 'packages/contracts/src/version-policy.schema.json' },
+    { id: 'release-plan', version: '1.0', path: 'packages/contracts/src/release-plan.schema.json' },
+    { id: 'managed-surface-manifest', version: '1.0', path: 'packages/contracts/src/managed-surface-manifest.schema.json' },
+    { id: 'change-scope', version: '1.0', path: 'packages/contracts/src/change-scope.schema.json' },
+    { id: 'control-plane', version: '1.0', path: 'packages/contracts/src/control-plane.schema.json' },
+    { id: 'multi-repo-control-plane-read-interface', version: '1.0', path: 'packages/contracts/src/multi-repo-control-plane-read-interface.schema.json' },
+    { id: 'workspace-governance', version: '1.0', path: 'packages/contracts/src/workspace-governance.schema.json' }
+];
+const printText = (outPath) => {
+    console.log('Playbook Contracts Registry');
+    console.log('');
+    console.log(`Wrote contract registry: ${outPath}`);
+    console.log('Use --json for machine-readable output.');
+};
+export const runContracts = async (cwd, options) => {
+    const payload = {
+        ...buildContractRegistry(cwd),
+        schemas: {
+            memoryArtifacts: [...memoryArtifactSchemas],
+            commandOutputs: [...additiveCommandOutputSchemas]
+        }
+    };
+    const outputPath = options.out ?? DEFAULT_OUTPUT_PATH;
+    const absoluteOutputPath = path.resolve(cwd, outputPath);
+    const outputJson = `${JSON.stringify(payload, null, 2)}\n`;
+    const shouldWriteArtifact = options.out !== undefined || options.format !== 'json';
+    if (shouldWriteArtifact) {
+        fs.mkdirSync(path.dirname(absoluteOutputPath), { recursive: true });
+        fs.writeFileSync(absoluteOutputPath, outputJson, 'utf8');
+    }
+    if (options.format === 'json') {
+        console.log(outputJson.trimEnd());
+        return ExitCode.Success;
+    }
+    if (!options.quiet) {
+        if (shouldWriteArtifact) {
+            printText(outputPath);
+        }
+        else {
+            console.log('Playbook Contracts Registry');
+            console.log('');
+            console.log('Use --json --out <path> to write the contract registry artifact.');
+        }
+    }
+    return ExitCode.Success;
+};
+//# sourceMappingURL=contracts.js.map

@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fawxzzy.dev/schemas/playbook.repo-scorecard.report.v1.json",
+  "title": "Playbook Repo Scorecard Report v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "status",
+    "repo",
+    "summary",
+    "dimensions",
+    "warnings",
+    "blocked"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "playbook.repo-scorecard.report.v1"
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "blocked"
+      ]
+    },
+    "repo": {
+      "type": "object",
+      "required": [
+        "id",
+        "role"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "role": {
+          "enum": [
+            "governance_owner",
+            "governed_consumer",
+            "bounded_executor"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "score",
+        "maxScore",
+        "grade"
+      ],
+      "properties": {
+        "score": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxScore": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "grade": {
+          "enum": [
+            "a",
+            "b",
+            "c",
+            "d",
+            "f",
+            "unrated"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "dimensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "status",
+          "score",
+          "maxScore",
+          "summary",
+          "evidence"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "owner_truth",
+              "command_truth",
+              "verification_truth",
+              "artifact_hygiene",
+              "docs_governance",
+              "workflow_pack_adoption",
+              "local_verification",
+              "roadmap_governance"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "verified",
+              "partial",
+              "missing",
+              "not_applicable"
+            ]
+          },
+          "score": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxScore": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "nextAction": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/issue" }
+    },
+    "blocked": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/issue" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "issue": {
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "command-availability-claim",
+            "duplicate-dimension-id",
+            "invalid-dimension-id",
+            "invalid-repo-id",
+            "invalid-repo-role",
+            "missing-dimension",
+            "missing-field",
+            "summary-mismatch"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dimensionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

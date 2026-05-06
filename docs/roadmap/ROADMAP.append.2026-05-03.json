@@ -1,0 +1,256 @@
+{
+  "features": [
+    {
+      "feature_id": "PB-V10-CONVERGENCE-SOURCE-INVENTORY-001",
+      "version": "v1.0",
+      "title": "Convergence source inventory contract",
+      "goal": "Create a deterministic, review-only source inventory contract for deciding which Atlas and owner-repo Playbook-relevant surfaces should migrate, template, remain referenced, or become future adapters.",
+      "commands": [],
+      "contracts": [
+        "docs/contracts/PLAYBOOK_CONVERGENCE_SCAN_CONTRACT_DRAFT.md",
+        "exports/playbook.convergence.source-inventory.schema.v1.json",
+        "exports/playbook.convergence.source-inventory.example.v1.json",
+        "exports/playbook.convergence.source-inventory.report.schema.v1.json",
+        "exports/playbook.convergence.source-inventory.report.example.v1.json"
+      ],
+      "tests": [
+        "test/scripts/validate-convergence-source-inventory.test.mjs",
+        "packages/engine/test/sourceInventory.test.ts",
+        "packages/engine/test/sourceInventoryReportContract.test.ts"
+      ],
+      "docs": [
+        "docs/roadmap/PLAYBOOK_RESTART_ROADMAP_2026-05-03.md",
+        "docs/migration/ATLAS_TO_PLAYBOOK_SOURCE_INVENTORY_2026-05-03.md",
+        "docs/migration/ATLAS_TO_PLAYBOOK_MIGRATION_MATRIX_2026-05-03.md",
+        "docs/contracts/PLAYBOOK_CONVERGENCE_SCAN_CONTRACT_DRAFT.md"
+      ],
+      "dependencies": [
+        "PB-V1-PRODUCT-TRUTH-PACKAGING-001",
+        "PB-V09-FINAL-ARCHITECTURE-MAP-001"
+      ],
+      "verification_commands": [
+        "node scripts/validate-convergence-source-inventory.mjs",
+        "pnpm -C packages/engine test -- sourceInventory",
+        "pnpm -C packages/engine test -- sourceInventoryReportContract",
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "implemented-hardening",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
+      "feature_id": "PB-V10-ADOPTION-TEMPLATES-001",
+      "version": "v1.0",
+      "title": "Repo-local Playbook adoption and verification templates",
+      "goal": "Turn the Fitness and Mazer adoption/verification evidence lanes into reusable Playbook-generated templates with scope-explicit status and not-applicable checks.",
+      "commands": [],
+      "contracts": [
+        "docs/contracts/PLAYBOOK-CONTRACT.md",
+        "exports/playbook.contract.example.v1.json"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/migration/ATLAS_TO_PLAYBOOK_MIGRATION_MATRIX_2026-05-03.md",
+        "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md"
+      ],
+      "dependencies": [
+        "PB-V10-CONVERGENCE-SOURCE-INVENTORY-001",
+        "PB-V10-GOLDEN-PATH-TEMPLATE-REGISTRY-001"
+      ],
+      "verification_commands": [
+        "node scripts/validate-roadmap-contract.mjs --ci",
+        "pnpm playbook docs audit --json"
+      ],
+      "status": "planned",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
+      "feature_id": "PB-V10-PACK-INGEST-001",
+      "version": "v1.0",
+      "title": "External playbook pack intake contract foundation",
+      "goal": "Bring the Atlas third-party playbook intake discipline into Playbook-owned contract surfaces while preserving provenance, vendor-neutral adoption, and no-execution-by-default safety.",
+      "commands": [],
+      "contracts": [
+        "docs/contracts/PLAYBOOK_CONVERGENCE_SCAN_CONTRACT_DRAFT.md",
+        "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/roadmap/PLAYBOOK_RESTART_ROADMAP_2026-05-03.md"
+      ],
+      "dependencies": [
+        "PB-V10-CONVERGENCE-SOURCE-INVENTORY-001",
+        "PB-V10-RESEARCH-CONTRACT-FOUNDATION-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json",
+        "node scripts/validate-roadmap-contract.mjs --ci"
+      ],
+      "status": "planned",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
+      "feature_id": "PB-V10-PRODUCTION-OBSERVATION-001",
+      "version": "v1.0",
+      "title": "Production observation evidence adapter contract",
+      "goal": "Define a structural metadata-only evidence adapter for production-adjacent systems such as Supabase so Playbook can report security/schema posture without owning app data or secrets.",
+      "commands": [],
+      "contracts": [
+        "docs/contracts/PLAYBOOK_CONVERGENCE_SCAN_CONTRACT_DRAFT.md",
+        "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/roadmap/PLAYBOOK_RESTART_ROADMAP_2026-05-03.md"
+      ],
+      "dependencies": [
+        "PB-V10-CONVERGENCE-SOURCE-INVENTORY-001",
+        "PB-V10-REPO-SCORECARD-001"
+      ],
+      "verification_commands": [
+        "pnpm playbook docs audit --json"
+      ],
+      "status": "directional",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
+      "feature_id": "PB-V10-RESEARCH-CONTRACT-FOUNDATION-001",
+      "version": "v1.0",
+      "title": "Research artifact contract foundation",
+      "goal": "Create a deterministic, commandless artifact family for external-research outputs so project profiles, pattern sets, integration maps, and roadmap diffs can be reviewed and reused across repos.",
+      "commands": [],
+      "contracts": [
+        "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md",
+        "exports/playbook.research.project-profile.schema.v1.json",
+        "exports/playbook.research.pattern-set.schema.v1.json",
+        "exports/playbook.research.integration-map.schema.v1.json",
+        "exports/playbook.research.roadmap-diff.schema.v1.json"
+      ],
+      "tests": [
+        "packages/engine/test/researchContracts.test.ts"
+      ],
+      "docs": [
+        "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md"
+      ],
+      "dependencies": [
+        "PB-V10-CONVERGENCE-SOURCE-INVENTORY-001"
+      ],
+      "verification_commands": [
+        "pnpm -C packages/engine test -- researchContracts",
+        "node scripts/validate-roadmap-contract.mjs --ci",
+        "pnpm playbook docs audit --json"
+      ],
+      "status": "planned",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
+      "feature_id": "PB-V10-REPO-SCORECARD-001",
+      "version": "v1.0",
+      "title": "Repo scorecard engine and report contract",
+      "goal": "Turn Wave One repo standards into deterministic scorecard checks and stable report artifacts without introducing a portal clone or new command surface first.",
+      "commands": [],
+      "contracts": [
+        "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md",
+        "exports/playbook.scorecard.report.schema.v1.json",
+        "exports/playbook.scorecard.report.example.v1.json"
+      ],
+      "tests": [
+        "packages/engine/test/repoScorecard.test.ts"
+      ],
+      "docs": [
+        "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md"
+      ],
+      "dependencies": [
+        "PB-V10-RESEARCH-CONTRACT-FOUNDATION-001"
+      ],
+      "verification_commands": [
+        "pnpm -C packages/engine test -- repoScorecard",
+        "node scripts/validate-roadmap-contract.mjs --ci",
+        "pnpm playbook docs audit --json"
+      ],
+      "status": "planned",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
+      "feature_id": "PB-V10-GOLDEN-PATH-TEMPLATE-REGISTRY-001",
+      "version": "v1.0",
+      "title": "Golden-path template registry",
+      "goal": "Publish checked-in template descriptors for common repo and feature archetypes so downstream adoption can reuse governed defaults instead of copy-pasted setup guidance.",
+      "commands": [],
+      "contracts": [
+        "docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md",
+        "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md",
+        "exports/playbook.template-registry.schema.v1.json"
+      ],
+      "tests": [
+        "packages/engine/test/templateRegistry.test.ts"
+      ],
+      "docs": [
+        "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md"
+      ],
+      "dependencies": [
+        "PB-V10-RESEARCH-CONTRACT-FOUNDATION-001"
+      ],
+      "verification_commands": [
+        "pnpm -C packages/engine test -- templateRegistry",
+        "node scripts/validate-roadmap-contract.mjs --ci",
+        "pnpm playbook docs audit --json"
+      ],
+      "status": "planned",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
+      "feature_id": "PB-V10-WORKFLOW-PACK-ENVIRONMENT-BRIDGE-001",
+      "version": "v1.0",
+      "title": "Workflow-pack environment bridge",
+      "goal": "Align reusable workflow-pack doctrine with explicit environment-gate contracts so verification, approval, and promotion boundaries can be reused without widening command authority first.",
+      "commands": [],
+      "contracts": [
+        "docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md",
+        "docs/contracts/WORKFLOW_PACK_ENVIRONMENT_BRIDGE_CONTRACT.md",
+        "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md"
+      ],
+      "tests": [
+        "packages/engine/test/workflowPackEnvironmentBridge.test.ts"
+      ],
+      "docs": [
+        "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md"
+      ],
+      "dependencies": [
+        "PB-V10-GOLDEN-PATH-TEMPLATE-REGISTRY-001",
+        "PB-V10-REPO-SCORECARD-001"
+      ],
+      "verification_commands": [
+        "pnpm -C packages/engine test -- workflowPackEnvironmentBridge",
+        "node scripts/validate-roadmap-contract.mjs --ci",
+        "pnpm playbook docs audit --json"
+      ],
+      "status": "planned-later",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    }
+  ]
+}

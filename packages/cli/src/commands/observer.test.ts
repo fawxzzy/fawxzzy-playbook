@@ -326,6 +326,7 @@ describe("runObserver", () => {
     fs.mkdirSync(serveRoot, { recursive: true });
 
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const processOnceSpy = vi.spyOn(process, "once");
     const exitCodePromise = runObserver(
       cwd,
       ["serve", "--port", "0", "--root", serveRoot],
@@ -351,7 +352,11 @@ describe("runObserver", () => {
       expect(payload.repo_count).toBe(0);
     });
 
-    process.kill(process.pid, "SIGTERM");
+    const closeServer = processOnceSpy.mock.calls.find(
+      ([signal]) => signal === "SIGTERM",
+    )?.[1] as (() => void) | undefined;
+    expect(closeServer).toBeTypeOf("function");
+    closeServer?.();
     await expect(exitCodePromise).resolves.toBe(ExitCode.Success);
   });
 });

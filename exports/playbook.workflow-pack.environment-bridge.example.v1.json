@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "playbook.workflow-pack.environment-bridge.v1",
+  "workflowPackId": "playbook.workflow-pack.reuse.v1",
+  "environmentName": "protected_production",
+  "verificationGate": {
+    "mode": "local_and_promotion_required",
+    "requiredEvidenceRefs": [
+      ".playbook/local-verification-receipt.json",
+      ".playbook/promotion-receipt.json"
+    ],
+    "failurePolicy": "block"
+  },
+  "approvalPolicy": {
+    "mode": "protected_environment",
+    "requiredApprovals": 1,
+    "approverRoles": [
+      "release_owner"
+    ]
+  },
+  "requiredSecrets": [
+    "ref://github/environment/PLAYBOOK_PUBLISH_TOKEN",
+    "ref://lifeline/secret/PLAYBOOK_RECEIPT_SIGNING_KEY"
+  ],
+  "secretRefsOnly": true,
+  "publishMode": "publish_after_verification",
+  "deploymentMode": "receipt_only",
+  "receiptRefs": [
+    ".playbook/local-verification-receipt.json",
+    ".playbook/promotion-receipt.json"
+  ],
+  "consumerRules": [
+    "Treat environment gates as approval and publish boundaries, not as verification truth.",
+    "Reference secrets through provider-neutral refs instead of embedding raw values.",
+    "Keep downstream projections read-only and preserve refs back to owner receipts."
+  ]
+}

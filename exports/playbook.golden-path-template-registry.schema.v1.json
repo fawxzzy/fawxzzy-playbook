@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fawxzzy.dev/schemas/playbook.golden-path-template-registry.v1.json",
+  "title": "Playbook Golden Path Template Registry v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "templates"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "playbook.golden-path-template-registry.v1"
+    },
+    "templates": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "archetype",
+          "purpose",
+          "requiredSurfaces",
+          "guardedDefaults",
+          "adoptionChecklist"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "nextjs_supabase_app",
+              "local_operator_repo",
+              "contract_first_engine_feature"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "archetype": {
+            "enum": [
+              "application",
+              "operator",
+              "engine_feature"
+            ]
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requiredSurfaces": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "guardedDefaults": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "adoptionChecklist": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

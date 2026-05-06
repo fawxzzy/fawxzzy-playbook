@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "playbook.convergence.source-inventory.report.v1",
+  "status": "ok",
+  "summary": {
+    "totalSources": 8,
+    "byDecision": {
+      "future_adapter": 1,
+      "migrate": 2,
+      "reference_only": 2,
+      "template": 3
+    },
+    "bySourceClass": {
+      "execution_boundary": 1,
+      "external_pack_policy": 1,
+      "owner_contract": 1,
+      "production_observation": 1,
+      "repo_adoption_evidence": 2,
+      "root_projection": 2
+    }
+  },
+  "sources": [
+    {
+      "id": "atlas-adoption-matrix",
+      "repo": "fawxzzy/ATLAS",
+      "path": "docs/ops/PLAYBOOK-ADOPTION-MATRIX.md",
+      "sourceClassification": "root_projection",
+      "sourceClass": "root_projection",
+      "migrationDecision": "template",
+      "rationale": "Status/evidence vocabulary should become reusable scan/report logic.",
+      "targetSurface": "convergence scan/report contract",
+      "guardrail": "Atlas keeps root projection truth."
+    },
+    {
+      "id": "atlas-mission-context",
+      "repo": "fawxzzy/ATLAS",
+      "path": "docs/ops/ATLAS-MISSION-CONTEXT.md",
+      "sourceClassification": "mission_context",
+      "sourceClass": "root_projection",
+      "migrationDecision": "reference_only",
+      "rationale": "Mission context frames Playbook lane but remains stack-owned strategy.",
+      "targetSurface": "docs/roadmap references",
+      "guardrail": "Do not copy stack mission as Playbook canonical truth."
+    },
+    {
+      "id": "atlas-playbook-ingest",
+      "repo": "fawxzzy/ATLAS",
+      "path": "docs/architecture/PLAYBOOK-INGEST-PIPELINE.md",
+      "sourceClassification": "external_pack",
+      "sourceClass": "external_pack_policy",
+      "migrationDecision": "migrate",
+      "rationale": "Import/evaluate/normalize/catalog flow belongs in Playbook pack tooling.",
+      "targetSurface": "pack command docs + contracts",
+      "guardrail": "No active repo mutation during intake."
+    },
+    {
+      "id": "fitness-adoption",
+      "repo": "fawxzzy/fawxzzy-fitness",
+      "path": "docs/ops/FITNESS-PLAYBOOK-ADOPTION.md",
+      "sourceClassification": "repo_adoption_evidence",
+      "sourceClass": "repo_adoption_evidence",
+      "migrationDecision": "template",
+      "rationale": "Strong repo-local adoption evidence pattern.",
+      "targetSurface": "repo adoption templates",
+      "guardrail": "Keep Fitness domain truth in Fitness."
+    },
+    {
+      "id": "lifeline-playbook-export-loader",
+      "repo": "fawxzzy/fawxzzy-lifeline",
+      "path": "src/core/load-playbook-exports.ts",
+      "sourceClassification": "execution_boundary",
+      "sourceClass": "execution_boundary",
+      "migrationDecision": "reference_only",
+      "rationale": "Concrete consumer of Playbook export family/schema version.",
+      "targetSurface": "export compatibility tests",
+      "guardrail": "Do not move Lifeline execution into Playbook."
+    },
+    {
+      "id": "mazer-adoption",
+      "repo": "fawxzzy/fawxzzy-mazer",
+      "path": "docs/ops/MAZER-PLAYBOOK-ADOPTION.md",
+      "sourceClassification": "repo_adoption_evidence",
+      "sourceClass": "repo_adoption_evidence",
+      "migrationDecision": "template",
+      "rationale": "Strong repo-local adoption evidence pattern with explicit not-applicable checks.",
+      "targetSurface": "repo adoption templates",
+      "guardrail": "Keep Mazer domain truth in Mazer."
+    },
+    {
+      "id": "playbook-contract",
+      "repo": "fawxzzy/fawxzzy-playbook",
+      "path": "docs/contracts/PLAYBOOK-CONTRACT.md",
+      "sourceClassification": "owner_contract",
+      "sourceClass": "owner_contract",
+      "migrationDecision": "migrate",
+      "rationale": "Already Playbook owner truth and should remain canonical.",
+      "targetSurface": "docs/contracts + exports",
+      "guardrail": "Keep schema/version validation green."
+    },
+    {
+      "id": "supabase-fawxzzyfitness",
+      "repo": "Supabase/FawxzzyFitness",
+      "path": "public schema metadata",
+      "sourceClassification": "production_observation",
+      "sourceClass": "production_observation",
+      "migrationDecision": "future_adapter",
+      "rationale": "Production-adjacent evidence can inform future structural observation adapter.",
+      "targetSurface": "production observation schema",
+      "guardrail": "No secrets or row data; evidence-only."
+    }
+  ],
+  "warnings": [],
+  "blocked": []
+}

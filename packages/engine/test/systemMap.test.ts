@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { generateSystemMapArtifact, writeSystemMapArtifact } from '../src/diagrams/systemMap.js';
 
 const createRepo = (): string => fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-system-map-'));
+const toPosixPath = (value: string): string => value.replace(/\\/g, '/');
 
 const writeArchitecture = (repoRoot: string): void => {
   const registryPath = path.join(repoRoot, '.playbook', 'architecture', 'subsystems.json');
@@ -71,7 +72,7 @@ describe('system map artifact', () => {
     const raw = fs.readFileSync(artifactPath, 'utf8');
     const parsed = JSON.parse(raw) as typeof artifact;
 
-    expect(path.relative(repo, artifactPath)).toBe('.playbook/system-map.json');
+    expect(toPosixPath(path.relative(repo, artifactPath))).toBe('.playbook/system-map.json');
     expect(raw.endsWith('\n')).toBe(true);
     expect(parsed).toEqual(artifact);
   });

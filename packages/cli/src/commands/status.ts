@@ -198,8 +198,8 @@ type MemoryPressurePlanSummary = {
 };
 
 const EXECUTION_OUTCOME_INPUT_RELATIVE_PATH = path.join('.playbook', 'execution-outcome-input.json');
-const UPDATED_STATE_RELATIVE_PATH = path.join('.playbook', 'execution-updated-state.json');
-const UPDATED_STATE_STAGING_RELATIVE_PATH = path.join('.playbook', 'staged', 'workflow-status-updated', 'execution-updated-state.json');
+const UPDATED_STATE_RELATIVE_PATH = path.posix.join('.playbook', 'execution-updated-state.json');
+const UPDATED_STATE_STAGING_RELATIVE_PATH = path.posix.join('.playbook', 'staged', 'workflow-status-updated', 'execution-updated-state.json');
 
 const defaultOutcomeInput = (): FleetExecutionOutcomeInput => ({
   schemaVersion: '1.0',

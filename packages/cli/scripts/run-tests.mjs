@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 const rawArgs = process.argv.slice(2);
 const args = rawArgs[0] === '--' ? rawArgs.slice(1) : rawArgs;
 const observerTarget = 'src/commands/observer.test.ts';
+const hasExplicitFileParallelism = args.some((arg) => arg.startsWith('--fileParallelism'));
 
 const run = (command, commandArgs) => spawnSync(command, commandArgs, {
   stdio: 'inherit',
@@ -25,5 +26,12 @@ if (onlyObserverTarget) {
   exitWith(observerResult);
 }
 
-const defaultResult = run('vitest', ['run', '--passWithNoTests', ...args]);
+const defaultVitestArgs = ['run', '--passWithNoTests'];
+
+// Windows CLI tests are git- and filesystem-heavy; serial file execution avoids worker timeout noise.
+if (process.platform === 'win32' && !hasExplicitFileParallelism) {
+  defaultVitestArgs.push('--fileParallelism=false');
+}
+
+const defaultResult = run('vitest', [...defaultVitestArgs, ...args]);
 exitWith(defaultResult);

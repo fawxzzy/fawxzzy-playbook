@@ -1,0 +1,1 @@
+{"version":3,"file":"runInitRule.js","sourceRoot":"","sources":["../../../src/rules/analyze/runInitRule.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,MAAM,WAAW,GAAgB;IACtC,EAAE,EAAE,kBAAkB;IACtB,WAAW,EAAE,6EAA6E;IAC1F,KAAK,EAAE,CAAC,EAAE,cAAc,EAAE,EAAE,EAAE,CAAC,cAAc,CAAC,EAAE,KAAK,kBAAkB;CACxE,CAAC"}

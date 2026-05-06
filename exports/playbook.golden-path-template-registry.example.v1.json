@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "playbook.golden-path-template-registry.v1",
+  "templates": [
+    {
+      "id": "contract_first_engine_feature",
+      "title": "Contract-first engine feature",
+      "archetype": "engine_feature",
+      "purpose": "Define deterministic contracts, validators, and tests before adding engine builders or any command surface.",
+      "requiredSurfaces": [
+        "exports/*.schema.v1.json",
+        "exports/*.example.v1.json",
+        "scripts/validate-<feature>.mjs",
+        "test/scripts/validate-<feature>.test.mjs"
+      ],
+      "guardedDefaults": [
+        "Keep command surfaces absent until the artifact contract and stable fixtures are proven.",
+        "Prefer repo-relative paths and stable examples with no timestamps or local absolute paths."
+      ],
+      "adoptionChecklist": [
+        "Publish schemas and examples first.",
+        "Add a fail-closed validator.",
+        "Add root script coverage before engine/report builders.",
+        "Only promote command truth after contract truth is stable."
+      ]
+    },
+    {
+      "id": "local_operator_repo",
+      "title": "Local operator repo",
+      "archetype": "operator",
+      "purpose": "Model a bounded local operator with explicit manifests, validation, receipts, and restore-safe behavior.",
+      "requiredSurfaces": [
+        "manifest schema",
+        "receipt contract",
+        "validation command coverage",
+        "restore or backup contract"
+      ],
+      "guardedDefaults": [
+        "Do not widen into a cloud control plane.",
+        "Prefer secret indirection and explicit health/readiness checks over ambient deploy authority."
+      ],
+      "adoptionChecklist": [
+        "Define manifest and receipt boundaries first.",
+        "Keep backup and restore semantics explicit.",
+        "Treat approvals and execution as separate ownership surfaces."
+      ]
+    },
+    {
+      "id": "nextjs_supabase_app",
+      "title": "Next.js + Supabase app",
+      "archetype": "application",
+      "purpose": "Standardize install-first product apps that keep server-side writes, RLS boundaries, and Playbook/Lifeline seams explicit.",
+      "requiredSurfaces": [
+        "app router boundary",
+        "server action or API write seam",
+        "RLS-backed data safety boundary",
+        "governed signal/export seam"
+      ],
+      "guardedDefaults": [
+        "Avoid moving domain truth into Playbook.",
+        "Keep monetization, experimentation, and activation contracts explicit before runtime automation."
+      ],
+      "adoptionChecklist": [
+        "Declare product truth and protected write seams.",
+        "Keep install/onboarding flow intentional.",
+        "Expose only structural evidence to Playbook unless domain truth belongs in the app."
+      ]
+    }
+  ]
+}

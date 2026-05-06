@@ -1,0 +1,104 @@
+import { ExitCode } from '../lib/cliContract.js';
+import { MODULE_DIGESTS_RELATIVE_PATH, buildRiskAwareContextSummary, readConsumedRuntimeManifestsArtifact, readModuleDigestsArtifact, resolveContextSnapshotCache, RUNTIME_MANIFESTS_RELATIVE_PATH } from '@zachariahredfield/playbook-engine';
+import { listRegisteredCommands } from './index.js';
+const buildContextSnapshot = (cwd) => {
+    const runtimeManifestArtifact = readConsumedRuntimeManifestsArtifact(cwd);
+    const moduleDigests = readModuleDigestsArtifact(cwd);
+    const riskAwareContext = buildRiskAwareContextSummary(cwd);
+    return {
+        schemaVersion: '1.0',
+        command: 'context',
+        architecture: 'modular-monolith',
+        workflow: ['verify', 'plan', 'apply'],
+        repositoryIntelligence: {
+            artifact: '.playbook/repo-index.json',
+            moduleDigestsArtifact: MODULE_DIGESTS_RELATIVE_PATH,
+            moduleDigestsAvailable: moduleDigests !== null,
+            moduleDigestCount: moduleDigests?.modules.length ?? 0,
+            commands: ['index', 'query', 'ask', 'explain']
+        },
+        controlPlaneArtifacts: {
+            policyEvaluation: '.playbook/policy-evaluation.json',
+            policyApplyResult: '.playbook/policy-apply-result.json',
+            session: '.playbook/session.json',
+            cycleState: '.playbook/cycle-state.json',
+            cycleHistory: '.playbook/cycle-history.json',
+            improvementCandidates: '.playbook/improvement-candidates.json',
+            prReview: '.playbook/pr-review.json'
+        },
+        runtimeManifests: {
+            artifact: RUNTIME_MANIFESTS_RELATIVE_PATH,
+            manifestsCount: runtimeManifestArtifact.manifests.length,
+            manifests: runtimeManifestArtifact.manifests
+        },
+        cli: {
+            commands: listRegisteredCommands().map((entry) => entry.name)
+        },
+        riskAwareContext
+    };
+};
+const buildContextResult = (cwd) => {
+    const cached = resolveContextSnapshotCache({
+        projectRoot: cwd,
+        scope: { kind: 'repo', id: 'root' },
+        shapingLevel: 'context',
+        riskTier: 'context',
+        sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json'],
+        buildSnapshot: () => buildContextSnapshot(cwd)
+    });
+    return cached.snapshot;
+};
+const printText = (result) => {
+    console.log('Playbook Context');
+    console.log('');
+    console.log('Architecture');
+    console.log(result.architecture);
+    console.log('');
+    console.log('Workflow');
+    console.log(result.workflow.join(' → '));
+    console.log('');
+    console.log('Repository Intelligence');
+    console.log(`Artifact: ${result.repositoryIntelligence.artifact}`);
+    console.log(`Module digests artifact: ${result.repositoryIntelligence.moduleDigestsArtifact}`);
+    console.log(`Module digests available: ${result.repositoryIntelligence.moduleDigestsAvailable ? 'yes' : 'no'}`);
+    console.log(`Module digest count: ${result.repositoryIntelligence.moduleDigestCount}`);
+    console.log(`Commands: ${result.repositoryIntelligence.commands.join(', ')}`);
+    console.log('');
+    console.log('Control Plane Artifacts');
+    console.log(`Policy evaluation: ${result.controlPlaneArtifacts.policyEvaluation}`);
+    console.log(`Policy apply result: ${result.controlPlaneArtifacts.policyApplyResult}`);
+    console.log(`Session: ${result.controlPlaneArtifacts.session}`);
+    console.log(`Cycle state: ${result.controlPlaneArtifacts.cycleState}`);
+    console.log(`Cycle history: ${result.controlPlaneArtifacts.cycleHistory}`);
+    console.log(`Improvement candidates: ${result.controlPlaneArtifacts.improvementCandidates}`);
+    console.log(`PR review: ${result.controlPlaneArtifacts.prReview}`);
+    console.log('');
+    console.log('Runtime Manifests');
+    console.log(`Artifact: ${result.runtimeManifests.artifact}`);
+    console.log(`Manifests: ${result.runtimeManifests.manifestsCount}`);
+    console.log('');
+    console.log('Risk-aware Context Shaping');
+    console.log(`Available: ${result.riskAwareContext ? 'yes' : 'no'}`);
+    if (result.riskAwareContext) {
+        console.log(`High-risk modules: ${result.riskAwareContext.highRiskModules}`);
+        console.log(`Low-risk modules: ${result.riskAwareContext.lowRiskModules}`);
+        console.log(`Depth mapping: high=${result.riskAwareContext.defaultDepthByTier.high}, low=${result.riskAwareContext.defaultDepthByTier.low}`);
+    }
+    console.log('');
+    console.log('CLI Commands');
+    for (const command of result.cli.commands) {
+        console.log(command);
+    }
+};
+export const runContext = async (cwd, options) => {
+    const result = buildContextResult(cwd);
+    if (options.format === 'json') {
+        console.log(JSON.stringify(result, null, 2));
+        return ExitCode.Success;
+    }
+    if (!options.quiet) {
+        printText(result);
+    }
+    return ExitCode.Success;
+};
+//# sourceMappingURL=context.js.map

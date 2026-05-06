@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "playbook.research.project-profile.v1",
+  "project": {
+    "id": "fawxzzy-playbook",
+    "name": "Playbook",
+    "repo": "fawxzzy/fawxzzy-playbook",
+    "role": "standardization_engine",
+    "currentPosture": "Deterministic repo runtime and trust layer for shared contracts, governance, and reusable workflow surfaces.",
+    "architectureFit": "Fits research standardization work because downstream repos already consume Playbook contracts, reports, and verification surfaces.",
+    "researchFocus": [
+      "research-artifact-contracts",
+      "repo-scorecards",
+      "golden-path-templates",
+      "workflow-pack-environment-bridges"
+    ],
+    "highConfidenceComparators": [
+      "Backstage catalog/templates/TechDocs",
+      "Port scorecards",
+      "OpsLevel scorecards",
+      "OpenSSF Scorecard"
+    ]
+  }
+}

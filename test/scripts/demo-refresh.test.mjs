@@ -4,11 +4,17 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 
 import { writeCommandTruthContract } from '../../scripts/managed-docs-lib.mjs';
+import {
+  createPatchedNodeArgs,
+  createScriptEnv,
+  nodeCommand,
+  repoRootFromImportMeta,
+  resolvePackageManagerCommand
+} from './helpers/runtime-test-utils.mjs';
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const repoRoot = repoRootFromImportMeta(import.meta.url);
 const demoRefreshScript = path.join(repoRoot, 'scripts', 'demo-refresh.mjs');
 const cliPath = path.join(repoRoot, 'packages', 'cli', 'dist', 'main.js');
 
@@ -38,17 +44,17 @@ const copyRequiredDocs = (targetRoot) => {
 };
 
 const runNode = (cwd, args, env = {}) =>
-  spawnSync('node', args, {
+  spawnSync(nodeCommand, args, {
     cwd,
     encoding: 'utf8',
-    env: { ...process.env, ...env }
+    env: createScriptEnv(env)
   });
 
 const runCommand = (cwd, command, args, env = {}) =>
-  spawnSync(command, args, {
+  spawnSync(resolvePackageManagerCommand(command).command, [...resolvePackageManagerCommand(command).extraArgs, ...args], {
     cwd,
     encoding: 'utf8',
-    env: { ...process.env, ...env }
+    env: createScriptEnv(env)
   });
 
 const createDemoRepoFixture = (name) => {
@@ -68,21 +74,6 @@ const createDemoRepoFixture = (name) => {
     ].join('\n') + '\n'
   );
   fs.writeFileSync(
-    path.join(fixtureRoot, 'package.json'),
-    JSON.stringify(
-      {
-        name,
-        version: '0.0.0',
-        private: true,
-        scripts: {
-          'demo:refresh': 'node scripts/refresh-demo-artifacts.mjs'
-        }
-      },
-      null,
-      2
-    ) + '\n'
-  );
-  fs.writeFileSync(
     path.join(fixtureRoot, 'scripts', 'refresh-demo-artifacts.mjs'),
     `#!/usr/bin/env node
 import fs from 'node:fs';
@@ -94,7 +85,7 @@ if (!cliPath) {
   throw new Error('PLAYBOOK_CLI_PATH is required for this fixture.');
 }
 
-const result = spawnSync('node', [cliPath, 'doctor', '--json'], {
+const result = spawnSync(process.execPath, [cliPath, 'doctor', '--json'], {
   cwd: process.cwd(),
   encoding: 'utf8',
   env: process.env
@@ -110,9 +101,6 @@ fs.mkdirSync(path.join(process.cwd(), '.playbook', 'demo-artifacts'), { recursiv
 fs.writeFileSync(path.join(process.cwd(), '.playbook', 'demo-artifacts', 'doctor.txt'), 'doctor ok\\n');
 `
   );
-
-  const installResult = runCommand(fixtureRoot, 'npm', ['install', '--package-lock-only'], { npm_config_audit: 'false' });
-  assert.equal(installResult.status, 0, installResult.stderr || installResult.stdout);
 
   const initResult = runCommand(fixtureRoot, 'git', ['init', '-b', 'main']);
   assert.equal(initResult.status, 0, initResult.stderr || initResult.stdout);
@@ -146,20 +134,26 @@ test('writeCommandTruthContract repairs missing contract so doctor passes', asyn
 
 test('demo refresh syncs command-truth before running doctor in the demo repo', () => {
   const fixtureRepo = createDemoRepoFixture('playbook-demo-refresh-fixture');
-  const result = runNode(repoRoot, [
+  const refreshCommandNodePath = nodeCommand.replace(/\\/g, '/');
+  const result = runNode(repoRoot, createPatchedNodeArgs(
     demoRefreshScript,
+    [
     '--dry-run',
     '--repo-url',
     fixtureRepo,
     '--feature-id',
     'PB-V1-DEMO-REFRESH-001'
-  ]);
+    ]
+  ), {
+    PLAYBOOK_DEMO_REFRESH_CMD: `"${refreshCommandNodePath}" scripts/refresh-demo-artifacts.mjs`
+  });
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(result.stdout, /Validated required managed docs\/contracts in temp demo repo before demo refresh/);
-  assert.match(result.stdout, /Using refresh command: npm run demo:refresh/);
+  assert.match(result.stdout, /Using refresh command: .*refresh-demo-artifacts\.mjs/);
   assert.match(result.stdout, /Detected changes:/);
   assert.match(result.stdout, /docs\/contracts\/command-truth\.json/);
   assert.match(result.stdout, /\.playbook\/demo-artifacts\/doctor\.txt/);
+  assert.doesNotMatch(result.stdout, /\.playbook\/finding-state\.json/);
   assert.match(result.stdout, /Dry-run mode: no commit\/push\/PR actions taken\./);
 });

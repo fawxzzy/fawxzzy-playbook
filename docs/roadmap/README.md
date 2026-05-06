@@ -16,6 +16,7 @@ Rule: command implementation status is **not** authored in roadmap documents; us
 - `docs/PLAYBOOK_PRODUCT_ROADMAP.md`: strategic direction, sequencing, and commitment posture.
 - `docs/roadmap/ROADMAP.json`: CI-validated implementation contract (`feature_id`, dependencies, status, ownership, verification commands).
 - `docs/roadmap/IMPROVEMENTS_BACKLOG.md`: emerging ideas not yet committed in roadmap sequencing.
+- `docs/roadmap/*EXTERNAL_RESEARCH*.md`: review-only research synthesis that informs future roadmap promotion without claiming live command or implementation truth.
 - `docs/archive/roadmap/*`: historical and transitional execution plans retained for context, not operator guidance.
 
 ## Promotion flow

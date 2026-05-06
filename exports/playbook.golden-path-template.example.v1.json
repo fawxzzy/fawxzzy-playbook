@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "playbook.golden-path-template.v1",
+  "template": {
+    "id": "contract_first_engine_feature",
+    "title": "Contract-first engine feature",
+    "archetype": "engine_feature",
+    "purpose": "Define deterministic contracts, validators, and tests before adding engine builders or any command surface.",
+    "requiredSurfaces": [
+      "exports/*.schema.v1.json",
+      "exports/*.example.v1.json",
+      "scripts/validate-<feature>.mjs",
+      "test/scripts/validate-<feature>.test.mjs"
+    ],
+    "guardedDefaults": [
+      "Keep command surfaces absent until the artifact contract and stable fixtures are proven.",
+      "Prefer repo-relative paths and stable examples with no timestamps or local absolute paths."
+    ],
+    "adoptionChecklist": [
+      "Publish schemas and examples first.",
+      "Add a fail-closed validator.",
+      "Add root script coverage before engine/report builders.",
+      "Only promote command truth after contract truth is stable."
+    ]
+  }
+}

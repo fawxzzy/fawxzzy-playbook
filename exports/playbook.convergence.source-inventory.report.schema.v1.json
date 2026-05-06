@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fawxzzy.dev/schemas/playbook.convergence.source-inventory.report.v1.json",
+  "title": "Playbook Convergence Source Inventory Report v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "status",
+    "summary",
+    "sources",
+    "warnings",
+    "blocked"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "playbook.convergence.source-inventory.report.v1"
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "blocked"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "totalSources",
+        "byDecision",
+        "bySourceClass"
+      ],
+      "properties": {
+        "totalSources": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "byDecision": {
+          "type": "object",
+          "properties": {
+            "migrate": { "type": "integer", "minimum": 0 },
+            "template": { "type": "integer", "minimum": 0 },
+            "reference_only": { "type": "integer", "minimum": 0 },
+            "future_adapter": { "type": "integer", "minimum": 0 },
+            "do_not_migrate": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "bySourceClass": {
+          "type": "object",
+          "properties": {
+            "owner_contract": { "type": "integer", "minimum": 0 },
+            "repo_adoption_evidence": { "type": "integer", "minimum": 0 },
+            "repo_verification_report": { "type": "integer", "minimum": 0 },
+            "root_projection": { "type": "integer", "minimum": 0 },
+            "external_pack_policy": { "type": "integer", "minimum": 0 },
+            "execution_boundary": { "type": "integer", "minimum": 0 },
+            "production_observation": { "type": "integer", "minimum": 0 },
+            "domain_truth": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "repo",
+          "path",
+          "sourceClassification",
+          "sourceClass",
+          "migrationDecision",
+          "rationale"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "repo": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceClassification": {
+            "enum": [
+              "owner_contract",
+              "repo_adoption_evidence",
+              "repo_verification_report",
+              "root_projection",
+              "execution_boundary",
+              "domain_truth",
+              "external_pack",
+              "production_observation",
+              "mission_context",
+              "architecture_boundary",
+              "initiative_memory"
+            ]
+          },
+          "sourceClass": {
+            "enum": [
+              "owner_contract",
+              "repo_adoption_evidence",
+              "repo_verification_report",
+              "root_projection",
+              "external_pack_policy",
+              "execution_boundary",
+              "production_observation",
+              "domain_truth"
+            ]
+          },
+          "migrationDecision": {
+            "enum": [
+              "migrate",
+              "template",
+              "reference_only",
+              "future_adapter",
+              "do_not_migrate"
+            ]
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1
+          },
+          "targetSurface": {
+            "type": "string",
+            "minLength": 1
+          },
+          "guardrail": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/issue" }
+    },
+    "blocked": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/issue" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "issue": {
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "command-availability-claim",
+            "duplicate-source-id",
+            "invalid-source-id",
+            "missing-field",
+            "missing-target-surface",
+            "unknown-classification",
+            "unknown-migration-decision"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -256,6 +256,56 @@ describe('runVerify policy mode', () => {
     logSpy.mockRestore();
   });
 
+  it('passes baseline selection through to the verify engine and exposes finding state', async () => {
+    const { runVerify } = await import('./verify.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    verifyRepo.mockReturnValue({
+      ok: true,
+      summary: { failures: 0, warnings: 0, baselineRef: 'main' },
+      failures: [],
+      warnings: [],
+      findingState: {
+        artifactPath: '/repo/.playbook/finding-state.json',
+        baselineRef: 'main',
+        summary: { total: 1, new: 1, existing: 0, resolved: 0, ignored: 0 },
+        findings: [
+          {
+            findingId: 'verify.finding:abc',
+            ruleId: 'release.version-governance',
+            normalizedLocation: 'release version governance',
+            evidenceHash: 'hash',
+            state: 'new',
+            firstSeenAt: '2026-05-04T00:00:00.000Z',
+            lastSeenAt: '2026-05-04T00:00:00.000Z',
+            evidenceRefs: ['release version governance']
+          }
+        ],
+        resolved: []
+      }
+    });
+
+    const exitCode = await runVerify('/repo', {
+      format: 'json',
+      ci: true,
+      quiet: true,
+      explain: false,
+      policy: false,
+      baseline: 'main'
+    });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(verifyRepo).toHaveBeenCalledWith('/repo', { baselineRef: 'main' });
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.findingState).toMatchObject({
+      artifactPath: '/repo/.playbook/finding-state.json',
+      baselineRef: 'main',
+      summary: { new: 1, existing: 0, resolved: 0, ignored: 0 }
+    });
+
+    logSpy.mockRestore();
+  });
+
   it('fails clearly for unsupported verify phases', async () => {
     const { runVerify } = await import('./verify.js');
 

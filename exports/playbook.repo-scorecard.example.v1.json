@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "playbook.repo-scorecard.v1",
+  "repo": {
+    "id": "fawxzzy-playbook",
+    "name": "Playbook"
+  },
+  "overallStatus": "partial",
+  "summary": {
+    "verified": 5,
+    "partial": 3,
+    "missing": 0,
+    "notApplicable": 0
+  },
+  "dimensions": [
+    {
+      "id": "owner_truth",
+      "title": "Owner truth",
+      "status": "verified",
+      "summary": "Canonical contract and roadmap owner surfaces are published and versioned.",
+      "evidence": [
+        "docs/contracts/PLAYBOOK-CONTRACT.md",
+        "docs/roadmap/ROADMAP.json"
+      ]
+    },
+    {
+      "id": "command_truth",
+      "title": "Command truth",
+      "status": "verified",
+      "summary": "Live command inventory remains owned by command docs rather than roadmap prose.",
+      "evidence": [
+        "docs/commands/README.md",
+        "AGENTS.md"
+      ]
+    },
+    {
+      "id": "verification_truth",
+      "title": "Verification truth",
+      "status": "verified",
+      "summary": "The repo carries deterministic verification contracts and root validation gates.",
+      "evidence": [
+        "scripts/validate-roadmap-contract.mjs",
+        "docs/contracts/COMMAND_CONTRACTS_V1.md"
+      ]
+    },
+    {
+      "id": "artifact_hygiene",
+      "title": "Artifact hygiene",
+      "status": "partial",
+      "summary": "Artifact refs are increasingly canonicalized, but not every output family is scored yet.",
+      "evidence": [
+        "exports/playbook.contract.schema.v1.json",
+        "exports/playbook.research.project-profile.schema.v1.json"
+      ],
+      "nextAction": "Expand scorecard coverage to report-only artifact families after contract checks stabilize."
+    },
+    {
+      "id": "docs_governance",
+      "title": "Docs governance",
+      "status": "partial",
+      "summary": "Docs audit is enforced, with one known warning still tracked separately.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/roadmap/README.md"
+      ],
+      "nextAction": "Keep the AGENTS planning-language warning scoped to a separate cleanup lane."
+    },
+    {
+      "id": "workflow_pack_adoption",
+      "title": "Workflow-pack adoption",
+      "status": "partial",
+      "summary": "Workflow-pack doctrine exists, but the environment-bridge contract is still a later slice.",
+      "evidence": [
+        "docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md",
+        "docs/roadmap/WAVE_ONE_EXTERNAL_RESEARCH_ROADMAP_2026-05-03.md"
+      ],
+      "nextAction": "Land the workflow-pack environment bridge contract before grading this dimension as verified."
+    },
+    {
+      "id": "local_verification",
+      "title": "Local verification",
+      "status": "verified",
+      "summary": "Local verification receipts and evidence flows are already modeled explicitly.",
+      "evidence": [
+        "docs/contracts/LOCAL_VERIFICATION_RECEIPT_CONTRACT.md",
+        ".playbook/local-verification-receipt.json"
+      ]
+    },
+    {
+      "id": "roadmap_governance",
+      "title": "Roadmap governance",
+      "status": "verified",
+      "summary": "Feature sequencing, status semantics, and roadmap validation are governed by contract.",
+      "evidence": [
+        "docs/roadmap/ROADMAP.json",
+        "scripts/validate-roadmap-contract.mjs"
+      ]
+    }
+  ]
+}

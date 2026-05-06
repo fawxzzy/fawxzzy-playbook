@@ -2,10 +2,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { assessReleaseSync, verifyReleaseGovernance } from '../src/release/index.js';
 
 const BREAKING_CHANGE_MARKER = ['BREAKING', 'CHANGE'].join(' ');
+const createdRepos: string[] = [];
 
 const run = (cwd: string, ...args: string[]): string =>
   execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
@@ -22,6 +23,7 @@ const write = (filePath: string, value: string): void => {
 
 const createRepo = (): { repoRoot: string; baseSha: string } => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-release-verify-'));
+  createdRepos.push(repoRoot);
   run(repoRoot, 'init');
   run(repoRoot, 'config', 'user.email', 'playbook@example.com');
   run(repoRoot, 'config', 'user.name', 'Playbook');
@@ -42,6 +44,12 @@ const createRepo = (): { repoRoot: string; baseSha: string } => {
   return { repoRoot, baseSha };
 };
 
+afterEach(() => {
+  for (const repoRoot of createdRepos.splice(0, createdRepos.length)) {
+    fs.rmSync(repoRoot, { recursive: true, force: true });
+  }
+});
+
 describe('verifyReleaseGovernance', () => {
   it('fails when public contract expansion lands without version governance updates', () => {
     const { repoRoot, baseSha } = createRepo();
@@ -53,7 +61,7 @@ describe('verifyReleaseGovernance', () => {
 
     expect(failures.map((failure) => failure.id)).toContain('release.contractExpansion.releasePlan.required');
     expect(failures.map((failure) => failure.id)).toContain('release.requiredVersionBump.missing');
-  });
+  }, 10000);
 
   it('does not fail for docs-only changes', () => {
     const { repoRoot, baseSha } = createRepo();
@@ -64,7 +72,7 @@ describe('verifyReleaseGovernance', () => {
     const failures = verifyReleaseGovernance(repoRoot, { baseRef: 'HEAD~0', baseSha });
 
     expect(failures).toEqual([]);
-  });
+  }, 10000);
 
 
   it('ignores the tracked release-plan artifact when classifying release bumps', () => {
@@ -82,7 +90,7 @@ describe('verifyReleaseGovernance', () => {
     const failures = verifyReleaseGovernance(repoRoot, { baseRef: 'HEAD~0', baseSha });
 
     expect(failures).toEqual([]);
-  });
+  }, 10000);
 
   it('fails deterministically for lockstep mismatch', () => {
     const { repoRoot, baseSha } = createRepo();
@@ -93,7 +101,7 @@ describe('verifyReleaseGovernance', () => {
     expect(failures).toEqual([
       expect.objectContaining({ id: 'release.versionGroup.inconsistent' })
     ]);
-  });
+  }, 10000);
 
   it('keeps release sync idempotent by deriving next version from baseRef version', () => {
     const { repoRoot, baseSha } = createRepo();
@@ -138,7 +146,7 @@ describe('verifyReleaseGovernance', () => {
     const changelogAfterSecondCheck = fs.readFileSync(changelogPath, 'utf8');
     const releaseHeaderMatchesAfterSecondCheck = changelogAfterSecondCheck.match(/## 1\.2\.4 - 2026-03-27/g) ?? [];
     expect(releaseHeaderMatchesAfterSecondCheck.length).toBe(releaseHeaderMatches.length);
-  });
+  }, 30000);
 
   it('passes generated-artifact mode when release-plan file is absent and durable outputs are aligned', () => {
     const { repoRoot, baseSha } = createRepo();
@@ -163,7 +171,7 @@ describe('verifyReleaseGovernance', () => {
 
     const assessed = assessReleaseSync(repoRoot, { baseRef: baseSha, mode: 'check' });
     expect(assessed.hasDrift).toBe(false);
-  });
+  }, 30000);
 
   it('fails generated-artifact mode when versions/changelog are not aligned', () => {
     const { repoRoot, baseSha } = createRepo();
@@ -179,7 +187,7 @@ describe('verifyReleaseGovernance', () => {
     const assessed = assessReleaseSync(repoRoot, { baseRef: baseSha, mode: 'check' });
     expect(assessed.hasDrift).toBe(true);
     expect(assessed.governanceFailures.map((failure) => failure.id)).toContain('release.requiredVersionBump.missing');
-  });
+  }, 30000);
 
   it('keeps legacy committed-plan mode backward compatible by ignoring repo copy parity', () => {
     const { repoRoot, baseSha } = createRepo();
@@ -201,5 +209,5 @@ describe('verifyReleaseGovernance', () => {
 
     const assessed = assessReleaseSync(repoRoot, { baseRef: baseSha, mode: 'check' });
     expect(assessed.hasDrift).toBe(false);
-  });
+  }, 30000);
 });

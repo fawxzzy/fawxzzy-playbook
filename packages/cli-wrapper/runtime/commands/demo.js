@@ -1,0 +1,74 @@
+import { ExitCode } from '../lib/cliContract.js';
+const DEMO_REPOSITORY_URL = 'https://github.com/ZachariahRedfield/playbook-demo';
+const DEMO_WORKFLOW = [
+    `git clone ${DEMO_REPOSITORY_URL}`,
+    'cd playbook-demo',
+    'pnpm install',
+    'pnpm playbook ai-context --json',
+    'pnpm playbook ai-contract --json',
+    'pnpm playbook context --json',
+    'pnpm playbook index --json',
+    'pnpm playbook query modules --json',
+    'pnpm playbook explain architecture --json',
+    'pnpm playbook verify',
+    'pnpm playbook plan --json --out .playbook/plan.json',
+    'pnpm playbook apply --from-plan .playbook/plan.json',
+    'pnpm playbook verify'
+];
+const DEMONSTRATES = [
+    'repository understanding',
+    'deterministic rule enforcement',
+    'explainable findings',
+    'safe remediation workflow'
+];
+const collectDemoContract = () => ({
+    schemaVersion: '1.0',
+    command: 'demo',
+    repository: {
+        name: 'playbook-demo',
+        url: DEMO_REPOSITORY_URL
+    },
+    workflow: DEMO_WORKFLOW,
+    expectedInitialFindings: {
+        firstVerifyPasses: false,
+        planProducesReviewedTasks: true,
+        applyExecutesBoundedTasks: true,
+        finalVerifyPasses: true
+    },
+    demonstrates: DEMONSTRATES,
+    summary: 'Official Playbook onboarding flow: clone the demo repository, establish trust/bootstrap context, generate deterministic repository intelligence, verify governance findings, execute reviewed plan/apply remediation, and confirm final verification passes.'
+});
+const printText = (result) => {
+    console.log('Playbook Demo');
+    console.log('');
+    console.log('Repository:');
+    console.log(result.repository.url);
+    console.log('');
+    console.log('Quick start:');
+    for (const step of result.workflow) {
+        console.log(step);
+    }
+    console.log('');
+    console.log('Expected initial state:');
+    console.log('- first verify fails');
+    console.log('- plan generates reviewed remediation tasks');
+    console.log('- apply executes bounded plan tasks');
+    console.log('- final verify passes');
+    console.log('');
+    console.log('What this demonstrates:');
+    for (const point of result.demonstrates) {
+        console.log(`- ${point}`);
+    }
+};
+export const runDemo = async (_cwd, options) => {
+    const result = collectDemoContract();
+    if (options.format === 'json') {
+        console.log(JSON.stringify(result, null, 2));
+        return ExitCode.Success;
+    }
+    if (!options.quiet) {
+        printText(result);
+    }
+    return ExitCode.Success;
+};
+//# sourceMappingURL=demo.js.map

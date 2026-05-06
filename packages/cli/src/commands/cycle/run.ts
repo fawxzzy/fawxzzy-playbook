@@ -377,7 +377,7 @@ export const runCycle = async (cwd: string, options: CycleOptions): Promise<numb
         const executionRunsRoot = path.join(cwd, '.playbook', 'execution-runs');
         if (fs.existsSync(executionRunsRoot)) {
           for (const entry of fs.readdirSync(executionRunsRoot).filter((file) => file.endsWith('.json')).sort((left, right) => left.localeCompare(right))) {
-            executionRunRefs.add(path.join('.playbook', 'execution-runs', entry));
+            executionRunRefs.add(path.posix.join('.playbook', 'execution-runs', entry));
           }
         }
       }

@@ -22,6 +22,7 @@ const REQUIRED_ALLOWED_PATHS = [
   'docs/ARCHITECTURE_DIAGRAMS.md',
   'docs/contracts/command-truth.json'
 ];
+const RUNTIME_ONLY_PATHS = ['.playbook/finding-state.json'];
 const DEFAULT_GIT_AUTHOR_NAME = 'playbook-demo-refresh[bot]';
 const DEFAULT_GIT_AUTHOR_EMAIL = 'playbook-demo-refresh[bot]@users.noreply.github.com';
 
@@ -99,6 +100,27 @@ const resolveAllowedPaths = () => {
 
 const isAllowedFile = (filePath, allowlist) =>
   allowlist.some((allowedPath) => (allowedPath.endsWith('/') ? filePath.startsWith(allowedPath) : filePath === allowedPath));
+
+const restoreRuntimeOnlyArtifacts = (demoDir) => {
+  for (const relativePath of RUNTIME_ONLY_PATHS) {
+    const tracked = run({
+      cwd: demoDir,
+      command: 'git',
+      args: ['ls-files', '--error-unmatch', '--', relativePath],
+      allowFailure: true
+    });
+
+    if (tracked.status === 0) {
+      run({ cwd: demoDir, command: 'git', args: ['checkout', '--', relativePath] });
+      continue;
+    }
+
+    const absolutePath = path.join(demoDir, relativePath);
+    if (fs.existsSync(absolutePath)) {
+      fs.rmSync(absolutePath, { force: true });
+    }
+  }
+};
 
 const tokenizeCommand = (command) => {
   const tokens = [];
@@ -348,6 +370,7 @@ const main = async () => {
   const refreshCommand = resolveRefreshCommand(demoDir);
   console.log(`Using refresh command: ${refreshCommand.description}`);
   runRefreshCommand({ demoDir, refreshCommand });
+  restoreRuntimeOnlyArtifacts(demoDir);
 
   const changedFiles = parseChangedFiles(demoDir);
   if (changedFiles.length === 0) {
