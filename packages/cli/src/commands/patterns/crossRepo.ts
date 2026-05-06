@@ -11,6 +11,17 @@ import { emitJsonOutput } from '../../lib/jsonArtifact.js';
 import { ExitCode } from '../../lib/cliContract.js';
 
 type PatternsOptions = { format: 'text' | 'json'; quiet: boolean; outFile?: string };
+type CandidatePattern = CrossRepoPatternsArtifact['candidate_patterns'][number];
+type Comparison = CrossRepoPatternsArtifact['comparisons'][number];
+type RepoDelta = Comparison['repo_deltas'][number];
+type RepoSummary = NonNullable<CrossRepoPatternsArtifact['repositories']>[number];
+type AggregateSummary = NonNullable<CrossRepoPatternsArtifact['aggregates']>[number];
+type RepoDeltaPatternEntry = {
+  pattern_id: string;
+  strength?: number;
+  attractor?: number;
+  fitness?: number;
+};
 
 const readOptionValue = (args: string[], optionName: string): string | null => {
   const index = args.indexOf(optionName);
@@ -39,10 +50,25 @@ const parseRepoArgs = (cwd: string, commandArgs: string[]): CrossRepoInput[] => 
   return [{ id: path.basename(cwd), repoPath: cwd }];
 };
 
-const candidatePatternsFromArtifact = (artifact: any): any[] => {
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const isAggregateSummary = (value: unknown): value is AggregateSummary =>
+  isRecord(value) && typeof value.pattern_id === 'string';
+
+const isComparison = (value: unknown): value is Comparison =>
+  isRecord(value) && typeof value.left_repo_id === 'string' && typeof value.right_repo_id === 'string' && Array.isArray(value.repo_deltas);
+
+const isRepoSummary = (value: unknown): value is RepoSummary =>
+  isRecord(value) && typeof value.id === 'string' && Array.isArray(value.patterns);
+
+const isRepoDeltaPatternEntry = (value: unknown): value is RepoDeltaPatternEntry =>
+  isRecord(value) && typeof value.pattern_id === 'string';
+
+const candidatePatternsFromArtifact = (artifact: CrossRepoPatternsArtifact): CandidatePattern[] => {
   if (Array.isArray(artifact.candidate_patterns)) return artifact.candidate_patterns;
   if (Array.isArray(artifact.aggregates)) {
-    return artifact.aggregates.map((entry: any) => ({
+    return artifact.aggregates.filter(isAggregateSummary).map((entry: AggregateSummary): CandidatePattern => ({
       id: entry.pattern_id,
       status: 'candidate_read_only',
       portability: { score: Number(entry.portability_score ?? 0), factors: [] },
@@ -53,22 +79,27 @@ const candidatePatternsFromArtifact = (artifact: any): any[] => {
   return [];
 };
 
-const computeRepoDelta = (artifact: any, leftRepo: string, rightRepo: string): any[] => {
+const computeRepoDelta = (artifact: CrossRepoPatternsArtifact, leftRepo: string, rightRepo: string): RepoDelta[] => {
   if (Array.isArray(artifact.comparisons)) {
-    const pair = artifact.comparisons.find((entry: any) =>
+    const pair = artifact.comparisons.filter(isComparison).find((entry: Comparison) =>
       (entry.left_repo_id === leftRepo && entry.right_repo_id === rightRepo) || (entry.left_repo_id === rightRepo && entry.right_repo_id === leftRepo)
     );
     if (pair) return pair.repo_deltas ?? [];
   }
 
-  const left = artifact.repositories?.find((repo: any) => repo.id === leftRepo);
-  const right = artifact.repositories?.find((repo: any) => repo.id === rightRepo);
+  const left = artifact.repositories?.filter(isRepoSummary).find((repo: RepoSummary) => repo.id === leftRepo);
+  const right = artifact.repositories?.filter(isRepoSummary).find((repo: RepoSummary) => repo.id === rightRepo);
   if (!left || !right) throw new Error(`playbook patterns repo-delta: repositories must exist in artifact (got: ${leftRepo}, ${rightRepo})`);
-  const rightByPattern = new Map((right.patterns ?? []).map((entry: any) => [entry.pattern_id, entry]));
-  return (left.patterns ?? [])
-    .filter((entry: any) => rightByPattern.has(entry.pattern_id))
-    .map((entry: any) => {
-      const rhs: any = rightByPattern.get(entry.pattern_id)!;
+  const rightPatterns = (right.patterns ?? []).filter(isRepoDeltaPatternEntry);
+  const rightByPattern = new Map<string, RepoDeltaPatternEntry>(
+    rightPatterns.map((entry: RepoDeltaPatternEntry) => [entry.pattern_id, entry] as const)
+  );
+  const leftPatterns = (left.patterns ?? []).filter(isRepoDeltaPatternEntry);
+  return leftPatterns
+    .filter(isRepoDeltaPatternEntry)
+    .filter((entry: RepoDeltaPatternEntry) => rightByPattern.has(entry.pattern_id))
+    .map((entry: RepoDeltaPatternEntry): RepoDelta => {
+      const rhs: RepoDeltaPatternEntry = rightByPattern.get(entry.pattern_id)!;
       return {
         pattern_id: entry.pattern_id,
         left_repo: leftRepo,
@@ -103,12 +134,11 @@ export const runPatternsCrossRepo = (cwd: string, commandArgs: string[], options
 };
 
 export const runPatternsPortability = (cwd: string, commandArgs: string[], options: PatternsOptions): number => {
-  const artifact = readCrossRepoPatternsArtifact(cwd) as any;
+  const artifact = readCrossRepoPatternsArtifact(cwd);
   const patternId = readOptionValue(commandArgs, '--pattern');
   const portability = candidatePatternsFromArtifact(artifact)
-    .filter((entry: any) => !patternId || entry.id === patternId)
-    .map((entry: any) => ({ pattern_id: entry.id ?? entry.pattern_id, portability_score: entry.portability?.score ?? entry.portability_score ?? 0, portability: entry.portability, evidence: entry.evidence, status: entry.status, promotion: entry.promotion }))
-    .map((entry: any) => ({ pattern_id: entry.pattern_id, portability_score: entry.portability_score }));
+    .filter((entry) => !patternId || entry.id === patternId)
+    .map((entry) => ({ pattern_id: entry.id, portability_score: entry.portability.score }));
   const payload = { schemaVersion: '1.0', command: 'patterns', action: 'portability', portability };
   if (options.format === 'json') {
     emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
@@ -119,10 +149,10 @@ export const runPatternsPortability = (cwd: string, commandArgs: string[], optio
 };
 
 export const runPatternsGeneralized = (cwd: string, options: PatternsOptions): number => {
-  const artifact = readCrossRepoPatternsArtifact(cwd) as any;
+  const artifact = readCrossRepoPatternsArtifact(cwd);
   const generalized = candidatePatternsFromArtifact(artifact)
-    .filter((entry: any) => Number(entry.portability?.score ?? entry.portability_score ?? 0) >= 0.85)
-    .map((entry: any) => ({ ...entry, pattern_id: entry.id ?? entry.pattern_id }));
+    .filter((entry) => Number(entry.portability.score ?? 0) >= 0.85)
+    .map((entry) => ({ ...entry, pattern_id: entry.id }));
   const payload = { schemaVersion: '1.0', command: 'patterns', action: 'generalized', generalized };
   if (options.format === 'json') {
     emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
@@ -136,7 +166,7 @@ export const runPatternsRepoDelta = (cwd: string, commandArgs: string[], options
   const leftRepo = readOptionValue(commandArgs, '--left') ?? commandArgs[1];
   const rightRepo = readOptionValue(commandArgs, '--right') ?? commandArgs[2];
   if (!leftRepo || !rightRepo) throw new Error('playbook patterns repo-delta: requires --left <repoId> --right <repoId>.');
-  const artifact = readCrossRepoPatternsArtifact(cwd) as any;
+  const artifact = readCrossRepoPatternsArtifact(cwd);
   const deltas = computeRepoDelta(artifact, leftRepo, rightRepo);
   const payload = { schemaVersion: '1.0', command: 'patterns', action: 'repo-delta', leftRepo, rightRepo, deltas };
   if (options.format === 'json') {

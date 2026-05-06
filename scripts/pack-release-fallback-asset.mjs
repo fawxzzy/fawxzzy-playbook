@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { withTempDir, promoteStagedFile } from './staged-artifact-workflow.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -13,7 +13,6 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 const packageVersion = packageJson.version;
 const SEMVER_TAG_PATTERN = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 const EXEC_MAX_BUFFER = 10 * 1024 * 1024;
-
 export const normalizeReleaseVersion = (value) => {
   if (typeof value !== 'string') {
     return null;
@@ -77,6 +76,33 @@ const validateTarball = (tarballPath) => {
   };
 };
 
+const runPnpmPack = (stagedReleaseDir) => {
+  if (process.platform === 'win32') {
+    const result = spawnSync(
+      process.env.ComSpec ?? 'cmd.exe',
+      ['/d', '/s', '/c', 'pnpm', 'pack', '--pack-destination', stagedReleaseDir],
+      {
+        cwd: wrapperDir,
+        encoding: 'utf8',
+        maxBuffer: EXEC_MAX_BUFFER,
+      },
+    );
+
+    if (result.status !== 0) {
+      const details = [result.stderr, result.stdout].filter(Boolean).join('\n').trim();
+      throw new Error(details || 'pnpm pack failed');
+    }
+
+    return result.stdout ?? '';
+  }
+
+  return execFileSync('pnpm', ['pack', '--pack-destination', stagedReleaseDir], {
+    cwd: wrapperDir,
+    encoding: 'utf8',
+    maxBuffer: EXEC_MAX_BUFFER
+  });
+};
+
 const main = async () => {
   const releaseContext = resolveReleaseVersionContext();
   if (releaseContext.version && releaseContext.version !== packageVersion) {
@@ -87,11 +113,7 @@ const main = async () => {
     const stagedReleaseDir = path.join(stagingDir, 'release');
     fs.mkdirSync(stagedReleaseDir, { recursive: true });
 
-    const packOutput = execFileSync('pnpm', ['pack', '--pack-destination', stagedReleaseDir], {
-      cwd: wrapperDir,
-      encoding: 'utf8',
-      maxBuffer: EXEC_MAX_BUFFER
-    });
+    const packOutput = runPnpmPack(stagedReleaseDir);
     if (packOutput) {
       process.stderr.write(packOutput);
     }

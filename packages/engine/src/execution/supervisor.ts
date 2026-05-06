@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { WorksetPlanArtifact } from '../orchestration/worksetPlan.js';
 import type { WorkerLaunchPlanArtifact } from '../orchestration/workerLaunchPlan.js';
+import type { ExecutionPlanArtifact } from '../routing/executionPlan.js';
 import { readJsonArtifact, writeJsonArtifact } from '../artifacts/artifactIO.js';
 import {
   normalizeOutcomeTelemetryArtifact,
@@ -427,9 +428,9 @@ export async function recordWorkerResult(laneId: string, workerId: string, resul
 
   emitLaneOutcomeScore(repoRoot, laneId, scoreSignals);
 
-  const executionPlan = tryReadArtifact<any>(repoRoot, EXECUTION_PLAN_PATH);
-  const worksetPlan = tryReadArtifact<any>(repoRoot, WORKSET_PLAN_PATH);
-  const executionState = tryReadArtifact<any>(repoRoot, EXECUTION_STATE_PATH);
+  const executionPlan = tryReadArtifact<ExecutionPlanArtifact>(repoRoot, EXECUTION_PLAN_PATH);
+  const worksetPlan = tryReadArtifact<WorksetPlanArtifact>(repoRoot, WORKSET_PLAN_PATH);
+  const executionState = tryReadArtifact<ExecutionStateArtifact>(repoRoot, EXECUTION_STATE_PATH);
   const outcomeTelemetry = tryReadArtifact<OutcomeTelemetryArtifact>(repoRoot, OUTCOME_TELEMETRY_PATH);
   const processTelemetry = tryReadArtifact<ProcessTelemetryArtifact>(repoRoot, PROCESS_TELEMETRY_PATH);
 

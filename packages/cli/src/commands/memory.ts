@@ -26,6 +26,43 @@ type MemoryClassFilter = 'canonical' | 'compactable' | 'disposable';
 type MemoryCandidateSourceFilter = 'replay' | 'interop-followup';
 type ReplayPromotionStateFilter = 'candidate' | 'promotion-ready' | 'promoted' | 'stale' | 'superseded';
 type ReplayPromotionBucketFilter = 'replay' | 'consolidation' | 'compaction' | 'promotion';
+type MemoryEventQueryInput = {
+  event_type?:
+    | 'route_decision'
+    | 'lane_transition'
+    | 'worker_assignment'
+    | 'execution_outcome'
+    | 'improvement_signal'
+    | 'lane_outcome'
+    | 'improvement_candidate';
+  subsystem?: 'repository_memory' | 'knowledge_lifecycle';
+  run_id?: string;
+  subject?: string;
+  related_artifact?: string;
+  order: 'asc' | 'desc';
+  limit?: number;
+};
+type MemoryCompactionReviewInput = {
+  decision?: 'discard' | 'attach' | 'merge' | 'new_candidate';
+  kind?: 'decision' | 'pattern' | 'failure_mode' | 'invariant' | 'open_question';
+};
+type MemoryCompactionReviewArtifact = {
+  summary: unknown;
+};
+type MemoryEngineFacade = {
+  queryRepositoryEvents: (cwd: string, input: MemoryEventQueryInput) => unknown[];
+  listRecentRouteDecisions: (cwd: string, limit?: number) => unknown[];
+  listLaneTransitionsForRun: (cwd: string, runId: string) => unknown[];
+  listWorkerAssignmentsForRun: (cwd: string, runId: string) => unknown[];
+  listImprovementSignalsForArtifact: (cwd: string, relatedArtifact: string) => unknown[];
+  reviewMemoryCompaction: (cwd: string) => MemoryCompactionReviewArtifact;
+  lookupMemoryCompactionReview: (
+    cwd: string,
+    input: MemoryCompactionReviewInput,
+  ) => unknown[];
+};
+
+const memoryEngine = playbookEngine as unknown as MemoryEngineFacade;
 
 const printMemoryHelp = (): void => {
   console.log(`Usage: playbook memory <subcommand> [options]
@@ -298,7 +335,7 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
         view: view ?? 'events',
         events: (() => {
           if (!view || view === 'events') {
-            return (playbookEngine as any).queryRepositoryEvents(cwd, {
+            return memoryEngine.queryRepositoryEvents(cwd, {
               event_type: readOptionValue(args, '--event-type') as
                 | 'route_decision'
                 | 'lane_transition'
@@ -318,24 +355,24 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
           }
 
           if (view === 'recent-routes') {
-            return (playbookEngine as any).listRecentRouteDecisions(cwd, limit ?? 10);
+            return memoryEngine.listRecentRouteDecisions(cwd, limit ?? 10);
           }
 
           if (view === 'lane-transitions') {
             if (!runId) throw new Error('playbook memory query: --run-id is required for view lane-transitions');
-            return (playbookEngine as any).listLaneTransitionsForRun(cwd, runId);
+            return memoryEngine.listLaneTransitionsForRun(cwd, runId);
           }
 
           if (view === 'worker-assignments') {
             if (!runId) throw new Error('playbook memory query: --run-id is required for view worker-assignments');
-            return (playbookEngine as any).listWorkerAssignmentsForRun(cwd, runId);
+            return memoryEngine.listWorkerAssignmentsForRun(cwd, runId);
           }
 
           if (view === 'artifact-improvements') {
             if (!relatedArtifact) {
               throw new Error('playbook memory query: --related-artifact is required for view artifact-improvements');
             }
-            return (playbookEngine as any).listImprovementSignalsForArtifact(cwd, relatedArtifact);
+            return memoryEngine.listImprovementSignalsForArtifact(cwd, relatedArtifact);
           }
 
           throw new Error(
@@ -601,13 +638,13 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
 
 
     if (subcommand === 'compaction') {
-      const artifact = (playbookEngine as any).reviewMemoryCompaction(cwd);
+      const artifact = memoryEngine.reviewMemoryCompaction(cwd);
       const payload = {
         schemaVersion: '1.0',
         command: 'memory-compaction-review',
         artifactPath: '.playbook/memory/compaction-review.json',
         summary: artifact.summary,
-        entries: (playbookEngine as any).lookupMemoryCompactionReview(cwd, {
+        entries: memoryEngine.lookupMemoryCompactionReview(cwd, {
           decision: (readOptionValue(args, '--decision') as 'discard' | 'attach' | 'merge' | 'new_candidate' | null) ?? undefined,
           kind: (readOptionValue(args, '--kind') as 'decision' | 'pattern' | 'failure_mode' | 'invariant' | 'open_question' | null) ?? undefined
         })

@@ -114,7 +114,10 @@ export const buildPatternProposalArtifact = (candidatesArtifact: CrossRepoCandid
         right.mean_confidence - left.mean_confidence ||
         left.pattern_family.localeCompare(right.pattern_family)
     )
-    .map(({ repo_count: _repoCount, ...proposal }) => proposal);
+    .map(({ repo_count, ...proposal }) => {
+      void repo_count;
+      return proposal;
+    });
 
   return {
     schemaVersion: '1.0',

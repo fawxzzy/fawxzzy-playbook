@@ -108,7 +108,7 @@ describe('improvement candidate engine', () => {
     expect(artifact.summary.CONVERSATIONAL).toBeGreaterThan(0);
 
     const outputPath = writeImprovementCandidatesArtifact(repo, artifact);
-    expect(outputPath.endsWith('.playbook/improvement-candidates.json')).toBe(true);
+    expect(outputPath.replaceAll(path.sep, '/').endsWith('.playbook/improvement-candidates.json')).toBe(true);
     expect(fs.existsSync(outputPath)).toBe(true);
   });
 

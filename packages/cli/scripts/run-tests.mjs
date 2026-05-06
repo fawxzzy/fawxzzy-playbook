@@ -25,5 +25,30 @@ if (onlyObserverTarget) {
   exitWith(observerResult);
 }
 
-const defaultResult = run('vitest', ['run', '--passWithNoTests', ...args]);
-exitWith(defaultResult);
+const includesObserverTarget = args.includes(observerTarget);
+const vitestArgs = args.filter((arg) => arg !== observerTarget);
+const shouldRunDefaultVitest = vitestArgs.length > 0 || !includesObserverTarget;
+
+if (shouldRunDefaultVitest) {
+  const defaultResult = run('vitest', [
+    'run',
+    '--passWithNoTests',
+    '--testTimeout=20000',
+    ...(args.length === 0 ? ['--exclude', observerTarget] : vitestArgs),
+  ]);
+  if ((defaultResult.status ?? 1) !== 0) {
+    exitWith(defaultResult);
+  }
+}
+
+if (args.length === 0 || includesObserverTarget) {
+  const buildResult = run('pnpm', ['build']);
+  if ((buildResult.status ?? 1) !== 0) {
+    exitWith(buildResult);
+  }
+
+  const observerResult = run('node', ['./scripts/run-observer-tests.mjs']);
+  exitWith(observerResult);
+}
+
+process.exit(0);

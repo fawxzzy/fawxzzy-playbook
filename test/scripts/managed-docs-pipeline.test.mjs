@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const pipelineScript = path.join(repoRoot, 'scripts', 'managed-docs-pipeline.mjs');
+const normalizeLineEndings = (value) => value.replace(/\r\n/g, '\n');
 
 const runPipeline = (args = []) =>
   spawnSync('node', [pipelineScript, ...args], {
@@ -52,7 +54,7 @@ test('docs pipeline blocks promotion when validation fails after regeneration', 
 
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /unknown live command "ghost-command"/);
-    assert.equal(after, commandTruthOriginal);
+    assert.equal(normalizeLineEndings(after), normalizeLineEndings(commandTruthOriginal));
   } finally {
     fs.writeFileSync(roadmapPath, roadmapOriginal, 'utf8');
     fs.writeFileSync(commandTruthPath, commandTruthOriginal, 'utf8');

@@ -9,8 +9,20 @@ import { spawnSync } from 'node:child_process';
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const localCliEntrypoint = path.resolve(projectRoot, 'packages/cli/dist/main.js');
 
+const resolveCommand = (command, args) => {
+  if (process.platform === 'win32' && ['npm', 'pnpm', 'yarn'].includes(command)) {
+    return {
+      command: process.env.ComSpec ?? 'cmd.exe',
+      args: ['/d', '/s', '/c', command, ...args]
+    };
+  }
+
+  return { command, args };
+};
+
 export const run = ({ cwd, command, args, allowFailure = false, env = process.env }) => {
-  const result = spawnSync(command, args, {
+  const resolved = resolveCommand(command, args);
+  const result = spawnSync(resolved.command, resolved.args, {
     cwd,
     env,
     encoding: 'utf8',
@@ -65,7 +77,7 @@ export const cloneDemoRepository = ({ repoUrl, localPath, prefix }) => {
   const demoDir = path.join(tempRoot, 'playbook-demo');
 
   if (localPath) {
-    run({ cwd: tempRoot, command: 'cp', args: ['-R', localPath, demoDir] });
+    fs.cpSync(localPath, demoDir, { recursive: true });
   } else {
     run({ cwd: tempRoot, command: 'git', args: ['clone', '--depth', '1', repoUrl, demoDir] });
   }

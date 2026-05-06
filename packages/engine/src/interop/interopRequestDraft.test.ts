@@ -36,7 +36,7 @@ describe('compileInteropRequestDraft', () => {
     const proposal = generateAiProposal(repo, { target: 'fitness' });
     proposal.fitnessRequestSuggestion = {
       ...proposal.fitnessRequestSuggestion!,
-      canonicalActionName: 'not_canonical_action' as any
+      canonicalActionName: 'not_canonical_action' as never
     };
     fs.writeFileSync(path.join(repo, '.playbook', 'ai-proposal.json'), JSON.stringify(proposal, null, 2));
 

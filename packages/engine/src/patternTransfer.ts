@@ -41,6 +41,7 @@ export type PatternTransferImportResult = {
 
 const stableStringify = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
 const slugify = (value: string): string => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'pattern';
+const toSafeFileName = (value: string): string => value.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '-');
 const uniqueSorted = (values: string[]): string[] => [...new Set(values.filter((v) => v.trim().length > 0))].sort((a, b) => a.localeCompare(b));
 const fingerprint = (value: unknown): string => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
@@ -146,7 +147,11 @@ export const exportPatternTransferPackage = (input: {
     }
   });
 
-  const packagePath = path.join(input.playbookHome, PATTERN_TRANSFER_PACKAGES_RELATIVE_DIR, `${pkg.package_id}.json`);
+  const packagePath = path.join(
+    input.playbookHome,
+    PATTERN_TRANSFER_PACKAGES_RELATIVE_DIR,
+    `${toSafeFileName(pkg.package_id)}.json`,
+  );
   fs.mkdirSync(path.dirname(packagePath), { recursive: true });
   fs.writeFileSync(packagePath, stableStringify(pkg), 'utf8');
   return { packagePath, package: pkg };

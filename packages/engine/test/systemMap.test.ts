@@ -71,7 +71,7 @@ describe('system map artifact', () => {
     const raw = fs.readFileSync(artifactPath, 'utf8');
     const parsed = JSON.parse(raw) as typeof artifact;
 
-    expect(path.relative(repo, artifactPath)).toBe('.playbook/system-map.json');
+    expect(path.relative(repo, artifactPath).replaceAll(path.sep, '/')).toBe('.playbook/system-map.json');
     expect(raw.endsWith('\n')).toBe(true);
     expect(parsed).toEqual(artifact);
   });

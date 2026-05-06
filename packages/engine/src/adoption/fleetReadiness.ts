@@ -175,7 +175,10 @@ export const buildFleetAdoptionReadinessSummary = (
         left.blocker_severity - right.blocker_severity ||
         left.repo_id.localeCompare(right.repo_id)
     )
-    .map(({ blocker_severity: _ignore, ...entry }) => entry);
+    .map(({ blocker_severity, ...entry }) => {
+      void blocker_severity;
+      return entry;
+    });
 
   return {
     schemaVersion: '1.0',

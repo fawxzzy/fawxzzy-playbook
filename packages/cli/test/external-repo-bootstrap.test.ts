@@ -69,7 +69,7 @@ describe('external repo bootstrap', () => {
     expect(query.stdout).toContain('"modules"');
   });
 
-  it('proves bootstrap readiness and surfaces execution-state failures clearly', { timeout: 45000 }, () => {
+  it('surfaces runtime blockers first and clears execution-state blockers once apply state exists', { timeout: 45000 }, () => {
     const before = fs.existsSync(path.join(fixtureRepo, '.playbook', 'policy-apply-result.json'));
     expect(before).toBe(false);
 
@@ -81,22 +81,25 @@ describe('external repo bootstrap', () => {
     expect(reportProof.status).toBe(0);
     const reportPayload = JSON.parse(reportProof.stdout);
     expect(reportPayload.mode).toBe('proof');
-    expect(reportPayload.proof.current_state).toBe('execution_state_blocked');
+    expect(reportPayload.proof.current_state).toBe('runtime_blocked');
 
     const failingProof = runCli(['--repo', fixtureRepo, 'status', 'proof', '--proof-gate', '--json']);
     expect(failingProof.status).toBe(1);
     const failingPayload = JSON.parse(failingProof.stdout);
     expect(failingPayload.mode).toBe('proof');
-    expect(failingPayload.proof.current_state).toBe('execution_state_blocked');
-    expect(failingPayload.proof.diagnostics.failing_stage).toBe('execution-state');
+    expect(failingPayload.proof.current_state).toBe('runtime_blocked');
+    expect(failingPayload.proof.diagnostics.failing_stage).toBe('runtime');
 
     fs.writeFileSync(path.join(fixtureRepo, '.playbook', 'policy-apply-result.json'), JSON.stringify({ ok: true }, null, 2));
 
     const passingProof = runCli(['--repo', fixtureRepo, 'status', 'proof', '--proof-gate', '--json']);
-    expect(passingProof.status).toBe(0);
+    expect(passingProof.status).toBe(1);
     const passingPayload = JSON.parse(passingProof.stdout);
-    expect(passingPayload.proof.ok).toBe(true);
-    expect(passingPayload.proof.current_state).toBe('governed_consumer_ready');
+    expect(passingPayload.proof.ok).toBe(false);
+    expect(passingPayload.proof.current_state).toBe('runtime_blocked');
+    expect(passingPayload.proof.diagnostics.failing_stage).toBe('runtime');
+    const executionStateCheck = passingPayload.proof.diagnostics.checks.find((entry: { id: string }) => entry.id === 'execution-state.required');
+    expect(executionStateCheck?.status).toBe('pass');
   });
 
 });
