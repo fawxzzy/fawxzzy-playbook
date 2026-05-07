@@ -271,7 +271,6 @@ export const generateLearningCompactionArtifact = (repoRoot: string): LearningCo
   const processPath = path.join(repoRoot, '.playbook', 'process-telemetry.json');
   const outcomePath = path.join(repoRoot, '.playbook', 'outcome-telemetry.json');
   const memoryEventsDir = path.join(repoRoot, '.playbook', 'memory', 'events');
-  const memoryIndexPath = path.join(repoRoot, '.playbook', 'memory', 'index.json');
 
   const processRaw = readJsonIfExists<ProcessTelemetryArtifact>(processPath);
   const outcomeRaw = readJsonIfExists<OutcomeTelemetryArtifact>(outcomePath);

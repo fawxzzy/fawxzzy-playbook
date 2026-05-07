@@ -15,8 +15,30 @@ const exitWith = (result) => {
   process.exit(1);
 };
 
-const onlyObserverTarget = args.length > 0 && args.every((arg) => arg === observerTarget);
-if (onlyObserverTarget) {
+const includesObserverTarget = args.includes(observerTarget);
+const vitestArgs = args.filter((arg) => arg !== observerTarget);
+const shouldRunDefaultVitest = vitestArgs.length > 0 || !includesObserverTarget;
+
+if (shouldRunDefaultVitest) {
+  const defaultVitestArgs = [
+    'run',
+    '--passWithNoTests',
+    '--testTimeout=20000',
+    ...(args.length === 0 ? ['--exclude', observerTarget] : vitestArgs),
+  ];
+
+  // Windows CLI tests are git- and filesystem-heavy; serial file execution avoids worker timeout noise.
+  if (process.platform === 'win32' && !hasExplicitFileParallelism) {
+    defaultVitestArgs.push('--fileParallelism=false');
+  }
+
+  const defaultResult = run('vitest', defaultVitestArgs);
+  if ((defaultResult.status ?? 1) !== 0) {
+    exitWith(defaultResult);
+  }
+}
+
+if (args.length === 0 || includesObserverTarget) {
   const buildResult = run('pnpm', ['build']);
   if ((buildResult.status ?? 1) !== 0) {
     exitWith(buildResult);
@@ -26,12 +48,4 @@ if (onlyObserverTarget) {
   exitWith(observerResult);
 }
 
-const defaultVitestArgs = ['run', '--passWithNoTests'];
-
-// Windows CLI tests are git- and filesystem-heavy; serial file execution avoids worker timeout noise.
-if (process.platform === 'win32' && !hasExplicitFileParallelism) {
-  defaultVitestArgs.push('--fileParallelism=false');
-}
-
-const defaultResult = run('vitest', [...defaultVitestArgs, ...args]);
-exitWith(defaultResult);
+process.exit(0);

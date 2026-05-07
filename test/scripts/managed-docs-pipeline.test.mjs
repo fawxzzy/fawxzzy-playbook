@@ -7,6 +7,7 @@ import { repoRootFromImportMeta, nodeCommand, createScriptEnv } from './helpers/
 
 const repoRoot = repoRootFromImportMeta(import.meta.url);
 const pipelineScript = path.join(repoRoot, 'scripts', 'managed-docs-pipeline.mjs');
+const normalizeLineEndings = (value) => value.replace(/\r\n/g, '\n');
 
 const runPipeline = (args = []) =>
   spawnSync(nodeCommand, [pipelineScript, ...args], {
@@ -52,7 +53,7 @@ test('docs pipeline blocks promotion when validation fails after regeneration', 
 
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /unknown live command "ghost-command"/);
-    assert.equal(after, commandTruthOriginal);
+    assert.equal(normalizeLineEndings(after), normalizeLineEndings(commandTruthOriginal));
   } finally {
     fs.writeFileSync(roadmapPath, roadmapOriginal, 'utf8');
     fs.writeFileSync(commandTruthPath, commandTruthOriginal, 'utf8');

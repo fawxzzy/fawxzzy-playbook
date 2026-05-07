@@ -15,14 +15,6 @@
 - @zachariahredfield/playbook-engine: 0.43.0 -> 0.44.0 (playbook-installable-workspace)
 - @zachariahredfield/playbook-node: 0.43.0 -> 0.44.0 (playbook-installable-workspace)
 
-## 0.43.0 - 2026-05-03
-- Recommended bump: minor
-- @fawxzzy/playbook: 0.42.0 -> 0.43.0 (playbook-installable-workspace)
-- @fawxzzy/playbook-cli: 0.42.0 -> 0.43.0 (playbook-installable-workspace)
-- @zachariahredfield/playbook-core: 0.42.0 -> 0.43.0 (playbook-installable-workspace)
-- @zachariahredfield/playbook-engine: 0.42.0 -> 0.43.0 (playbook-installable-workspace)
-- @zachariahredfield/playbook-node: 0.42.0 -> 0.43.0 (playbook-installable-workspace)
-
 ## 0.43.0 - 2026-05-02
 - Recommended bump: minor
 - @fawxzzy/playbook: 0.42.0 -> 0.43.0 (playbook-installable-workspace)

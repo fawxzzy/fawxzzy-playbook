@@ -107,12 +107,6 @@ const readPromotedKnowledge = (projectRoot: string): MemoryKnowledgeEntry[] =>
 const toConsolidationCandidateId = (candidate: MemoryReplayCandidate): string =>
   createHash('sha256').update(`${candidate.kind}:${candidate.fingerprint}:${candidate.candidateId}`).digest('hex').slice(0, 16);
 
-const compareDate = (value: string | undefined): number => {
-  if (typeof value !== 'string') return 0;
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? 0 : parsed;
-};
-
 const toCandidate = (candidate: MemoryReplayCandidate, promotedKnowledge: MemoryKnowledgeEntry[]): ConsolidationCandidate => {
   const matchedKnowledgeIds = uniqueSorted(
     promotedKnowledge

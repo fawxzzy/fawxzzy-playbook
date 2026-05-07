@@ -8,7 +8,6 @@ import type {
 import type {
   FleetAdoptionWorkQueue,
   AdoptionWorkItem,
-  WorkQueueParallelGroup,
 } from "./workQueue.js";
 import type { ReadinessLifecycleStage } from "./readiness.js";
 import type { WorkflowPromotion } from "../schema/workflowPromotion.js";

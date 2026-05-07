@@ -1,7 +1,6 @@
 import type { FleetAdoptionReadinessSummary } from "./fleetReadiness.js";
 import type {
   FleetCodexExecutionPlan,
-  CodexExecutionPrompt,
 } from "./executionPlan.js";
 import type { FleetAdoptionWorkQueue, AdoptionWorkItem } from "./workQueue.js";
 import {

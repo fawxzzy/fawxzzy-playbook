@@ -331,11 +331,6 @@ const listArtifactRecords = (artifact) => {
         record.entries ??
         []);
 };
-const toStringList = (value) => Array.isArray(value)
-    ? [
-        ...new Set(value.filter((entry) => typeof entry === "string" && entry.trim().length > 0)),
-    ].sort((left, right) => left.localeCompare(right))
-    : [];
 const toSourceRefList = (entry) => {
     const rawSourceRefs = Array.isArray(entry.sourceRefs) ? entry.sourceRefs : [];
     const direct = rawSourceRefs.flatMap((value) => {
@@ -656,7 +651,7 @@ const artifactKindsForStoryEvidence = () => [
     "system-map",
     "promotion-receipts",
 ];
-const buildRepoBacklog = (repo, readiness) => {
+const buildRepoBacklog = (repo) => {
     const artifact = readRepoStories(repo);
     return {
         artifact_path: ".playbook/stories.json",
@@ -1508,7 +1503,7 @@ const observerServerResponse = (observerRoot, invocationCwd, pathname, searchPar
                 kind: "observer-server-repo",
                 repo,
                 readiness,
-                backlog: buildRepoBacklog(repo, readiness),
+                backlog: buildRepoBacklog(repo),
                 promotion_layer: buildRepoPromotionLayer(repo),
             },
         };
@@ -1533,7 +1528,7 @@ const observerServerResponse = (observerRoot, invocationCwd, pathname, searchPar
                 ...base,
                 kind: "observer-server-backlog",
                 repoId: repo.id,
-                backlog: buildRepoBacklog(repo, readiness),
+                backlog: buildRepoBacklog(repo),
                 readiness,
             },
         };

@@ -32,11 +32,16 @@ const parseRepoArgs = (cwd, commandArgs) => {
         return observerRepos;
     return [{ id: path.basename(cwd), repoPath: cwd }];
 };
+const isRecord = (value) => typeof value === 'object' && value !== null;
+const isAggregateSummary = (value) => isRecord(value) && typeof value.pattern_id === 'string';
+const isComparison = (value) => isRecord(value) && typeof value.left_repo_id === 'string' && typeof value.right_repo_id === 'string' && Array.isArray(value.repo_deltas);
+const isRepoSummary = (value) => isRecord(value) && typeof value.id === 'string' && Array.isArray(value.patterns);
+const isRepoDeltaPatternEntry = (value) => isRecord(value) && typeof value.pattern_id === 'string';
 const candidatePatternsFromArtifact = (artifact) => {
     if (Array.isArray(artifact.candidate_patterns))
         return artifact.candidate_patterns;
     if (Array.isArray(artifact.aggregates)) {
-        return artifact.aggregates.map((entry) => ({
+        return artifact.aggregates.filter(isAggregateSummary).map((entry) => ({
             id: entry.pattern_id,
             status: 'candidate_read_only',
             portability: { score: Number(entry.portability_score ?? 0), factors: [] },
@@ -48,16 +53,19 @@ const candidatePatternsFromArtifact = (artifact) => {
 };
 const computeRepoDelta = (artifact, leftRepo, rightRepo) => {
     if (Array.isArray(artifact.comparisons)) {
-        const pair = artifact.comparisons.find((entry) => (entry.left_repo_id === leftRepo && entry.right_repo_id === rightRepo) || (entry.left_repo_id === rightRepo && entry.right_repo_id === leftRepo));
+        const pair = artifact.comparisons.filter(isComparison).find((entry) => (entry.left_repo_id === leftRepo && entry.right_repo_id === rightRepo) || (entry.left_repo_id === rightRepo && entry.right_repo_id === leftRepo));
         if (pair)
             return pair.repo_deltas ?? [];
     }
-    const left = artifact.repositories?.find((repo) => repo.id === leftRepo);
-    const right = artifact.repositories?.find((repo) => repo.id === rightRepo);
+    const left = artifact.repositories?.filter(isRepoSummary).find((repo) => repo.id === leftRepo);
+    const right = artifact.repositories?.filter(isRepoSummary).find((repo) => repo.id === rightRepo);
     if (!left || !right)
         throw new Error(`playbook patterns repo-delta: repositories must exist in artifact (got: ${leftRepo}, ${rightRepo})`);
-    const rightByPattern = new Map((right.patterns ?? []).map((entry) => [entry.pattern_id, entry]));
-    return (left.patterns ?? [])
+    const rightPatterns = (right.patterns ?? []).filter(isRepoDeltaPatternEntry);
+    const rightByPattern = new Map(rightPatterns.map((entry) => [entry.pattern_id, entry]));
+    const leftPatterns = (left.patterns ?? []).filter(isRepoDeltaPatternEntry);
+    return leftPatterns
+        .filter(isRepoDeltaPatternEntry)
         .filter((entry) => rightByPattern.has(entry.pattern_id))
         .map((entry) => {
         const rhs = rightByPattern.get(entry.pattern_id);
@@ -98,8 +106,7 @@ export const runPatternsPortability = (cwd, commandArgs, options) => {
     const patternId = readOptionValue(commandArgs, '--pattern');
     const portability = candidatePatternsFromArtifact(artifact)
         .filter((entry) => !patternId || entry.id === patternId)
-        .map((entry) => ({ pattern_id: entry.id ?? entry.pattern_id, portability_score: entry.portability?.score ?? entry.portability_score ?? 0, portability: entry.portability, evidence: entry.evidence, status: entry.status, promotion: entry.promotion }))
-        .map((entry) => ({ pattern_id: entry.pattern_id, portability_score: entry.portability_score }));
+        .map((entry) => ({ pattern_id: entry.id, portability_score: entry.portability.score }));
     const payload = { schemaVersion: '1.0', command: 'patterns', action: 'portability', portability };
     if (options.format === 'json') {
         emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
@@ -112,8 +119,8 @@ export const runPatternsPortability = (cwd, commandArgs, options) => {
 export const runPatternsGeneralized = (cwd, options) => {
     const artifact = readCrossRepoPatternsArtifact(cwd);
     const generalized = candidatePatternsFromArtifact(artifact)
-        .filter((entry) => Number(entry.portability?.score ?? entry.portability_score ?? 0) >= 0.85)
-        .map((entry) => ({ ...entry, pattern_id: entry.id ?? entry.pattern_id }));
+        .filter((entry) => Number(entry.portability.score ?? 0) >= 0.85)
+        .map((entry) => ({ ...entry, pattern_id: entry.id }));
     const payload = { schemaVersion: '1.0', command: 'patterns', action: 'generalized', generalized };
     if (options.format === 'json') {
         emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });

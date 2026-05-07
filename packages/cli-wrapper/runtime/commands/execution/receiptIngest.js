@@ -3,11 +3,11 @@ import path from "node:path";
 import { buildFleetAdoptionReadinessSummary, buildFleetAdoptionWorkQueue, buildFleetCodexExecutionPlan, ingestExecutionResults, buildRepoAdoptionReadiness, readStoriesArtifact, findStoryById, reconcileStoryExecution, validateStoriesArtifact, STORIES_RELATIVE_PATH, generateAndWriteLifecycleCandidatesArtifact, } from "@zachariahredfield/playbook-engine";
 import { writeJsonArtifactAbsolute } from "../../lib/jsonArtifact.js";
 import { previewWorkflowArtifact, stageWorkflowArtifact, } from "../../lib/workflowPromotion.js";
-export const EXECUTION_OUTCOME_INPUT_RELATIVE_PATH = path.posix.join(".playbook", "execution-outcome-input.json");
-export const UPDATED_STATE_RELATIVE_PATH = path.posix.join(".playbook", "execution-updated-state.json");
-export const UPDATED_STATE_STAGING_RELATIVE_PATH = path.posix.join(".playbook", "staged", "workflow-status-updated", "execution-updated-state.json");
-const EXECUTION_PLAN_RELATIVE_PATH = path.join(".playbook", "execution-plan.json");
-const EXECUTION_RECEIPT_RELATIVE_PATH = path.posix.join(".playbook", "execution-receipt.json");
+export const EXECUTION_OUTCOME_INPUT_RELATIVE_PATH = ".playbook/execution-outcome-input.json";
+export const UPDATED_STATE_RELATIVE_PATH = ".playbook/execution-updated-state.json";
+export const UPDATED_STATE_STAGING_RELATIVE_PATH = ".playbook/staged/workflow-status-updated/execution-updated-state.json";
+const EXECUTION_PLAN_RELATIVE_PATH = ".playbook/execution-plan.json";
+const EXECUTION_RECEIPT_RELATIVE_PATH = ".playbook/execution-receipt.json";
 const loadStoryReference = (cwd) => {
     const executionPlanPath = path.join(cwd, EXECUTION_PLAN_RELATIVE_PATH);
     if (!fs.existsSync(executionPlanPath)) {

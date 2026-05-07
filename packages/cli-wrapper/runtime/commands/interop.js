@@ -27,7 +27,8 @@ const toAutomationSynthesisSuggestions = (followups) => followups
     };
 })
     .sort((left, right) => left.suggestionId.localeCompare(right.suggestionId));
-const fitnessIntegrationContract = engineRuntime.fitnessIntegrationContract;
+const engine = engineRuntime;
+const fitnessIntegrationContract = engine.fitnessIntegrationContract;
 const actionKinds = fitnessIntegrationContract.actions.map((entry) => entry.name);
 const defaultBoundedActionInputByAction = {
     adjust_upcoming_workout_load: {
@@ -53,7 +54,6 @@ const defaultBoundedActionInputByAction = {
         duration_days: 7
     }
 };
-const engine = engineRuntime;
 const interopFollowupTypes = new Set(['memory-candidate', 'next-plan-hint', 'review-cue', 'docs-story-followup']);
 const interopFollowupSurfaces = new Set([
     '.playbook/memory/candidates.json',

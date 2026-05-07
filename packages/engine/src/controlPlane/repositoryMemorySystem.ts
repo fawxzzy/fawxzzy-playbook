@@ -131,8 +131,6 @@ const listJsonFilesRecursive = (rootPath: string): string[] => {
   return files;
 };
 
-const toRelative = (repoRoot: string, absolutePath: string): string => path.relative(repoRoot, absolutePath).replaceAll(path.sep, '/');
-
 const countRecords = (record: Record<string, unknown> | null): number => {
   if (!record) return 0;
   const entries = readArray(record.entries);

@@ -11,9 +11,9 @@ import { previewWorkflowArtifact, stageWorkflowArtifact } from '../lib/workflowP
 import { buildExecutionPlanInterpretation, buildFleetInterpretation, buildProofInterpretation, buildQueueInterpretation, buildReceiptInterpretation, buildRepoStatusInterpretation, buildUpdatedStateInterpretation } from '../lib/interpretation.js';
 import { renderBriefOutput } from '../lib/briefOutput.js';
 import { formatLongitudinalThinText, readLongitudinalStateSummary } from './longitudinalState.js';
-const EXECUTION_OUTCOME_INPUT_RELATIVE_PATH = path.join('.playbook', 'execution-outcome-input.json');
-const UPDATED_STATE_RELATIVE_PATH = path.posix.join('.playbook', 'execution-updated-state.json');
-const UPDATED_STATE_STAGING_RELATIVE_PATH = path.posix.join('.playbook', 'staged', 'workflow-status-updated', 'execution-updated-state.json');
+const EXECUTION_OUTCOME_INPUT_RELATIVE_PATH = '.playbook/execution-outcome-input.json';
+const UPDATED_STATE_RELATIVE_PATH = '.playbook/execution-updated-state.json';
+const UPDATED_STATE_STAGING_RELATIVE_PATH = '.playbook/staged/workflow-status-updated/execution-updated-state.json';
 const defaultOutcomeInput = () => ({
     schemaVersion: '1.0',
     kind: 'fleet-adoption-execution-outcome-input',

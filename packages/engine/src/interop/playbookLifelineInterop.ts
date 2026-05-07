@@ -6,7 +6,6 @@ import type {
   InteropActionStatus,
   InteropCapabilityRegistration,
   InteropExecutionReceipt,
-  InteropHeartbeatSnapshot,
   PlaybookLifelineInteropRuntimeArtifact,
   RemediationInteropActionKind,
   RendezvousManifest,

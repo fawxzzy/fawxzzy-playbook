@@ -7,6 +7,7 @@ import { ExitCode } from '../lib/cliContract.js';
 import { runAnalyzePr } from './analyzePr.js';
 
 const createRepo = (name: string): string => fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`));
+const ANALYZE_PR_GIT_FIXTURE_TIMEOUT_MS = 45_000;
 
 const runGit = (repo: string, args: string[]): string =>
   execFileSync('git', args, { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -113,8 +114,16 @@ const writeMemoryEvent = (repo: string, eventId: string, fingerprint: string, su
   );
 };
 
-describe('analyze-pr', () => {
-  it('returns deterministic PR analysis JSON', { timeout: 15000 }, async () => {
+describe(
+  'analyze-pr',
+  // This file exercises real git-backed fixtures repeatedly; hosted runners can exceed Vitest defaults without indicating behavior drift.
+  { timeout: ANALYZE_PR_GIT_FIXTURE_TIMEOUT_MS },
+  () => {
+  it(
+    'returns deterministic PR analysis JSON',
+    // Hosted runners occasionally take longer than the default budget for the first git-backed analyze-pr fixture.
+    { timeout: ANALYZE_PR_GIT_FIXTURE_TIMEOUT_MS },
+    async () => {
     const repo = createRepo('playbook-cli-analyze-pr');
     initGitRepo(repo);
     writeRepoIndex(repo);

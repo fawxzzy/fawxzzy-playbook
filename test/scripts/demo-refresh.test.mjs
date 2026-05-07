@@ -43,12 +43,43 @@ const copyRequiredDocs = (targetRoot) => {
   }
 };
 
+const writePackageLock = (targetRoot, name) => {
+  fs.writeFileSync(
+    path.join(targetRoot, 'package-lock.json'),
+    JSON.stringify(
+      {
+        name,
+        version: '0.0.0',
+        lockfileVersion: 3,
+        requires: true,
+        packages: {
+          '': {
+            name,
+            version: '0.0.0'
+          }
+        }
+      },
+      null,
+      2,
+    ) + '\n',
+    'utf8',
+  );
+};
+
 const runNode = (cwd, args, env = {}) =>
   spawnSync(nodeCommand, args, {
     cwd,
     encoding: 'utf8',
     env: createScriptEnv(env)
   });
+
+const resolveCommand = (command) => {
+  if (process.platform === 'win32' && ['npm', 'pnpm', 'yarn'].includes(command)) {
+    return `${command}.cmd`;
+  }
+
+  return command;
+};
 
 const runCommand = (cwd, command, args, env = {}) =>
   spawnSync(resolvePackageManagerCommand(command).command, [...resolvePackageManagerCommand(command).extraArgs, ...args], {
@@ -102,6 +133,7 @@ fs.writeFileSync(path.join(process.cwd(), '.playbook', 'demo-artifacts', 'doctor
 `
   );
 
+  writePackageLock(fixtureRoot, name);
   const initResult = runCommand(fixtureRoot, 'git', ['init', '-b', 'main']);
   assert.equal(initResult.status, 0, initResult.stderr || initResult.stdout);
   const addResult = runCommand(fixtureRoot, 'git', ['add', '.']);

@@ -348,9 +348,6 @@ const deriveRouteSeeds = (repoRoot: string): StoryCandidateSeed[] => {
   }));
 };
 
-const seedFingerprint = (seed: StoryCandidateSeed): string =>
-  crypto.createHash('sha256').update(JSON.stringify({ groupingKey: seed.groupingKey, title: seed.title, sourceKind: seed.sourceKind, sourceKey: seed.sourceKey })).digest('hex').slice(0, 12);
-
 const mergeSeeds = (repoName: string, seeds: StoryCandidateSeed[]): StoryCandidateRecord[] => {
   const grouped = new Map<string, StoryCandidateSeed[]>();
   for (const seed of seeds) {

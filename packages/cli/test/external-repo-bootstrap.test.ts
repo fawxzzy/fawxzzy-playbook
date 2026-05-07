@@ -23,22 +23,49 @@ function createFixtureRepo(): string {
   return fixtureRepo;
 }
 
-function runCli(args: readonly string[]) {
-  const pathValue = process.env.Path ?? process.env.PATH ?? '';
+function runCli(args: readonly string[], options?: { env?: NodeJS.ProcessEnv }) {
+  const pathValue = options?.env?.Path
+    ?? options?.env?.PATH
+    ?? process.env.Path
+    ?? process.env.PATH
+    ?? '';
+  const pathextValue = options?.env?.PATHEXT ?? process.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD';
   return spawnSync(process.execPath, [cliEntry, ...args], {
     cwd: repoRoot,
     encoding: 'utf8',
     env: {
-      ...process.env,
+      ...(options?.env ?? process.env),
       PATH: pathValue,
       Path: pathValue,
-      PATHEXT: process.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD'
+      PATHEXT: pathextValue
     }
   });
 }
 
+function buildPnpmBlockedEnv(): { env: NodeJS.ProcessEnv; shimDir: string } {
+  const shimDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-path-without-pnpm-'));
+  if (process.platform === 'win32') {
+    fs.writeFileSync(
+      path.join(shimDir, 'pnpm.cmd'),
+      '@echo off\r\necho blocked test pnpm shim 1>&2\r\nexit /b 1\r\n'
+    );
+  } else {
+    const shimPath = path.join(shimDir, 'pnpm');
+    fs.writeFileSync(shimPath, '#!/bin/sh\necho "blocked test pnpm shim" >&2\nexit 1\n');
+    fs.chmodSync(shimPath, 0o755);
+  }
+  return {
+    env: {
+      ...process.env,
+      PATH: [shimDir, process.env.PATH ?? ''].filter(Boolean).join(path.delimiter)
+    },
+    shimDir
+  };
+}
+
 describe('external repo bootstrap', () => {
   let fixtureRepo = '';
+  const tempDirs: string[] = [];
 
   beforeAll(() => {
     fixtureRepo = createFixtureRepo();
@@ -47,6 +74,9 @@ describe('external repo bootstrap', () => {
   afterAll(() => {
     if (fixtureRepo) {
       fs.rmSync(fixtureRepo, { recursive: true, force: true });
+    }
+    for (const tempDir of tempDirs) {
+      fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
 
@@ -76,7 +106,9 @@ describe('external repo bootstrap', () => {
     expect(query.stdout).toContain('"modules"');
   });
 
-  it('proves bootstrap readiness and surfaces execution-state failures clearly', { timeout: 45000 }, () => {
+  it('surfaces runtime blockers first and clears execution-state blockers once apply state exists', { timeout: 45000 }, () => {
+    const { env: pnpmBlockedEnv, shimDir } = buildPnpmBlockedEnv();
+    tempDirs.push(shimDir);
     const before = fs.existsSync(path.join(fixtureRepo, '.playbook', 'policy-apply-result.json'));
     expect(before).toBe(false);
 
@@ -84,26 +116,29 @@ describe('external repo bootstrap', () => {
     expect(plan.status).toBe(0);
     fs.writeFileSync(path.join(fixtureRepo, '.playbook', 'plan.json'), plan.stdout);
 
-    const reportProof = runCli(['--repo', fixtureRepo, 'status', 'proof', '--json']);
+    const reportProof = runCli(['--repo', fixtureRepo, 'status', 'proof', '--json'], { env: pnpmBlockedEnv });
     expect(reportProof.status).toBe(0);
     const reportPayload = JSON.parse(reportProof.stdout);
     expect(reportPayload.mode).toBe('proof');
-    expect(reportPayload.proof.current_state).toBe('execution_state_blocked');
+    expect(reportPayload.proof.current_state).toBe('runtime_blocked');
 
-    const failingProof = runCli(['--repo', fixtureRepo, 'status', 'proof', '--proof-gate', '--json']);
+    const failingProof = runCli(['--repo', fixtureRepo, 'status', 'proof', '--proof-gate', '--json'], { env: pnpmBlockedEnv });
     expect(failingProof.status).toBe(1);
     const failingPayload = JSON.parse(failingProof.stdout);
     expect(failingPayload.mode).toBe('proof');
-    expect(failingPayload.proof.current_state).toBe('execution_state_blocked');
-    expect(failingPayload.proof.diagnostics.failing_stage).toBe('execution-state');
+    expect(failingPayload.proof.current_state).toBe('runtime_blocked');
+    expect(failingPayload.proof.diagnostics.failing_stage).toBe('runtime');
 
     fs.writeFileSync(path.join(fixtureRepo, '.playbook', 'policy-apply-result.json'), JSON.stringify({ ok: true }, null, 2));
 
-    const passingProof = runCli(['--repo', fixtureRepo, 'status', 'proof', '--proof-gate', '--json']);
-    expect(passingProof.status).toBe(0);
+    const passingProof = runCli(['--repo', fixtureRepo, 'status', 'proof', '--proof-gate', '--json'], { env: pnpmBlockedEnv });
+    expect(passingProof.status).toBe(1);
     const passingPayload = JSON.parse(passingProof.stdout);
-    expect(passingPayload.proof.ok).toBe(true);
-    expect(passingPayload.proof.current_state).toBe('governed_consumer_ready');
+    expect(passingPayload.proof.ok).toBe(false);
+    expect(passingPayload.proof.current_state).toBe('runtime_blocked');
+    expect(passingPayload.proof.diagnostics.failing_stage).toBe('runtime');
+    const executionStateCheck = passingPayload.proof.diagnostics.checks.find((entry: { id: string }) => entry.id === 'execution-state.required');
+    expect(executionStateCheck?.status).toBe('pass');
   });
 
 });

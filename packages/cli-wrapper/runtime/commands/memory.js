@@ -4,6 +4,7 @@ import path from 'node:path';
 import { expandMemoryProvenance, loadCandidateKnowledgeById, lookupMemoryCandidateKnowledge, lookupMemoryEventTimeline, lookupPromotedMemoryKnowledge, promoteMemoryCandidate, retirePromotedKnowledge, resolvePatternKnowledgeStore } from '@zachariahredfield/playbook-engine';
 import { emitJsonOutput } from '../lib/jsonArtifact.js';
 import { ExitCode } from '../lib/cliContract.js';
+const memoryEngine = playbookEngine;
 const printMemoryHelp = () => {
     console.log(`Usage: playbook memory <subcommand> [options]
 
@@ -227,7 +228,7 @@ export const runMemory = async (cwd, args, options) => {
                 view: view ?? 'events',
                 events: (() => {
                     if (!view || view === 'events') {
-                        return playbookEngine.queryRepositoryEvents(cwd, {
+                        return memoryEngine.queryRepositoryEvents(cwd, {
                             event_type: readOptionValue(args, '--event-type'),
                             subsystem: readOptionValue(args, '--subsystem'),
                             run_id: runId,
@@ -238,23 +239,23 @@ export const runMemory = async (cwd, args, options) => {
                         });
                     }
                     if (view === 'recent-routes') {
-                        return playbookEngine.listRecentRouteDecisions(cwd, limit ?? 10);
+                        return memoryEngine.listRecentRouteDecisions(cwd, limit ?? 10);
                     }
                     if (view === 'lane-transitions') {
                         if (!runId)
                             throw new Error('playbook memory query: --run-id is required for view lane-transitions');
-                        return playbookEngine.listLaneTransitionsForRun(cwd, runId);
+                        return memoryEngine.listLaneTransitionsForRun(cwd, runId);
                     }
                     if (view === 'worker-assignments') {
                         if (!runId)
                             throw new Error('playbook memory query: --run-id is required for view worker-assignments');
-                        return playbookEngine.listWorkerAssignmentsForRun(cwd, runId);
+                        return memoryEngine.listWorkerAssignmentsForRun(cwd, runId);
                     }
                     if (view === 'artifact-improvements') {
                         if (!relatedArtifact) {
                             throw new Error('playbook memory query: --related-artifact is required for view artifact-improvements');
                         }
-                        return playbookEngine.listImprovementSignalsForArtifact(cwd, relatedArtifact);
+                        return memoryEngine.listImprovementSignalsForArtifact(cwd, relatedArtifact);
                     }
                     throw new Error('playbook memory query: invalid --view value. Use events, recent-routes, lane-transitions, worker-assignments, or artifact-improvements.');
                 })()
@@ -442,13 +443,13 @@ export const runMemory = async (cwd, args, options) => {
             return ExitCode.Success;
         }
         if (subcommand === 'compaction') {
-            const artifact = playbookEngine.reviewMemoryCompaction(cwd);
+            const artifact = memoryEngine.reviewMemoryCompaction(cwd);
             const payload = {
                 schemaVersion: '1.0',
                 command: 'memory-compaction-review',
                 artifactPath: '.playbook/memory/compaction-review.json',
                 summary: artifact.summary,
-                entries: playbookEngine.lookupMemoryCompactionReview(cwd, {
+                entries: memoryEngine.lookupMemoryCompactionReview(cwd, {
                     decision: readOptionValue(args, '--decision') ?? undefined,
                     kind: readOptionValue(args, '--kind') ?? undefined
                 })

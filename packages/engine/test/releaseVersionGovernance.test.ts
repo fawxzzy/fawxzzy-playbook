@@ -7,6 +7,8 @@ import { assessReleaseSync, verifyReleaseGovernance } from '../src/release/index
 
 const BREAKING_CHANGE_MARKER = ['BREAKING', 'CHANGE'].join(' ');
 const createdRepos: string[] = [];
+const GIT_FIXTURE_TEST_TIMEOUT_MS = 60_000;
+let baselineTemplateRoot: string | null = null;
 
 const run = (cwd: string, ...args: string[]): string =>
   execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
@@ -21,25 +23,40 @@ const write = (filePath: string, value: string): void => {
   fs.writeFileSync(filePath, value);
 };
 
-const createRepo = (): { repoRoot: string; baseSha: string } => {
-  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-release-verify-'));
-  createdRepos.push(repoRoot);
-  run(repoRoot, 'init');
-  run(repoRoot, 'config', 'user.email', 'playbook@example.com');
-  run(repoRoot, 'config', 'user.name', 'Playbook');
+const ensureBaselineTemplateRoot = (): string => {
+  if (baselineTemplateRoot) {
+    return baselineTemplateRoot;
+  }
 
-  writeJson(path.join(repoRoot, 'packages', 'alpha', 'package.json'), { name: '@scope/alpha', version: '1.2.3' });
-  writeJson(path.join(repoRoot, 'packages', 'beta', 'package.json'), { name: '@scope/beta', version: '1.2.3' });
-  writeJson(path.join(repoRoot, '.playbook', 'version-policy.json'), {
+  const templateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-release-verify-template-'));
+  run(templateRoot, 'init');
+  run(templateRoot, 'config', 'user.email', 'playbook@example.com');
+  run(templateRoot, 'config', 'user.name', 'Playbook');
+  run(templateRoot, 'config', 'core.autocrlf', 'false');
+  run(templateRoot, 'config', 'core.safecrlf', 'false');
+
+  writeJson(path.join(templateRoot, 'packages', 'alpha', 'package.json'), { name: '@scope/alpha', version: '1.2.3' });
+  writeJson(path.join(templateRoot, 'packages', 'beta', 'package.json'), { name: '@scope/beta', version: '1.2.3' });
+  writeJson(path.join(templateRoot, '.playbook', 'version-policy.json'), {
     schemaVersion: '1.0',
     kind: 'playbook-version-policy',
     breakingChangeMarkers: [BREAKING_CHANGE_MARKER],
     versionGroups: [{ name: 'lockstep', packages: ['@scope/alpha', '@scope/beta'] }]
   });
-  write(path.join(repoRoot, 'docs', 'CHANGELOG.md'), `# Changelog\n\n<!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_START -->\n- Existing release note.\n<!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_END -->\n`);
-  write(path.join(repoRoot, 'docs', 'commands', 'verify.md'), '# verify\n');
-  run(repoRoot, 'add', '.');
-  run(repoRoot, 'commit', '-m', 'baseline');
+  write(path.join(templateRoot, 'docs', 'CHANGELOG.md'), `# Changelog\n\n<!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_START -->\n- Existing release note.\n<!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_END -->\n`);
+  write(path.join(templateRoot, 'docs', 'commands', 'verify.md'), '# verify\n');
+  run(templateRoot, 'add', '.');
+  run(templateRoot, 'commit', '-m', 'baseline');
+  baselineTemplateRoot = templateRoot;
+  return templateRoot;
+};
+
+const createRepo = (): { repoRoot: string; baseSha: string } => {
+  const templateRoot = ensureBaselineTemplateRoot();
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-release-verify-'));
+  fs.rmSync(repoRoot, { recursive: true, force: true });
+  fs.cpSync(templateRoot, repoRoot, { recursive: true });
+  createdRepos.push(repoRoot);
   const baseSha = run(repoRoot, 'rev-parse', 'HEAD');
   return { repoRoot, baseSha };
 };
@@ -61,7 +78,7 @@ describe('verifyReleaseGovernance', () => {
 
     expect(failures.map((failure) => failure.id)).toContain('release.contractExpansion.releasePlan.required');
     expect(failures.map((failure) => failure.id)).toContain('release.requiredVersionBump.missing');
-  }, 10000);
+  }, GIT_FIXTURE_TEST_TIMEOUT_MS);
 
   it('does not fail for docs-only changes', () => {
     const { repoRoot, baseSha } = createRepo();
@@ -72,7 +89,7 @@ describe('verifyReleaseGovernance', () => {
     const failures = verifyReleaseGovernance(repoRoot, { baseRef: 'HEAD~0', baseSha });
 
     expect(failures).toEqual([]);
-  }, 10000);
+  }, GIT_FIXTURE_TEST_TIMEOUT_MS);
 
 
   it('ignores the tracked release-plan artifact when classifying release bumps', () => {
@@ -90,7 +107,7 @@ describe('verifyReleaseGovernance', () => {
     const failures = verifyReleaseGovernance(repoRoot, { baseRef: 'HEAD~0', baseSha });
 
     expect(failures).toEqual([]);
-  }, 10000);
+  }, GIT_FIXTURE_TEST_TIMEOUT_MS);
 
   it('fails deterministically for lockstep mismatch', () => {
     const { repoRoot, baseSha } = createRepo();
@@ -101,7 +118,7 @@ describe('verifyReleaseGovernance', () => {
     expect(failures).toEqual([
       expect.objectContaining({ id: 'release.versionGroup.inconsistent' })
     ]);
-  }, 10000);
+  }, GIT_FIXTURE_TEST_TIMEOUT_MS);
 
   it('keeps release sync idempotent by deriving next version from baseRef version', () => {
     const { repoRoot, baseSha } = createRepo();
@@ -146,7 +163,7 @@ describe('verifyReleaseGovernance', () => {
     const changelogAfterSecondCheck = fs.readFileSync(changelogPath, 'utf8');
     const releaseHeaderMatchesAfterSecondCheck = changelogAfterSecondCheck.match(/## 1\.2\.4 - 2026-03-27/g) ?? [];
     expect(releaseHeaderMatchesAfterSecondCheck.length).toBe(releaseHeaderMatches.length);
-  }, 30000);
+  }, GIT_FIXTURE_TEST_TIMEOUT_MS);
 
   it('passes generated-artifact mode when release-plan file is absent and durable outputs are aligned', () => {
     const { repoRoot, baseSha } = createRepo();
@@ -171,7 +188,7 @@ describe('verifyReleaseGovernance', () => {
 
     const assessed = assessReleaseSync(repoRoot, { baseRef: baseSha, mode: 'check' });
     expect(assessed.hasDrift).toBe(false);
-  }, 30000);
+  }, GIT_FIXTURE_TEST_TIMEOUT_MS);
 
   it('fails generated-artifact mode when versions/changelog are not aligned', () => {
     const { repoRoot, baseSha } = createRepo();
@@ -187,8 +204,10 @@ describe('verifyReleaseGovernance', () => {
     const assessed = assessReleaseSync(repoRoot, { baseRef: baseSha, mode: 'check' });
     expect(assessed.hasDrift).toBe(true);
     expect(assessed.governanceFailures.map((failure) => failure.id)).toContain('release.requiredVersionBump.missing');
-  }, 30000);
+  }, GIT_FIXTURE_TEST_TIMEOUT_MS);
 
+  // This legacy compatibility check spins a real git-backed fixture and can exceed
+  // the default 20s budget on slower hosted runners without indicating product drift.
   it('keeps legacy committed-plan mode backward compatible by ignoring repo copy parity', () => {
     const { repoRoot, baseSha } = createRepo();
     const featurePath = path.join(repoRoot, 'packages', 'alpha', 'src', 'feature.ts');
@@ -209,5 +228,5 @@ describe('verifyReleaseGovernance', () => {
 
     const assessed = assessReleaseSync(repoRoot, { baseRef: baseSha, mode: 'check' });
     expect(assessed.hasDrift).toBe(false);
-  }, 30000);
+  }, GIT_FIXTURE_TEST_TIMEOUT_MS);
 });

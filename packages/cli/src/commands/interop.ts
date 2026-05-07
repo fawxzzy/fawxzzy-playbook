@@ -26,6 +26,95 @@ type InteropFollowupsArtifact = {
   command: 'interop followups';
   followups: InteropFollowupRow[];
 };
+type InteropRuntimeStatus = {
+  request_id: string;
+  request_state: string;
+  updated_at: string;
+  detail: string;
+};
+type InteropRuntimeRetry = {
+  attempts: number;
+  max_attempts: number;
+  reconcile_token: string;
+  last_attempt_at: string | null;
+  next_retry_at: string | null;
+};
+type InteropRuntimeRequest = {
+  request_id: string;
+  remediation_id: string;
+  action_kind: RemediationInteropActionKind;
+  receipt_type: string;
+  routing: FitnessActionContract['routing'];
+  capability_id: string;
+  created_at: string;
+  updated_at: string;
+  request_state: string;
+  idempotency_key: string;
+  rendezvous_manifest_path: string;
+  rendezvous_manifest_sha256: string;
+  bounded_inputs: string[];
+  bounded_action_input: Record<string, unknown>;
+  blocked_reason: Record<string, unknown> | null;
+  retry: InteropRuntimeRetry;
+};
+type InteropRuntimeReceipt = {
+  request_id: string;
+  action_kind: string;
+  receipt_type: string;
+  routing: FitnessActionContract['routing'];
+  completed_at: string;
+  output_artifact_path: string | null;
+  output_sha256: string | null;
+  detail: string;
+};
+type InteropRuntimeArtifact = {
+  capabilities: Array<{
+    capability_id: string;
+    action_kind: RemediationInteropActionKind;
+    receipt_type: string;
+    routing: FitnessActionContract['routing'];
+    version: string;
+    runtime_id: string;
+    idempotency_key_prefix: string;
+    registered_at?: string;
+  }>;
+  requests: InteropRuntimeRequest[];
+  statuses: InteropRuntimeStatus[];
+  receipts: InteropRuntimeReceipt[];
+  heartbeat: Record<string, unknown> | null;
+};
+type InteropRuntimeArtifactResult = {
+  runtime: InteropRuntimeArtifact;
+  request: InteropRuntimeRequest;
+};
+type InteropReconcileResult = {
+  runtime: InteropRuntimeArtifact;
+  updatedTruth: Record<string, unknown>;
+  updatedTruthPath: string;
+};
+type InteropDraftArtifact = {
+  draftId: string;
+  proposalId: string;
+  target: string;
+  action: string;
+  capability: string;
+  expected_receipt_type: string;
+  bounded_action_input: Record<string, unknown>;
+  routing_metadata: {
+    channel: string;
+    target: string;
+    priority: string;
+    maxDeliveryLatencySeconds: number;
+  };
+};
+type InteropDraftReadResult = {
+  artifactPath: string;
+  draft: InteropDraftArtifact;
+};
+type InteropDraftCompileResult = {
+  artifactPath: string;
+  draft: InteropDraftArtifact;
+};
 
 type AutomationSynthesisSuggestion = {
   suggestionId: string;
@@ -98,7 +187,52 @@ type FitnessContractInspectPayload = {
   contract: unknown;
 };
 
-const fitnessIntegrationContract = (engineRuntime as unknown as { fitnessIntegrationContract: { actions: FitnessActionContract[] } }).fitnessIntegrationContract;
+type FitnessContractArtifact = {
+  source: {
+    sourceRepo: string;
+    sourceRef: string;
+    sourcePath: string;
+    syncMode: string;
+  };
+  fingerprint: string;
+  payload: {
+    kind: string;
+    schemaVersion: string;
+    signalTypes: string[];
+    stateSnapshotTypes: string[];
+    actions: Array<{ name: string }>;
+    receiptTypes: string[];
+  };
+};
+
+const engine = engineRuntime as unknown as {
+  fitnessIntegrationContract: { actions: FitnessActionContract[] };
+  readInteropRuntime: (cwd: string) => InteropRuntimeArtifact;
+  writeInteropRuntime: (cwd: string, artifact: InteropRuntimeArtifact) => string;
+  registerInteropCapability: (
+    runtime: InteropRuntimeArtifact,
+    capability: {
+      capability_id: string;
+      action_kind: RemediationInteropActionKind;
+      receipt_type: string;
+      routing: FitnessActionContract['routing'];
+      version: string;
+      runtime_id: string;
+      idempotency_key_prefix: string;
+      registered_at?: string;
+    }
+  ) => InteropRuntimeArtifact;
+  emitBoundedInteropActionRequest: (input: Record<string, unknown>) => InteropRuntimeArtifactResult;
+  emitPlanDerivedFitnessRequest: (input: Record<string, unknown>) => InteropRuntimeArtifactResult;
+  runLifelineMockRuntimeOnce: (runtime: InteropRuntimeArtifact, runtimeId: string) => InteropRuntimeArtifact;
+  reconcileInteropRuntime: (cwd: string, runtime: InteropRuntimeArtifact) => Promise<InteropReconcileResult>;
+  materializeFitnessContractArtifact: (options: { repoRoot: string }) => Promise<FitnessContractArtifact>;
+  compileInteropRequestDraft: (cwd: string, options?: { proposalPath?: string; outFile?: string; capability?: string }) => InteropDraftCompileResult;
+  readInteropRequestDraft: (cwd: string, options?: { draftPath?: string }) => InteropDraftReadResult;
+  readArtifactJson: <T>(path: string) => T;
+};
+
+const fitnessIntegrationContract = engine.fitnessIntegrationContract;
 const actionKinds = fitnessIntegrationContract.actions.map((entry: FitnessActionContract) => entry.name);
 const defaultBoundedActionInputByAction = {
   adjust_upcoming_workout_load: {
@@ -124,20 +258,6 @@ const defaultBoundedActionInputByAction = {
     duration_days: 7
   }
 } as const;
-
-const engine = engineRuntime as unknown as {
-  readInteropRuntime: (cwd: string) => any;
-  writeInteropRuntime: (cwd: string, artifact: any) => string;
-  registerInteropCapability: (runtime: any, capability: any) => any;
-  emitBoundedInteropActionRequest: (input: any) => { runtime: any; request: any };
-  emitPlanDerivedFitnessRequest: (input: any) => { runtime: any; request: any };
-  runLifelineMockRuntimeOnce: (runtime: any, runtimeId: string) => any;
-  reconcileInteropRuntime: (cwd: string, runtime: any) => Promise<{ runtime: any; updatedTruth: any; updatedTruthPath: string }>;
-  materializeFitnessContractArtifact: (options: { repoRoot: string }) => Promise<any>;
-  compileInteropRequestDraft: (cwd: string, options?: { proposalPath?: string; outFile?: string; capability?: string }) => { artifactPath: string; draft: any };
-  readInteropRequestDraft: (cwd: string, options?: { draftPath?: string }) => { artifactPath: string; draft: any };
-  readArtifactJson: <T>(path: string) => T;
-};
 
 const interopFollowupTypes: ReadonlySet<InteropFollowupType> = new Set(['memory-candidate', 'next-plan-hint', 'review-cue', 'docs-story-followup']);
 const interopFollowupSurfaces: ReadonlySet<InteropFollowupTargetSurface> = new Set([
@@ -207,7 +327,7 @@ const readPlanDerivedReadiness = (cwd: string, approvedPlan: boolean): {
 };
 
 const toFitnessContractInspectPayload = async (cwd: string): Promise<FitnessContractInspectPayload> => {
-  const artifact = await engine.materializeFitnessContractArtifact({ repoRoot: cwd });
+  const artifact: FitnessContractArtifact = await engine.materializeFitnessContractArtifact({ repoRoot: cwd });
   return {
     sourceRepo: artifact.source.sourceRepo,
     sourceRef: artifact.source.sourceRef,
@@ -332,7 +452,7 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
 
     if (sub === 'draft') {
       const fromProposal = valueFor('--from-proposal');
-      const compiled = engine.compileInteropRequestDraft(cwd, fromProposal ? { proposalPath: fromProposal } : {});
+      const compiled: InteropDraftCompileResult = engine.compileInteropRequestDraft(cwd, fromProposal ? { proposalPath: fromProposal } : {});
       const payload = { artifactPath: compiled.artifactPath, draft: compiled.draft };
       if (options.format === 'json') {
         emitJsonOutput({ cwd, command: 'interop', payload: { command: 'interop', subcommand: sub, payload } });
@@ -367,7 +487,7 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
       return ExitCode.Success;
     }
 
-    let runtime = engine.readInteropRuntime(cwd);
+    let runtime: InteropRuntimeArtifact = engine.readInteropRuntime(cwd);
 
     if (sub === 'register') {
       const capability = valueFor('--capability') ?? 'lifeline-remediation-v1';
@@ -408,7 +528,7 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
       if (fromDraft && (directAction || directCapability || actionInputJson)) {
         throw new Error('Cannot emit plan-derived Fitness request: --from-draft cannot be combined with --capability, --action, or --action-input-json.');
       }
-      const draft = fromDraft ? engine.readInteropRequestDraft(cwd, { draftPath: fromDraft }).draft : null;
+      const draft: InteropDraftArtifact | null = fromDraft ? engine.readInteropRequestDraft(cwd, { draftPath: fromDraft }).draft : null;
       const capability = draft ? String(draft.capability) : (directCapability ?? 'lifeline-remediation-v1');
       const action = (draft ? String(draft.action) : (directAction ?? 'adjust_upcoming_workout_load')) as RemediationInteropActionKind;
       if (!actionKinds.includes(action)) throw new Error(`Unsupported --action ${action}`);
@@ -472,7 +592,7 @@ export const runInterop = async (cwd: string, commandArgs: string[], options: In
       runtime = engine.runLifelineMockRuntimeOnce(runtime, runtimeId);
       engine.writeInteropRuntime(cwd, runtime);
     } else if (sub === 'reconcile') {
-      const reconciled = await engine.reconcileInteropRuntime(cwd, runtime);
+      const reconciled: InteropReconcileResult = await engine.reconcileInteropRuntime(cwd, runtime);
       runtime = reconciled.runtime;
       engine.writeInteropRuntime(cwd, runtime);
       const payload = {
