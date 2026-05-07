@@ -171,7 +171,7 @@ Do not hand-edit entries inside the managed markers.
 - `pilot`: Run one-command external baseline analysis workflow for a target repository
   - Example: `pnpm playbook pilot --repo "./target-repo" --json`
 - `verify`: Detect repository state and extract governance invariants
-  - Example: `pnpm playbook verify --ci --json`
+  - Example: `pnpm playbook verify --baseline main --format sarif --out .playbook/verify.sarif`
 - `plan`: Transform findings into a structured remediation model
   - Example: `pnpm playbook plan --json`
 - `lanes`: Derive deterministic lane-state from .playbook/workset-plan.json
@@ -303,7 +303,7 @@ Do not hand-edit entries inside the managed markers.
 | --- | --- |
 | `analyze` | `pnpm playbook analyze --json` |
 | `pilot` | `pnpm playbook pilot --repo "./target-repo" --json` |
-| `verify` | `pnpm playbook verify --ci --json` |
+| `verify` | `pnpm playbook verify --baseline main --format sarif --out .playbook/verify.sarif` |
 | `plan` | `pnpm playbook plan --json` |
 | `lanes` | `pnpm playbook lanes --json` |
 | `workers` | `pnpm playbook workers assign --json` |

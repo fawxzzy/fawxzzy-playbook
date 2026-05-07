@@ -166,6 +166,7 @@ describe('runVerify policy mode', () => {
     expect(exitCode).toBe(ExitCode.Success);
     expect(verifyRepo).not.toHaveBeenCalled();
     expect(logSpy.mock.calls.flat().join('\n')).toContain('Usage: playbook verify [options]');
+    expect(logSpy.mock.calls.flat().join('\n')).toContain('--format <text|json|sarif> Output format');
 
     logSpy.mockRestore();
   });
@@ -352,6 +353,67 @@ describe('runVerify policy mode', () => {
 
     const contaminated = `pnpm header\n${fs.readFileSync(outputPath, 'utf8')}`;
     expect(() => JSON.parse(contaminated)).toThrow();
+
+    logSpy.mockRestore();
+  });
+
+  it('renders SARIF with stable fingerprints when requested', async () => {
+    const { runVerify } = await import('./verify.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    verifyRepo.mockReturnValue({
+      ok: false,
+      summary: { failures: 1, warnings: 1, baselineRef: 'main' },
+      failures: [{
+        id: 'requireNotesOnChanges',
+        message: 'notes file not updated',
+        evidence: 'docs/PLAYBOOK_NOTES.md:12:1',
+        findingId: 'verify.finding:abc',
+        normalizedLocation: 'docs/PLAYBOOK_NOTES.md:12:1',
+        evidenceHash: 'hash-abc',
+        baselineRef: 'main',
+        state: 'existing'
+      }],
+      warnings: [{
+        id: 'config-missing',
+        message: 'config missing',
+        findingId: 'verify.finding:def',
+        normalizedLocation: 'playbook.config.json',
+        evidenceHash: 'hash-def',
+        baselineRef: 'main'
+      }]
+    });
+
+    const exitCode = await runVerify('/repo', {
+      format: 'sarif',
+      ci: true,
+      quiet: true,
+      explain: false,
+      policy: false
+    });
+
+    expect(exitCode).toBe(ExitCode.PolicyFailure);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.version).toBe('2.1.0');
+    expect(payload.runs[0].tool.driver.name).toBe('Playbook Verify');
+    expect(payload.runs[0].results).toEqual([
+      expect.objectContaining({
+        ruleId: 'requireNotesOnChanges',
+        level: 'error',
+        partialFingerprints: expect.objectContaining({
+          playbookFindingId: 'verify.finding:abc',
+          playbookEvidenceHash: 'hash-abc',
+          playbookBaselineRef: 'main'
+        })
+      }),
+      expect.objectContaining({
+        ruleId: 'config-missing',
+        level: 'warning',
+        partialFingerprints: expect.objectContaining({
+          playbookFindingId: 'verify.finding:def'
+        })
+      })
+    ]);
 
     logSpy.mockRestore();
   });

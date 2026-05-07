@@ -709,7 +709,7 @@
       "canonicalSequence": 8,
       "productFacing": true,
       "machineReadable": true,
-      "example": "pnpm playbook verify --ci --json"
+      "example": "pnpm playbook verify --baseline main --format sarif --out .playbook/verify.sarif"
     },
     {
       "name": "workers",

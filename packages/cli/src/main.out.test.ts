@@ -78,4 +78,18 @@ describe('cli --repo with --out json artifacts', () => {
     const applyArtifact = JSON.parse(fs.readFileSync(applyArtifactPath, 'utf8'));
     expect(applyArtifact.kind).toBe('policy-apply-result');
   });
+
+  it('writes raw SARIF artifacts for external repo targeting', { timeout: 45000 }, () => {
+    const sarifPath = path.join(targetRepo, '.playbook', 'verify.sarif');
+
+    execFileSync('node', [scriptPath, '--repo', targetRepo, 'verify', '--format', 'sarif', '--out', sarifPath], {
+      cwd: process.cwd(),
+      encoding: 'utf8'
+    });
+
+    const sarif = JSON.parse(fs.readFileSync(sarifPath, 'utf8'));
+    expect(sarif.version).toBe('2.1.0');
+    expect(Array.isArray(sarif.runs)).toBe(true);
+    expect(sarif.runs[0].tool.driver.name).toBe('Playbook Verify');
+  });
 });
