@@ -114,7 +114,14 @@ export const deriveVerifyFindingState = (
 ): VerifyFindingStateArtifact => {
   const generatedAt = input.generatedAt ?? new Date().toISOString();
   const previous = readExistingState(repoRoot);
-  const previousById = new Map(previous?.findings.map((entry) => [entry.findingId, entry]) ?? []);
+  const scopedPrevious = previous?.baselineRef === input.baselineRef ? previous : null;
+  const previousById = new Map<string, VerifyFindingActiveRecord | VerifyFindingResolvedRecord>();
+  for (const entry of scopedPrevious?.resolved ?? []) {
+    previousById.set(entry.findingId, entry);
+  }
+  for (const entry of scopedPrevious?.findings ?? []) {
+    previousById.set(entry.findingId, entry);
+  }
   const seenIds = new Set<string>();
 
   const findings: VerifyFindingActiveRecord[] = [];
@@ -146,7 +153,7 @@ export const deriveVerifyFindingState = (
     seenIds.add(findingId);
   }
 
-  for (const prior of previous?.findings ?? []) {
+  for (const prior of previousById.values()) {
     if (seenIds.has(prior.findingId)) {
       continue;
     }
@@ -158,7 +165,7 @@ export const deriveVerifyFindingState = (
       evidenceHash: prior.evidenceHash,
       state: 'resolved',
       firstSeenAt: prior.firstSeenAt,
-      lastSeenAt: generatedAt,
+      lastSeenAt: prior.state === 'resolved' ? prior.lastSeenAt : generatedAt,
       evidenceRefs: prior.evidenceRefs
     });
   }
