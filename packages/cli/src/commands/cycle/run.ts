@@ -133,6 +133,7 @@ const STEP_ARTIFACTS: Record<StepName, string[]> = {
 const nowMs = (): number => Date.now();
 
 const pathExists = (cwd: string, relativePath: string): boolean => fs.existsSync(path.join(cwd, relativePath));
+const toPosixRelativePath = (value: string): string => value.replace(/\\/g, '/');
 
 const toCycleArtifact = (
   repo: string,
@@ -377,7 +378,7 @@ export const runCycle = async (cwd: string, options: CycleOptions): Promise<numb
         const executionRunsRoot = path.join(cwd, '.playbook', 'execution-runs');
         if (fs.existsSync(executionRunsRoot)) {
           for (const entry of fs.readdirSync(executionRunsRoot).filter((file) => file.endsWith('.json')).sort((left, right) => left.localeCompare(right))) {
-            executionRunRefs.add(path.join('.playbook', 'execution-runs', entry));
+            executionRunRefs.add(toPosixRelativePath(path.join('.playbook', 'execution-runs', entry)));
           }
         }
       }

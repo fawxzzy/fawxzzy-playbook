@@ -243,6 +243,18 @@ type ObserverRepoRegistry = {
   repos: ObserverRepoEntry[];
 };
 
+type ObserverRepoRegistryArtifactEntry = {
+  id?: unknown;
+  name?: unknown;
+  root?: unknown;
+  artifactsRoot?: unknown;
+  tags?: unknown;
+};
+
+type ObserverCrossRepoComparison = CrossRepoPatternsArtifact["comparisons"][number];
+type ObserverCrossRepoCandidatePattern =
+  CrossRepoPatternsArtifact["candidate_patterns"][number];
+
 type ObserverRepoCreateInput = {
   path: string;
   id?: string;
@@ -571,7 +583,7 @@ const readRegistry = (observerRoot: string): ObserverRepoRegistry => {
     schemaVersion: "1.0",
     kind: "repo-registry",
     repos: parsed.repos
-      .map((entry: any) => ({
+      .map((entry: ObserverRepoRegistryArtifactEntry) => ({
         id: String(entry.id ?? ""),
         name: String(entry.name ?? ""),
         root: String(entry.root ?? ""),
@@ -583,7 +595,7 @@ const readRegistry = (observerRoot: string): ObserverRepoRegistry => {
               .sort((left: string, right: string) => left.localeCompare(right))
           : [],
       }))
-      .filter((entry: any) => entry.id.length > 0),
+      .filter((entry) => entry.id.length > 0),
   });
 };
 
@@ -728,18 +740,6 @@ const listArtifactRecords = (
       [],
   );
 };
-
-const toStringList = (value: unknown): string[] =>
-  Array.isArray(value)
-    ? [
-        ...new Set(
-          value.filter(
-            (entry): entry is string =>
-              typeof entry === "string" && entry.trim().length > 0,
-          ),
-        ),
-      ].sort((left, right) => left.localeCompare(right))
-    : [];
 
 const toSourceRefList = (entry: Record<string, unknown>): string[] => {
   const rawSourceRefs = Array.isArray(entry.sourceRefs) ? entry.sourceRefs : [];
@@ -1220,7 +1220,6 @@ const artifactKindsForStoryEvidence = (): string[] => [
 
 const buildRepoBacklog = (
   repo: ObserverRepoEntry,
-  readiness: ObserverRepoReadiness,
 ): ObserverStoryBacklog => {
   const artifact = readRepoStories(repo);
   return {
@@ -2184,7 +2183,7 @@ const observerServerResponse = (
     }
     const artifact = buildCrossRepoArtifact(observerRoot, registry);
     const comparison = artifact.comparisons.find(
-      (entry: any) =>
+      (entry: ObserverCrossRepoComparison) =>
         (entry.left_repo_id === left && entry.right_repo_id === right) ||
         (entry.left_repo_id === right && entry.right_repo_id === left),
     );
@@ -2219,7 +2218,7 @@ const observerServerResponse = (
     const patternId = decodeURIComponent(patternMatch[1] ?? "");
     const artifact = buildCrossRepoArtifact(observerRoot, registry);
     const pattern = artifact.candidate_patterns.find(
-      (entry: any) => entry.id === patternId,
+      (entry: ObserverCrossRepoCandidatePattern) => entry.id === patternId,
     );
     if (!pattern) {
       return {
@@ -2257,9 +2256,7 @@ const observerServerResponse = (
 
   const repoMatch = /^\/repos\/([^/]+)$/.exec(pathname);
   if (repoMatch) {
-    const repo = registry.repos.find(
-      (entry: any) => entry.id === decodeURIComponent(repoMatch[1] ?? ""),
-    );
+    const repo = registry.repos.find((entry) => entry.id === decodeURIComponent(repoMatch[1] ?? ""));
     if (!repo) {
       return {
         statusCode: 404,
@@ -2278,7 +2275,7 @@ const observerServerResponse = (
         kind: "observer-server-repo",
         repo,
         readiness,
-        backlog: buildRepoBacklog(repo, readiness),
+        backlog: buildRepoBacklog(repo),
         promotion_layer: buildRepoPromotionLayer(repo),
       },
     };
@@ -2286,9 +2283,7 @@ const observerServerResponse = (
 
   const backlogMatch = /^\/repos\/([^/]+)\/backlog$/.exec(pathname);
   if (backlogMatch) {
-    const repo = registry.repos.find(
-      (entry: any) => entry.id === decodeURIComponent(backlogMatch[1] ?? ""),
-    );
+    const repo = registry.repos.find((entry) => entry.id === decodeURIComponent(backlogMatch[1] ?? ""));
     if (!repo) {
       return {
         statusCode: 404,
@@ -2306,7 +2301,7 @@ const observerServerResponse = (
         ...base,
         kind: "observer-server-backlog",
         repoId: repo.id,
-        backlog: buildRepoBacklog(repo, readiness),
+        backlog: buildRepoBacklog(repo),
         readiness,
       },
     };
@@ -2316,9 +2311,7 @@ const observerServerResponse = (
     pathname,
   );
   if (storyMatch) {
-    const repo = registry.repos.find(
-      (entry: any) => entry.id === decodeURIComponent(storyMatch[1] ?? ""),
-    );
+    const repo = registry.repos.find((entry) => entry.id === decodeURIComponent(storyMatch[1] ?? ""));
     if (!repo) {
       return {
         statusCode: 404,
@@ -2358,9 +2351,7 @@ const observerServerResponse = (
 
   const artifactMatch = /^\/repos\/([^/]+)\/artifacts\/([^/]+)$/.exec(pathname);
   if (artifactMatch) {
-    const repo = registry.repos.find(
-      (entry: any) => entry.id === decodeURIComponent(artifactMatch[1] ?? ""),
-    );
+    const repo = registry.repos.find((entry) => entry.id === decodeURIComponent(artifactMatch[1] ?? ""));
     if (!repo) {
       return {
         statusCode: 404,

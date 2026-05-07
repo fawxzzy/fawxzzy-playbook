@@ -191,16 +191,20 @@ export const buildStoryPatternContext = (
                 ? [(pattern as PatternRecord & { superseded_by?: unknown }).superseded_by as string]
                 : []
           },
-          _rank: reason.rank,
+          sortRank: reason.rank,
         },
       ];
     })
     .sort(
       (left, right) =>
-        left._rank - right._rank ||
+        left.sortRank - right.sortRank ||
         left.pattern_id.localeCompare(right.pattern_id),
     )
-    .map(({ _rank, ...entry }) => entry);
+    .map((entry) => {
+      const { sortRank, ...normalized } = entry;
+      void sortRank;
+      return normalized;
+    });
 
   return {
     patterns: matches,

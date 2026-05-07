@@ -75,12 +75,8 @@ let latestExecutionReceiptPayload = null;
 let latestPromotionPayload = null;
 let latestUpdatedStatePayload = null;
 let latestNextQueuePayload = null;
-let latestBacklogPayload = null;
 let latestStoryDetailPayload = null;
 let latestRepoPromotionLayerPayload = null;
-let latestCrossRepoPromotionLayerPayload = null;
-let latestGlobalPatternListPayload = null;
-let latestGlobalPatternDetailPayload = null;
 let selectedStoryId = null;
 let selectedGlobalPatternId = null;
 
@@ -99,7 +95,6 @@ const NODE_LINKED_ARTIFACT = {
   'observer-server': 'system-map'
 };
 
-const boolStatus = (value) => value ? 'present' : 'missing';
 const FRESH_WINDOW_MS = 1000 * 60 * 60 * 24;
 const parseTimestamp = (value) => {
   if (!value || typeof value !== 'string') return null;
@@ -241,7 +236,7 @@ const attachTruthHandlers = () => {
   }
 };
 
-const renderBacklogSummary = (repoId, backlog, readiness) => {
+const renderBacklogSummary = (repoId, backlog) => {
   if (!backlog || !backlog.summary) {
     backlogSummaryPanelEl.innerHTML = '<div class="empty-state">No canonical backlog artifact detected yet. Generate or promote candidate stories so planning can sit above lower-level operational detail.</div>';
     return;
@@ -404,15 +399,13 @@ const renderStoryDetail = (detail) => {
 
 const loadBacklog = async () => {
   if (!selectedRepoId) {
-    latestBacklogPayload = null;
     backlogSummaryPanelEl.innerHTML = '<div class="empty-state">Select a repo to load backlog summary.</div>';
     backlogListPanelEl.innerHTML = '<div class="empty-state">Select a repo to load backlog list.</div>';
     renderStoryDetail(null);
     return;
   }
   const payload = await getJson('/repos/' + encodeURIComponent(selectedRepoId) + '/backlog');
-  latestBacklogPayload = payload;
-  renderBacklogSummary(selectedRepoId, payload.backlog, payload.readiness || null);
+  renderBacklogSummary(selectedRepoId, payload.backlog);
   renderBacklogList(selectedRepoId, payload.backlog);
   const stories = payload.backlog && Array.isArray(payload.backlog.stories) ? payload.backlog.stories : [];
   if (!selectedStoryId || !stories.find((story) => story.id === selectedStoryId)) selectedStoryId = stories[0] ? stories[0].id : null;
@@ -739,7 +732,6 @@ const loadRepoDetail = async () => {
 
   latestRepoPayload = await getJson('/repos/' + encodeURIComponent(selectedRepoId));
   latestRepoPromotionLayerPayload = latestRepoPayload;
-  latestBacklogPayload = latestRepoPayload.backlog ? { backlog: latestRepoPayload.backlog, readiness: latestRepoPayload.readiness } : null;
   repoTitleEl.textContent = 'Repo: ' + latestRepoPayload.repo.id;
   const readiness = latestRepoPayload.readiness || {};
   const missing = Array.isArray(readiness.missing_artifacts) && readiness.missing_artifacts.length > 0 ? readiness.missing_artifacts.join(', ') : 'none';
@@ -1144,10 +1136,8 @@ const loadCrossRepoAggregate = async () => {
   const reposPayload = await getJson('/repos');
   const repos = Array.isArray(reposPayload.repos) ? reposPayload.repos : [];
   const promotionLayerPayload = await getJson('/api/cross-repo/promotion-layer');
-  latestCrossRepoPromotionLayerPayload = promotionLayerPayload;
   renderCrossRepoPromotionLayer(promotionLayerPayload);
   const globalPatternListPayload = await getJson('/api/cross-repo/global-patterns');
-  latestGlobalPatternListPayload = globalPatternListPayload;
   renderGlobalPatternList(globalPatternListPayload);
   const patterns = toArray(globalPatternListPayload.patterns);
   if (!selectedGlobalPatternId || !patterns.find((pattern) => pattern.id === selectedGlobalPatternId)) {
@@ -1181,7 +1171,6 @@ const loadGlobalPatternDetail = async () => {
     return;
   }
   const payload = await getJson('/api/cross-repo/global-patterns/' + encodeURIComponent(selectedGlobalPatternId));
-  latestGlobalPatternDetailPayload = payload;
   renderGlobalPatternDetail(payload);
 };
 

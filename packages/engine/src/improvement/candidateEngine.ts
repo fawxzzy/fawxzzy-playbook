@@ -20,8 +20,6 @@ import {
 import {
   generateDoctrinePromotionArtifacts,
   writeDoctrinePromotionArtifacts,
-  KNOWLEDGE_CANDIDATES_RELATIVE_PATH,
-  KNOWLEDGE_PROMOTIONS_RELATIVE_PATH,
   type DoctrinePromotionCandidatesArtifact,
   type DoctrinePromotionsArtifact
 } from './doctrinePromotion.js';

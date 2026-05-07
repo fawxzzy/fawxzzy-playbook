@@ -38,7 +38,9 @@ describe('rendezvous manifest', () => {
   });
 
   it('blocks release when required artifacts are missing', () => {
-    const { ['apply-result']: _removed, ...artifactsWithoutApply } = baseInput.artifacts;
+    const artifactsWithoutApply = Object.fromEntries(
+      Object.entries(baseInput.artifacts).filter(([key]) => key !== 'apply-result'),
+    ) as typeof baseInput.artifacts;
     const manifest = buildRendezvousManifest({
       ...baseInput,
       artifacts: artifactsWithoutApply

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { compileInteropFollowups, materializeInteropMemoryCandidates } from './interopFollowups.js';
 import { reconcileInteropRuntime, type InteropUpdatedTruthArtifact } from './playbookLifelineInterop.js';
+import type { PlaybookLifelineInteropRuntimeArtifact } from '@zachariahredfield/playbook-core';
 
 const createRepo = (name: string): string => {
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`));
@@ -209,7 +210,9 @@ describe('reconcileInteropRuntime', () => {
       heartbeat: null
     } as const;
 
-    await expect(reconcileInteropRuntime(repo, runtime as any)).rejects.toThrow(/receipt mismatch/);
+    await expect(
+      reconcileInteropRuntime(repo, runtime as unknown as PlaybookLifelineInteropRuntimeArtifact),
+    ).rejects.toThrow(/receipt mismatch/);
   });
 });
 
