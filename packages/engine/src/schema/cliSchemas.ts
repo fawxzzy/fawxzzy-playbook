@@ -502,6 +502,63 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
           }
         }
       },
+      findingState: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['artifactPath', 'baselineRef', 'summary', 'findings', 'resolved'],
+        properties: {
+          artifactPath: { type: 'string' },
+          baselineRef: { type: 'string' },
+          summary: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['total', 'new', 'existing', 'resolved', 'ignored'],
+            properties: {
+              total: { type: 'integer' },
+              new: { type: 'integer' },
+              existing: { type: 'integer' },
+              resolved: { type: 'integer' },
+              ignored: { type: 'integer' }
+            }
+          },
+          findings: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['findingId', 'ruleId', 'normalizedLocation', 'evidenceHash', 'state', 'firstSeenAt', 'lastSeenAt', 'evidenceRefs'],
+              properties: {
+                findingId: { type: 'string' },
+                ruleId: { type: 'string' },
+                normalizedLocation: { type: 'string' },
+                evidenceHash: { type: 'string' },
+                state: { enum: ['new', 'existing', 'ignored'] },
+                firstSeenAt: { type: 'string' },
+                lastSeenAt: { type: 'string' },
+                evidenceRefs: { type: 'array', items: { type: 'string' } }
+              }
+            }
+          },
+          resolved: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['findingId', 'ruleId', 'normalizedLocation', 'evidenceHash', 'state', 'firstSeenAt', 'lastSeenAt', 'evidenceRefs'],
+              properties: {
+                findingId: { type: 'string' },
+                ruleId: { type: 'string' },
+                normalizedLocation: { type: 'string' },
+                evidenceHash: { type: 'string' },
+                state: { const: 'resolved' },
+                firstSeenAt: { type: 'string' },
+                lastSeenAt: { type: 'string' },
+                evidenceRefs: { type: 'array', items: { type: 'string' } }
+              }
+            }
+          }
+        }
+      },
       nextActions: {
         type: 'array',
         items: { type: 'string' }

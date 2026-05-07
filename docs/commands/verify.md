@@ -12,6 +12,7 @@ Runs deterministic governance rule checks and reports policy findings.
 - `pnpm playbook verify --local --json`
 - `pnpm playbook verify --local-only --json`
 - `pnpm playbook verify --phase preflight --json --out .playbook/verify-preflight.json`
+- `pnpm playbook verify --baseline main --json`
 
 ## Local-first verification
 
@@ -51,6 +52,15 @@ pnpm playbook release plan --json --out .playbook/release-plan.json
 pnpm playbook verify --phase preflight --json --out .playbook/verify-preflight.json
 ```
 
+## Baseline-aware finding state
+
+`verify --baseline <ref>` persists a stable finding-state artifact at `.playbook/finding-state.json`.
+
+- Finding identity is derived from rule id, normalized location, baseline ref, and evidence hash.
+- Finding triage states are `new`, `existing`, `resolved`, and `ignored`.
+- The finding-state artifact is deterministic and repo-local; it does not introduce SARIF or GitHub-check delivery modes.
+- SARIF/check output remains a future delivery mode after finding identity is stable.
+
 ## Policy mode
 
 `--policy` evaluates verify findings against `verify.policy.rules` in `playbook.config.json`.
@@ -63,6 +73,7 @@ pnpm playbook verify --phase preflight --json --out .playbook/verify-preflight.j
 ## Contract notes
 - JSON output uses a stable response envelope (`schemaVersion`, `command`, `ok`, `exitCode`).
 - Findings are deterministic and sorted for machine consumption.
+- Baseline-aware verify output can include `findingState` when `--baseline` is used.
 - Policy failures return exit code `3`.
 - Local-first runs write a durable local receipt that is authoritative for verification, while publishing and deployment remain separate workflow fields.
 

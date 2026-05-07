@@ -12,11 +12,43 @@ export type VerifyReport = {
     warnings: number;
     baseRef?: string;
     baseSha?: string;
+    baselineRef?: string;
     phase?: string;
     ruleIds?: string[];
   };
-  failures: Array<{ id: string; message: string; evidence?: string; fix?: string }>;
+  failures: Array<{ id: string; message: string; evidence?: string; fix?: string; findingId?: string; normalizedLocation?: string; evidenceHash?: string; baselineRef?: string; state?: 'new' | 'existing' | 'ignored' | 'resolved' }>;
   warnings: Array<{ id: string; message: string }>;
+  findingState?: {
+    artifactPath: string;
+    baselineRef: string;
+    summary: {
+      total: number;
+      new: number;
+      existing: number;
+      resolved: number;
+      ignored: number;
+    };
+    findings: Array<{
+      findingId: string;
+      ruleId: string;
+      normalizedLocation: string;
+      evidenceHash: string;
+      state: 'new' | 'existing' | 'ignored';
+      firstSeenAt: string;
+      lastSeenAt: string;
+      evidenceRefs: string[];
+    }>;
+    resolved: Array<{
+      findingId: string;
+      ruleId: string;
+      normalizedLocation: string;
+      evidenceHash: string;
+      state: 'resolved';
+      firstSeenAt: string;
+      lastSeenAt: string;
+      evidenceRefs: string[];
+    }>;
+  };
 };
 type VerifyFailure = VerifyReport['failures'][number];
 type VerifyWarning = VerifyReport['warnings'][number];
@@ -39,6 +71,7 @@ type VerifyRunOptions = {
   policy: boolean;
   local?: boolean;
   localOnly?: boolean;
+  baseline?: string;
   outFile?: string;
   runId?: string;
   help?: boolean;
@@ -101,7 +134,7 @@ const validateVerifyOptions = (options: VerifyRunOptions): void => {
   }
 };
 
-export const collectVerifyReport = async (cwd: string, options: { phase?: VerifyPhase; ruleIds?: string[] } = {}): Promise<VerifyReport> => (
+export const collectVerifyReport = async (cwd: string, options: { baselineRef?: string; phase?: VerifyPhase; ruleIds?: string[] } = {}): Promise<VerifyReport> => (
   engine.verifyRepo(cwd, options) as VerifyReport
 );
 
@@ -126,6 +159,7 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
       description: 'Verify repository governance rules and optional policy gating.',
       options: [
         '--phase <name>             Run a named low-cost verify subset (currently: preflight)',
+        '--baseline <ref>           Evaluate findings against a baseline ref and persist finding state',
         '--rule <id>                Restrict verify to one or more rule ids (repeatable or comma-separated)',
         '--policy                   Enable policy mode for configured policy rules',
         '--local                    Run repo-defined local verification in addition to governance checks',
@@ -153,10 +187,20 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
   const verificationMode = options.localOnly ? 'local-only' : options.local ? 'combined' : 'governance-only';
   const governanceRequested = !options.localOnly;
   const report = governanceRequested
-    ? await collectVerifyReport(cwd, { phase: options.phase, ruleIds: normalizedRuleIds })
+    ? await collectVerifyReport(cwd, {
+        ...(options.baseline ? { baselineRef: options.baseline } : {}),
+        ...(options.phase ? { phase: options.phase } : {}),
+        ...(normalizedRuleIds ? { ruleIds: normalizedRuleIds } : {})
+      })
     : {
         ok: true,
-        summary: { failures: 0, warnings: 0, phase: options.phase, ruleIds: normalizedRuleIds },
+        summary: {
+          failures: 0,
+          warnings: 0,
+          ...(options.baseline ? { baselineRef: options.baseline } : {}),
+          ...(options.phase ? { phase: options.phase } : {}),
+          ...(normalizedRuleIds ? { ruleIds: normalizedRuleIds } : {})
+        },
         failures: [],
         warnings: [],
       };
@@ -329,6 +373,7 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
         message: warning.message
       }))
     ],
+    findingState: report.findingState,
     nextActions,
     policyViolations: inPolicyMode ? policyViolations : undefined,
     verificationMode,
