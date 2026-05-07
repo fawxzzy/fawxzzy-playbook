@@ -19,11 +19,11 @@ Playbook depends on a stable execution invariant:
 
 ```text
 analysis output
-      ↓
+      v
 failure extraction
-      ↓
+      v
 remediation planning
-      ↓
+      v
 deterministic apply
 ```
 
@@ -38,16 +38,25 @@ If failure derivation is fuzzy, behavior becomes unpredictable and can cause:
 
 ```text
 Discovery (verify/analyze)
-      ↓
+      v
 Findings
-      ↓
+      v
 Failure Derivation
-      ↓
+      v
 Remediation Planning
-      ↓
+      v
 Remediation Apply
 ```
 
 **Rule:** Remediation logic must depend only on failures, never on total findings.
 
 **Reason:** Findings include warnings and informational results, which must not trigger repository modification.
+
+## Baseline-Aware Finding State
+
+`verify --baseline <ref>` can also persist `.playbook/finding-state.json` as a deterministic repo-local artifact.
+
+- Finding identity is derived from rule id, normalized location, baseline ref, and evidence hash.
+- Triage states are `new`, `existing`, `resolved`, and `ignored`.
+- The finding-state artifact is separate from SARIF or GitHub-check output.
+- SARIF/check delivery modes remain a future layer after stable finding identity exists.

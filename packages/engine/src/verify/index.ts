@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { collectScmContext } from '@zachariahredfield/playbook-core';
 import { loadConfig } from '../config/load.js';
 import { getChangedFiles } from '../git/diff.js';
@@ -8,6 +9,7 @@ import { getCoreRules } from '../rules/coreRules.js';
 import { RuleRunner } from '../execution/ruleRunner.js';
 import { compactPatterns } from '../compaction/compactPatterns.js';
 import { buildVerifyMemoryEvent, captureMemoryRuntimeEventSafe } from '../memory/runtimeEvents.js';
+import { VERIFY_FINDING_STATE_RELATIVE_PATH, buildVerifyFindingObservations, deriveVerifyFindingState } from '../verification/findingState.js';
 
 export const VERIFY_PHASE_RULES = {
   preflight: ['release.version-governance']
@@ -16,6 +18,7 @@ export const VERIFY_PHASE_RULES = {
 export type VerifyPhase = keyof typeof VERIFY_PHASE_RULES;
 
 export type VerifyRepoOptions = {
+  baselineRef?: string;
   phase?: VerifyPhase;
   ruleIds?: string[];
 };
@@ -41,6 +44,7 @@ export const verifyRepo = (repoRoot: string, options: VerifyRepoOptions = {}): V
 
   const scmContext = collectScmContext(repoRoot);
   if (scmContext.diffBase.warning) warnings.push({ id: 'base-selection', message: scmContext.diffBase.warning });
+  const baselineRef = options.baselineRef?.trim() || scmContext.diffBase.baseRef?.trim() || 'main';
 
   const changedFiles = scmContext.diffBase.baseSha ? getChangedFiles(repoRoot, scmContext.diffBase.baseSha) : [];
 
@@ -63,6 +67,7 @@ export const verifyRepo = (repoRoot: string, options: VerifyRepoOptions = {}): V
       warnings: warnings.length,
       baseRef: scmContext.diffBase.baseRef,
       baseSha: scmContext.diffBase.baseSha,
+      baselineRef: options.baselineRef?.trim() ? baselineRef : undefined,
       phase: options.phase,
       ruleIds: options.ruleIds
     },
@@ -76,6 +81,17 @@ export const verifyRepo = (repoRoot: string, options: VerifyRepoOptions = {}): V
     const message = error instanceof Error ? error.message : String(error);
     report.warnings.push({ id: 'pattern-compaction', message: `Pattern compaction skipped: ${message}` });
     report.summary.warnings = report.warnings.length;
+  }
+
+  if (options.baselineRef?.trim()) {
+    const findingState = deriveVerifyFindingState(repoRoot, {
+      baselineRef,
+      findings: buildVerifyFindingObservations(report)
+    });
+    report.findingState = {
+      artifactPath: path.join(repoRoot, VERIFY_FINDING_STATE_RELATIVE_PATH),
+      ...findingState
+    };
   }
 
   captureMemoryRuntimeEventSafe(

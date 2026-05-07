@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "playbook.verify.finding-state",
+  "title": "PlaybookVerifyFindingStateArtifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "generatedAt", "baselineRef", "summary", "findings", "resolved"],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "kind": {
+      "const": "playbook-verify-finding-state"
+    },
+    "generatedAt": {
+      "type": "string"
+    },
+    "baselineRef": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "new", "existing", "resolved", "ignored"],
+      "properties": {
+        "total": { "type": "integer" },
+        "new": { "type": "integer" },
+        "existing": { "type": "integer" },
+        "resolved": { "type": "integer" },
+        "ignored": { "type": "integer" }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["findingId", "ruleId", "normalizedLocation", "evidenceHash", "state", "firstSeenAt", "lastSeenAt", "evidenceRefs"],
+        "properties": {
+          "findingId": { "type": "string" },
+          "ruleId": { "type": "string" },
+          "normalizedLocation": { "type": "string" },
+          "evidenceHash": { "type": "string" },
+          "state": { "enum": ["new", "existing", "ignored"] },
+          "firstSeenAt": { "type": "string" },
+          "lastSeenAt": { "type": "string" },
+          "evidenceRefs": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "resolved": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["findingId", "ruleId", "normalizedLocation", "evidenceHash", "state", "firstSeenAt", "lastSeenAt", "evidenceRefs"],
+        "properties": {
+          "findingId": { "type": "string" },
+          "ruleId": { "type": "string" },
+          "normalizedLocation": { "type": "string" },
+          "evidenceHash": { "type": "string" },
+          "state": { "const": "resolved" },
+          "firstSeenAt": { "type": "string" },
+          "lastSeenAt": { "type": "string" },
+          "evidenceRefs": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
