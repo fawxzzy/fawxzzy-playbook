@@ -66,6 +66,25 @@ const writePackageLock = (targetRoot, name) => {
   );
 };
 
+const writePackageJson = (targetRoot, name) => {
+  fs.writeFileSync(
+    path.join(targetRoot, 'package.json'),
+    JSON.stringify(
+      {
+        name,
+        version: '0.0.0',
+        private: true,
+        scripts: {
+          'refresh:playbook': 'node scripts/refresh-demo-artifacts.mjs'
+        }
+      },
+      null,
+      2,
+    ) + '\n',
+    'utf8',
+  );
+};
+
 const runNode = (cwd, args, env = {}) =>
   spawnSync(nodeCommand, args, {
     cwd,
@@ -133,7 +152,13 @@ fs.writeFileSync(path.join(process.cwd(), '.playbook', 'demo-artifacts', 'doctor
 `
   );
 
+  writePackageJson(fixtureRoot, name);
   writePackageLock(fixtureRoot, name);
+  assert.equal(
+    fs.existsSync(path.join(fixtureRoot, 'package.json')),
+    true,
+    'demo refresh fixture must be a valid package before dependency install runs',
+  );
   const initResult = runCommand(fixtureRoot, 'git', ['init', '-b', 'main']);
   assert.equal(initResult.status, 0, initResult.stderr || initResult.stdout);
   const addResult = runCommand(fixtureRoot, 'git', ['add', '.']);
