@@ -72,7 +72,7 @@ export const commandMetadata: CommandMetadata[] = [
     onboardingPriority: 8,
     canonicalSequence: 8,
     productFacing: true,
-    exampleArgs: "verify --ci --json",
+    exampleArgs: "verify --baseline main --format sarif --out .playbook/verify.sarif",
     machineReadable: true,
   },
   {

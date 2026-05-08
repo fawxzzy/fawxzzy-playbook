@@ -9,7 +9,7 @@ import { getCoreRules } from '../rules/coreRules.js';
 import { RuleRunner } from '../execution/ruleRunner.js';
 import { compactPatterns } from '../compaction/compactPatterns.js';
 import { buildVerifyMemoryEvent, captureMemoryRuntimeEventSafe } from '../memory/runtimeEvents.js';
-import { VERIFY_FINDING_STATE_RELATIVE_PATH, buildVerifyFindingObservations, deriveVerifyFindingState } from '../verification/findingState.js';
+import { VERIFY_FINDING_STATE_RELATIVE_PATH, buildVerifyFindingFingerprints, buildVerifyFindingObservations, deriveVerifyFindingState } from '../verification/findingState.js';
 
 export const VERIFY_PHASE_RULES = {
   preflight: ['release.version-governance']
@@ -59,20 +59,32 @@ export const verifyRepo = (repoRoot: string, options: VerifyRepoOptions = {}): V
     baseRef: scmContext.diffBase.baseRef,
     baseSha: scmContext.diffBase.baseSha
   });
+  const findingFingerprints = buildVerifyFindingFingerprints({
+    baselineRef,
+    findings: buildVerifyFindingObservations({ failures, warnings })
+  });
+  const annotatedFailures = failures.map((failure, index) => ({
+    ...failure,
+    ...findingFingerprints[index]
+  }));
+  const annotatedWarnings = warnings.map((warning, index) => ({
+    ...warning,
+    ...findingFingerprints[failures.length + index]
+  }));
 
   const report: VerifyReport = {
-    ok: failures.length === 0,
+    ok: annotatedFailures.length === 0,
     summary: {
-      failures: failures.length,
-      warnings: warnings.length,
+      failures: annotatedFailures.length,
+      warnings: annotatedWarnings.length,
       baseRef: scmContext.diffBase.baseRef,
       baseSha: scmContext.diffBase.baseSha,
       baselineRef: options.baselineRef?.trim() ? baselineRef : undefined,
       phase: options.phase,
       ruleIds: options.ruleIds
     },
-    failures,
-    warnings
+    failures: annotatedFailures,
+    warnings: annotatedWarnings
   };
 
   try {
@@ -92,6 +104,15 @@ export const verifyRepo = (repoRoot: string, options: VerifyRepoOptions = {}): V
       artifactPath: path.join(repoRoot, VERIFY_FINDING_STATE_RELATIVE_PATH),
       ...findingState
     };
+    const stateByFindingId = new Map(findingState.findings.map((entry) => [entry.findingId, entry.state] as const));
+    report.failures = report.failures.map((failure) => ({
+      ...failure,
+      state: failure.findingId ? stateByFindingId.get(failure.findingId) : undefined
+    }));
+    report.warnings = report.warnings.map((warning) => ({
+      ...warning,
+      state: warning.findingId ? stateByFindingId.get(warning.findingId) : undefined
+    }));
   }
 
   captureMemoryRuntimeEventSafe(

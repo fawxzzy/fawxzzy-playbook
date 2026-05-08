@@ -99,10 +99,38 @@ const toObservation = (finding: ReportFailure | ReportWarning, kind: 'failure' |
   evidence: 'evidence' in finding ? finding.evidence : undefined
 });
 
+export type VerifyFindingFingerprint = {
+  findingId: string;
+  normalizedLocation: string;
+  evidenceHash: string;
+  baselineRef: string;
+};
+
 export const buildVerifyFindingObservations = (report: Pick<VerifyReport, 'failures' | 'warnings'>): VerifyFindingObservation[] => [
   ...report.failures.map((failure) => toObservation(failure, 'failure')),
   ...report.warnings.map((warning) => toObservation(warning, 'warning'))
 ];
+
+export const buildVerifyFindingFingerprints = (
+  input: {
+    baselineRef: string;
+    findings: VerifyFindingObservation[];
+  }
+): VerifyFindingFingerprint[] => input.findings.map((finding) => {
+  const normalizedLocation = normalizeLocation(finding);
+  const evidenceHash = computeEvidenceHash(finding);
+  return {
+    findingId: computeFindingId({
+      ruleId: finding.ruleId,
+      normalizedLocation,
+      baselineRef: input.baselineRef,
+      evidenceHash
+    }),
+    normalizedLocation,
+    evidenceHash,
+    baselineRef: input.baselineRef
+  };
+});
 
 export const deriveVerifyFindingState = (
   repoRoot: string,
@@ -127,15 +155,13 @@ export const deriveVerifyFindingState = (
   const findings: VerifyFindingActiveRecord[] = [];
   const resolved: VerifyFindingResolvedRecord[] = [];
 
-  for (const finding of input.findings) {
-    const normalizedLocation = normalizeLocation(finding);
-    const evidenceHash = computeEvidenceHash(finding);
-    const findingId = computeFindingId({
-      ruleId: finding.ruleId,
-      normalizedLocation,
-      baselineRef: input.baselineRef,
-      evidenceHash
-    });
+  const fingerprints = buildVerifyFindingFingerprints({
+    baselineRef: input.baselineRef,
+    findings: input.findings
+  });
+
+  for (const [index, finding] of input.findings.entries()) {
+    const { normalizedLocation, evidenceHash, findingId } = fingerprints[index];
     const prior = previousById.get(findingId);
     const state: VerifyFindingStatus = prior ? (prior.state === 'ignored' ? 'ignored' : 'existing') : 'new';
     const record: VerifyFindingActiveRecord = {

@@ -13,6 +13,7 @@ Runs deterministic governance rule checks and reports policy findings.
 - `pnpm playbook verify --local-only --json`
 - `pnpm playbook verify --phase preflight --json --out .playbook/verify-preflight.json`
 - `pnpm playbook verify --baseline main --json`
+- `pnpm playbook verify --baseline main --format sarif --out .playbook/verify.sarif`
 
 ## Local-first verification
 
@@ -58,8 +59,16 @@ pnpm playbook verify --phase preflight --json --out .playbook/verify-preflight.j
 
 - Finding identity is derived from rule id, normalized location, baseline ref, and evidence hash.
 - Finding triage states are `new`, `existing`, `resolved`, and `ignored`.
-- The finding-state artifact is deterministic and repo-local; it does not introduce SARIF or GitHub-check delivery modes.
-- SARIF/check output remains a future delivery mode after finding identity is stable.
+- The finding-state artifact is deterministic and repo-local.
+
+## SARIF delivery mode
+
+`verify --format sarif` emits a raw SARIF 2.1.0 log over the same deterministic verify payload.
+
+- SARIF is a delivery mode only; it does not create a second analysis engine.
+- Results carry Playbook fingerprints for `findingId`, `evidenceHash`, `normalizedLocation`, and `baselineRef` when that evidence is available.
+- `--out` writes the raw SARIF log directly instead of the Playbook JSON envelope.
+- GitHub-check output remains a later delivery mode and is not part of this slice.
 
 ## Policy mode
 
