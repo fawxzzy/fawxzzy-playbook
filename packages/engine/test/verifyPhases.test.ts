@@ -63,7 +63,15 @@ describe('verifyRepo phase/rule selection', () => {
     const report = verifyRepo(repoRoot, { phase: 'preflight' });
 
     expect(report.summary.phase).toBe('preflight');
-    expect(report.failures).toEqual([{ id: 'release.required', message: 'missing release governance' }]);
+    expect(report.failures).toEqual([
+      expect.objectContaining({
+        id: 'release.required',
+        message: 'missing release governance',
+        baselineRef: 'main'
+      })
+    ]);
+    expect(report.failures[0]?.findingId).toMatch(/^verify\.finding:/);
+    expect(report.failures[0]?.normalizedLocation).toBe('missing release governance');
     expect(releaseRule.check).toHaveBeenCalledTimes(1);
     expect(protectedDocRule.check).not.toHaveBeenCalled();
   });
@@ -91,7 +99,15 @@ describe('verifyRepo phase/rule selection', () => {
     const report = verifyRepo(repoRoot, { ruleIds: ['protected-doc.governance'] });
 
     expect(report.summary.ruleIds).toEqual(['protected-doc.governance']);
-    expect(report.failures).toEqual([{ id: 'protected-doc.pending', message: 'pending protected docs work' }]);
+    expect(report.failures).toEqual([
+      expect.objectContaining({
+        id: 'protected-doc.pending',
+        message: 'pending protected docs work',
+        baselineRef: 'main'
+      })
+    ]);
+    expect(report.failures[0]?.findingId).toMatch(/^verify\.finding:/);
+    expect(report.failures[0]?.normalizedLocation).toBe('pending protected docs work');
     expect(releaseRule.check).not.toHaveBeenCalled();
     expect(protectedDocRule.check).toHaveBeenCalledTimes(1);
   });

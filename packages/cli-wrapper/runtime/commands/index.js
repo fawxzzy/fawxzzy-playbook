@@ -49,6 +49,12 @@ const parseReviewPrFormat = (allArgs, globalFormat) => {
     }
     return format === "json" ? "json" : "text";
 };
+const parseVerifyFormat = (allArgs, globalFormat) => {
+    if (globalFormat === "json") {
+        return "json";
+    }
+    return parseOptionValue(allArgs, "--format") === "sarif" ? "sarif" : "text";
+};
 const parseOrchestrateArtifactFormat = (allArgs, globalFormat) => {
     if (globalFormat === "json") {
         return "json";
@@ -164,12 +170,12 @@ const commandRunners = {
             help: parseFlag(commandArgs, "--help") || parseFlag(commandArgs, "-h"),
         });
     },
-    verify: async ({ cwd, commandArgs, ci, explain, format, quiet }) => {
+    verify: async ({ cwd, args, commandArgs, ci, explain, format, quiet }) => {
         const { runVerify } = await import("./verify.js");
         return runVerify(cwd, {
             ci,
             explain,
-            format,
+            format: parseVerifyFormat(args, format),
             quiet,
             policy: parseFlag(commandArgs, "--policy"),
             local: parseFlag(commandArgs, "--local"),

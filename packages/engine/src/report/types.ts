@@ -3,11 +3,22 @@ export type ReportFailure = {
   message: string;
   evidence?: string;
   fix?: string;
+  findingId?: string;
+  normalizedLocation?: string;
+  evidenceHash?: string;
+  baselineRef?: string;
+  state?: 'new' | 'existing' | 'ignored' | 'resolved';
 };
 
 export type ReportWarning = {
   id: string;
   message: string;
+  evidence?: string;
+  findingId?: string;
+  normalizedLocation?: string;
+  evidenceHash?: string;
+  baselineRef?: string;
+  state?: 'new' | 'existing' | 'ignored' | 'resolved';
 };
 
 export type VerifyReport = {

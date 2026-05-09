@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import * as engine from '@zachariahredfield/playbook-engine';
 import { buildResult, emitResult, ExitCode } from '../lib/cliContract.js';
 import { emitJsonOutput } from '../lib/jsonArtifact.js';
@@ -17,7 +19,7 @@ export type VerifyReport = {
     ruleIds?: string[];
   };
   failures: Array<{ id: string; message: string; evidence?: string; fix?: string; findingId?: string; normalizedLocation?: string; evidenceHash?: string; baselineRef?: string; state?: 'new' | 'existing' | 'ignored' | 'resolved' }>;
-  warnings: Array<{ id: string; message: string }>;
+  warnings: Array<{ id: string; message: string; evidence?: string; findingId?: string; normalizedLocation?: string; evidenceHash?: string; baselineRef?: string; state?: 'new' | 'existing' | 'ignored' | 'resolved' }>;
   findingState?: {
     artifactPath: string;
     baselineRef: string;
@@ -64,7 +66,7 @@ type VerifyPhase = 'preflight';
 const VERIFY_PHASE_RULES = { preflight: ['release.version-governance'] } as const;
 
 type VerifyRunOptions = {
-  format: 'text' | 'json';
+  format: 'text' | 'json' | 'sarif';
   ci: boolean;
   quiet: boolean;
   explain: boolean;
@@ -77,6 +79,20 @@ type VerifyRunOptions = {
   help?: boolean;
   phase?: VerifyPhase;
   ruleIds?: string[];
+};
+
+type SarifResult = {
+  ruleId: string;
+  level: 'error' | 'warning' | 'note';
+  message: string;
+  evidence?: string;
+  explanation?: string;
+  remediation?: string[];
+  findingId?: string;
+  normalizedLocation?: string;
+  evidenceHash?: string;
+  baselineRef?: string;
+  state?: 'new' | 'existing' | 'ignored' | 'resolved';
 };
 
 const resolveFailureGuidance = (
@@ -113,6 +129,128 @@ const printCompactNextActions = (actions: string[]): void => {
 const parseRuleIds = (ruleIds: string[] | undefined): string[] | undefined => {
   const normalized = [...new Set((ruleIds ?? []).flatMap((entry) => entry.split(',')).map((entry) => entry.trim()).filter((entry) => entry.length > 0))];
   return normalized.length > 0 ? normalized : undefined;
+};
+
+const PATH_LOCATION_PATTERN = /^(?<uri>(?:[A-Za-z]:)?(?:\.{1,2}\/|\/)?[^:*?"<>|\r\n]+?\.[A-Za-z0-9._-]+)(?::(?<line>\d+))?(?::(?<column>\d+))?$/;
+
+const parseSarifLocation = (candidate: string | undefined): {
+  uri: string;
+  startLine?: number;
+  startColumn?: number;
+} | null => {
+  if (!candidate) {
+    return null;
+  }
+
+  const normalized = candidate.trim().replace(/\\/g, '/');
+  if (!normalized || normalized.includes('\n') || normalized.includes(',') || normalized.includes('`') || normalized.includes('{') || normalized.includes('[')) {
+    return null;
+  }
+
+  const match = PATH_LOCATION_PATTERN.exec(normalized);
+  if (!match?.groups?.uri) {
+    return null;
+  }
+
+  const startLine = match.groups.line ? Number(match.groups.line) : undefined;
+  const startColumn = match.groups.column ? Number(match.groups.column) : undefined;
+  return {
+    uri: match.groups.uri,
+    ...(Number.isFinite(startLine) ? { startLine } : {}),
+    ...(Number.isFinite(startColumn) ? { startColumn } : {})
+  };
+};
+
+const writeStructuredOutput = (outFile: string, payload: unknown): void => {
+  fs.mkdirSync(path.dirname(outFile), { recursive: true });
+  fs.writeFileSync(outFile, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+};
+
+const buildSarifLog = (
+  results: SarifResult[],
+  summary: VerifyReport['summary']
+): Record<string, unknown> => {
+  const sarifRules = [...new Map(results.map((result) => [result.ruleId, result])).values()].map((result) => {
+    const helpParts = [
+      result.explanation?.trim(),
+      result.remediation && result.remediation.length > 0
+        ? `Remediation:\n${result.remediation.map((step) => `- ${step}`).join('\n')}`
+        : null
+    ].filter((entry): entry is string => Boolean(entry && entry.length > 0));
+
+    return {
+      id: result.ruleId,
+      shortDescription: { text: result.message },
+      ...(helpParts.length > 0 ? { help: { text: helpParts.join('\n\n') } } : {})
+    };
+  });
+
+  return {
+    $schema: 'https://json.schemastore.org/sarif-2.1.0.json',
+    version: '2.1.0',
+    runs: [
+      {
+        tool: {
+          driver: {
+            name: 'Playbook Verify',
+            rules: sarifRules
+          }
+        },
+        properties: {
+          summary: {
+            failures: summary.failures,
+            warnings: summary.warnings,
+            ...(summary.baseRef ? { baseRef: summary.baseRef } : {}),
+            ...(summary.baseSha ? { baseSha: summary.baseSha } : {}),
+            ...(summary.baselineRef ? { baselineRef: summary.baselineRef } : {}),
+            ...(summary.phase ? { phase: summary.phase } : {}),
+            ...(summary.ruleIds ? { ruleIds: summary.ruleIds } : {})
+          }
+        },
+        results: results.map((result) => {
+          const location = parseSarifLocation(result.normalizedLocation ?? result.evidence);
+          return {
+            ruleId: result.ruleId,
+            level: result.level,
+            message: { text: result.message },
+            ...(location ? {
+              locations: [
+                {
+                  physicalLocation: {
+                    artifactLocation: { uri: location.uri },
+                    ...(location.startLine || location.startColumn ? {
+                      region: {
+                        ...(location.startLine ? { startLine: location.startLine } : {}),
+                        ...(location.startColumn ? { startColumn: location.startColumn } : {})
+                      }
+                    } : {})
+                  }
+                }
+              ]
+            } : {}),
+            ...(result.findingId || result.evidenceHash || result.normalizedLocation || result.baselineRef ? {
+              partialFingerprints: {
+                ...(result.findingId ? { playbookFindingId: result.findingId } : {}),
+                ...(result.evidenceHash ? { playbookEvidenceHash: result.evidenceHash } : {}),
+                ...(result.normalizedLocation ? { playbookNormalizedLocation: result.normalizedLocation } : {}),
+                ...(result.baselineRef ? { playbookBaselineRef: result.baselineRef } : {})
+              }
+            } : {}),
+            properties: {
+              ...(result.evidence ? { evidence: result.evidence } : {}),
+              ...(result.explanation ? { explanation: result.explanation } : {}),
+              ...(result.remediation ? { remediation: result.remediation } : {}),
+              ...(result.findingId ? { findingId: result.findingId } : {}),
+              ...(result.normalizedLocation ? { normalizedLocation: result.normalizedLocation } : {}),
+              ...(result.evidenceHash ? { evidenceHash: result.evidenceHash } : {}),
+              ...(result.baselineRef ? { baselineRef: result.baselineRef } : {}),
+              ...(result.state ? { state: result.state } : {})
+            }
+          };
+        })
+      }
+    ]
+  };
 };
 
 const validateVerifyOptions = (options: VerifyRunOptions): void => {
@@ -166,10 +304,10 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
         '--local-only               Run only repo-defined local verification and emit a local receipt',
         '--ci                       CI mode summary in text output',
         '--explain                  Show why findings matter and remediation in text mode',
-        '--out <path>               Write JSON artifact envelope for verify result',
+        '--out <path>               Write JSON artifact envelope or raw SARIF file for verify result',
         '--run-id <id>              Attach verify step to an existing execution run',
         '--json                     Alias for --format=json',
-        '--format <text|json>       Output format',
+        '--format <text|json|sarif> Output format',
         '--quiet                    Suppress success output in text mode',
         '--help                     Show help'
       ],
@@ -370,7 +508,8 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
       ...report.warnings.map((warning: VerifyWarning) => ({
         id: `verify.warning.${warning.id}`,
         level: 'warning' as const,
-        message: warning.message
+        message: warning.message,
+        evidence: warning.evidence
       }))
     ],
     findingState: report.findingState,
@@ -392,6 +531,53 @@ export const runVerify = async (cwd: string, options: VerifyRunOptions): Promise
       summary: localVerification.receipt.summary,
     } : undefined,
   };
+
+  const sarifResults: SarifResult[] = [
+    ...report.failures.map<SarifResult>((failure: VerifyFailure) => {
+      const guidance = resolveFailureGuidance(verifyRules, failure);
+      return {
+        ruleId: failure.id,
+        level: inPolicyMode ? (policyFailureIds.has(failure.id) ? 'error' : 'note') : 'error',
+        message: failure.message,
+        evidence: failure.evidence,
+        explanation: guidance.explanation,
+        remediation: guidance.remediation,
+        findingId: failure.findingId,
+        normalizedLocation: failure.normalizedLocation,
+        evidenceHash: failure.evidenceHash,
+        baselineRef: failure.baselineRef,
+        state: failure.state
+      };
+    }),
+    ...report.warnings.map<SarifResult>((warning: VerifyWarning) => ({
+      ruleId: warning.id,
+      level: 'warning',
+      message: warning.message,
+      evidence: warning.evidence,
+      findingId: warning.findingId,
+      normalizedLocation: warning.normalizedLocation,
+      evidenceHash: warning.evidenceHash,
+      baselineRef: warning.baselineRef,
+      state: warning.state
+    }))
+  ];
+
+  if (options.format === 'sarif') {
+    const sarifPayload = buildSarifLog(sarifResults, report.summary);
+    if (options.outFile) {
+      writeStructuredOutput(options.outFile, sarifPayload);
+    }
+    console.log(JSON.stringify(sarifPayload, null, 2));
+    tracker.finish({
+      inputsSummary: `policy=${inPolicyMode ? 'on' : 'off'}; mode=${verificationMode}; phase=${options.phase ?? 'full'}; rules=${normalizedRuleIds?.join(',') ?? 'all'}; format=sarif`,
+      artifactsWritten: [options.outFile, localVerification?.receiptPath, localVerification?.receiptLogPath].filter((entry): entry is string => Boolean(entry)),
+      downstreamArtifactsProduced: [options.outFile, localVerification?.receiptPath, localVerification?.receiptLogPath].filter((entry): entry is string => Boolean(entry)),
+      successStatus: ok ? 'success' : 'failure',
+      warningsCount: report.warnings.length,
+      confidenceScore: ok ? 0.9 : 0.3
+    });
+    return exitCode;
+  }
 
   if (options.format === 'json' && options.outFile) {
     emitJsonOutput({ cwd, command: 'verify', payload: buildResult(resultPayload), outFile: options.outFile });

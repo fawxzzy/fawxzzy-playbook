@@ -86,7 +86,7 @@ Do not hand-edit entries inside the managed markers.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `analyze` | Analyze project stack | compatibility | compatibility | hidden-compatibility | Later | Current (implemented) | `pnpm playbook analyze --json` |
 | `pilot` | Run one-command external baseline analysis workflow for a target repository | canonical | bootstrap | primary | Later | Current (implemented) | `pnpm playbook pilot --repo "./target-repo" --json` |
-| `verify` | Detect repository state and extract governance invariants | canonical | governance | primary | P8 | Current (implemented) | `pnpm playbook verify --ci --json` |
+| `verify` | Detect repository state and extract governance invariants | canonical | governance | primary | P8 | Current (implemented) | `pnpm playbook verify --baseline main --format sarif --out .playbook/verify.sarif` |
 | `plan` | Transform findings into a structured remediation model | canonical | remediation | primary | P9 | Current (implemented) | `pnpm playbook plan --json` |
 | `lanes` | Derive deterministic lane-state from .playbook/workset-plan.json | canonical | remediation | primary | Later | Current (implemented) | `pnpm playbook lanes --json` |
 | `workers` | Assign deterministic proposal-only workers, derive launch authorization, and submit worker results from lane-state/workset artifacts | canonical | remediation | primary | Later | Current (implemented) | `pnpm playbook workers assign --json` |

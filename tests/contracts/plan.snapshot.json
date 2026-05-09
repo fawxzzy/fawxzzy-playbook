@@ -13,11 +13,19 @@
     "warnings": [
       {
         "id": "config-missing",
-        "message": "playbook.config.json not found; using defaults (this is not an error). Add playbook.config.json for explicit settings and .playbookignore to tune scan scope."
+        "message": "playbook.config.json not found; using defaults (this is not an error). Add playbook.config.json for explicit settings and .playbookignore to tune scan scope.",
+        "findingId": "verify.finding:b1a23a9d8333907da1d707629c4d0c3b3631fec4ec7422c28e163dabb4f7544d",
+        "normalizedLocation": "playbook.config.json not found; using defaults (this is not an error). Add playbook.config.json for explicit settings and .playbookignore to tune scan scope.",
+        "evidenceHash": "85b5ae9d612abce7fdc2b2a1dbc8e412ee0f1e40929534b02170272adff44fc2",
+        "baselineRef": "main"
       },
       {
         "id": "base-selection",
-        "message": "Repository is not a git work tree; skipping diff-based verification checks."
+        "message": "Repository is not a git work tree; skipping diff-based verification checks.",
+        "findingId": "verify.finding:a5d3eb0e0a70feab0b875bf86cb3188a9062fc62005c41372234a5649f2f5947",
+        "normalizedLocation": "Repository is not a git work tree; skipping diff-based verification checks.",
+        "evidenceHash": "20fff84fc9a79e1e054242c040ed4d9e829c9caa92aeeaf8cc55cf37f7b9c134",
+        "baselineRef": "main"
       }
     ]
   },
