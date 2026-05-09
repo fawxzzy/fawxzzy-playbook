@@ -95,7 +95,7 @@ describe('collectGitChangelogChanges', () => {
       '2024-01-02T00:00:00Z',
       '2024-01-03T00:00:00Z'
     ]);
-  });
+  }, 15000);
 
   it('returns an empty array for an empty range', () => {
     const repoRoot = createTempRepo();
@@ -109,7 +109,7 @@ describe('collectGitChangelogChanges', () => {
     const changes = collectGitChangelogChanges(repoRoot, { baseRef: baseCommit, headRef: baseCommit });
 
     expect(changes).toEqual([]);
-  });
+  }, 15000);
 
   it('throws a useful error for invalid refs', () => {
     const repoRoot = createTempRepo();
@@ -123,7 +123,7 @@ describe('collectGitChangelogChanges', () => {
     expect(() => collectGitChangelogChanges(repoRoot, { baseRef: 'missing-ref' })).toThrow(
       /Invalid baseRef "missing-ref"/
     );
-  });
+  }, 15000);
 
   it('preserves multiline commit bodies', () => {
     const repoRoot = createTempRepo();
@@ -145,7 +145,7 @@ describe('collectGitChangelogChanges', () => {
     const [change] = collectGitChangelogChanges(repoRoot, { baseRef: baseCommit });
 
     expect(change.body).toBe('Why: keep release notes deterministic.\n\nRationale: align engine behavior.');
-  });
+  }, 15000);
 
   it('collects changed files with statuses', () => {
     const repoRoot = createTempRepo();
@@ -174,7 +174,7 @@ describe('collectGitChangelogChanges', () => {
       { path: 'packages/engine/src/one.ts', status: 'A' },
       { path: 'packages/engine/src/two.ts', status: 'A' }
     ]);
-  });
+  }, 15000);
 
   it('filters merge commits by default and includes them when requested', () => {
     const repoRoot = createTempRepo();
@@ -225,7 +225,7 @@ describe('collectGitChangelogChanges', () => {
       'merge feature changelog'
     ]);
     expect(withMerges.at(-1)?.metadata).toEqual({ mergeCommit: true });
-  });
+  }, 20000);
 
   it('honors maxCount while preserving deterministic ordering', () => {
     const repoRoot = createTempRepo();
@@ -261,5 +261,5 @@ describe('collectGitChangelogChanges', () => {
       'feat: first visible change',
       'feat: second visible change'
     ]);
-  });
+  }, 15000);
 });

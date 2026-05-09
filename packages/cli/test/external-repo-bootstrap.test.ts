@@ -24,14 +24,25 @@ function createFixtureRepo(): string {
 }
 
 function runCli(args: readonly string[], options?: { env?: NodeJS.ProcessEnv }) {
+  const pathValue = options?.env?.Path
+    ?? options?.env?.PATH
+    ?? process.env.Path
+    ?? process.env.PATH
+    ?? '';
+  const pathextValue = options?.env?.PATHEXT ?? process.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD';
   return spawnSync(process.execPath, [cliEntry, ...args], {
     cwd: repoRoot,
     encoding: 'utf8',
-    env: options?.env ?? process.env
+    env: {
+      ...(options?.env ?? process.env),
+      PATH: pathValue,
+      Path: pathValue,
+      PATHEXT: pathextValue
+    }
   });
 }
 
-function buildPnpmBlockedEnv(): NodeJS.ProcessEnv {
+function buildPnpmBlockedEnv(): { env: NodeJS.ProcessEnv; shimDir: string } {
   const shimDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-path-without-pnpm-'));
   if (process.platform === 'win32') {
     fs.writeFileSync(
@@ -44,8 +55,11 @@ function buildPnpmBlockedEnv(): NodeJS.ProcessEnv {
     fs.chmodSync(shimPath, 0o755);
   }
   return {
-    ...process.env,
-    PATH: [shimDir, process.env.PATH ?? ''].filter(Boolean).join(path.delimiter)
+    env: {
+      ...process.env,
+      PATH: [shimDir, process.env.PATH ?? ''].filter(Boolean).join(path.delimiter)
+    },
+    shimDir
   };
 }
 
@@ -93,8 +107,8 @@ describe('external repo bootstrap', () => {
   });
 
   it('surfaces runtime blockers first and clears execution-state blockers once apply state exists', { timeout: 45000 }, () => {
-    const pnpmBlockedEnv = buildPnpmBlockedEnv();
-    tempDirs.push(pnpmBlockedEnv.PATH ?? '');
+    const { env: pnpmBlockedEnv, shimDir } = buildPnpmBlockedEnv();
+    tempDirs.push(shimDir);
     const before = fs.existsSync(path.join(fixtureRepo, '.playbook', 'policy-apply-result.json'));
     expect(before).toBe(false);
 

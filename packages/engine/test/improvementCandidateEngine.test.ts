@@ -11,6 +11,7 @@ import {
 } from '../src/index.js';
 
 const created: string[] = [];
+const toPosixPath = (value: string): string => value.replace(/\\/g, '/');
 
 const createRepo = (): string => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-improve-engine-'));
@@ -108,7 +109,7 @@ describe('improvement candidate engine', () => {
     expect(artifact.summary.CONVERSATIONAL).toBeGreaterThan(0);
 
     const outputPath = writeImprovementCandidatesArtifact(repo, artifact);
-    expect(outputPath.replaceAll(path.sep, '/').endsWith('.playbook/improvement-candidates.json')).toBe(true);
+    expect(toPosixPath(outputPath).endsWith('.playbook/improvement-candidates.json')).toBe(true);
     expect(fs.existsSync(outputPath)).toBe(true);
   });
 

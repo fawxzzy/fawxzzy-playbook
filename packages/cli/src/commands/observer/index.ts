@@ -265,15 +265,15 @@ const OBSERVER_REPO_REGISTRY_RELATIVE_PATH =
   ".playbook/observer/repos.json" as const;
 const OBSERVER_SNAPSHOT_RELATIVE_PATH =
   ".playbook/observer/snapshot.json" as const;
-const EXECUTION_OUTCOME_INPUT_RELATIVE_PATH = path.join(
+const EXECUTION_OUTCOME_INPUT_RELATIVE_PATH = path.posix.join(
   ".playbook",
   "execution-outcome-input.json",
 );
-const UPDATED_STATE_RELATIVE_PATH = path.join(
+const UPDATED_STATE_RELATIVE_PATH = path.posix.join(
   ".playbook",
   "execution-updated-state.json",
 );
-const UPDATED_STATE_STAGING_RELATIVE_PATH = path.join(
+const UPDATED_STATE_STAGING_RELATIVE_PATH = path.posix.join(
   ".playbook",
   "staged",
   "workflow-status-updated",
@@ -2642,6 +2642,8 @@ export const runObserver = async (
 
     await new Promise<void>((resolve) => {
       const closeServer = (): void => {
+        process.off("SIGINT", closeServer);
+        process.off("SIGTERM", closeServer);
         server.close(() => resolve());
       };
 

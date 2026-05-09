@@ -4,6 +4,27 @@ This document captures repo-level product and experience patterns that should go
 
 Rule: Promote repeated pilot learnings into explicit doctrine before they become tribal knowledge.
 
+## Natural-language pattern capture
+
+Product work often arrives through loose natural-language references rather than canonical component names. Playbook should treat those references as real pattern-discovery inputs.
+
+- **Rule**: When a user says to reuse something from another page, component, or flow, treat it as a possible reusable pattern.
+- **Pattern**: Alias-Aware References.
+- **Definition**: The same component, flow, or pattern may be described through multiple names, screenshots, or behavioral cues rather than one canonical identifier.
+- **Design implication**: Resolve references by context, file usage, UI role, and nearby examples, not only by exact naming.
+
+- **Pattern**: Abstract -> Document -> Reuse.
+- **Definition**: When the same UI, UX, or code behavior appears in multiple places, the preferred path is shared abstraction first, documentation second, repeated reuse third.
+- **Design implication**: Reuse the existing shared component or route work through a new shared abstraction instead of silently duplicating behavior.
+
+- **Failure Mode**: Silent Pattern Forking.
+- **Definition**: A new component or flow is created that looks almost the same as an existing one but carries slightly different behavior without an explicit reason.
+- **Why it matters**: Silent forks create drift, increase future integration cost, and make larger feature lanes harder to land cleanly.
+
+Rule: When a durable shared pattern emerges, update the canonical pattern notes rather than leaving it as task-local memory only.
+
+Rule: AI workers may suggest consolidation automatically, but they should avoid destructive refactors unless the task explicitly asks for them or the consolidation is small, obvious, and well-tested.
+
 ## System -> Interpretation Gap
 
 A deterministic system can be correct and still be hard to use when its outputs require too much internal system knowledge to interpret.

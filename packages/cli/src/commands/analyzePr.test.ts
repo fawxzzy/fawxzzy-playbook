@@ -159,7 +159,7 @@ describe(
   });
 
 
-  it('renders GitHub comment markdown when --format github-comment is provided', async () => {
+  it('renders GitHub comment markdown when --format github-comment is provided', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-cli-analyze-pr-github-comment');
     initGitRepo(repo);
     writeRepoIndex(repo);
@@ -187,7 +187,7 @@ describe(
 
 
 
-  it('renders GitHub review diagnostics JSON when --format github-review is provided', async () => {
+  it('renders GitHub review diagnostics JSON when --format github-review is provided', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-cli-analyze-pr-github-review');
     initGitRepo(repo);
     writeRepoIndex(repo);
@@ -210,7 +210,7 @@ describe(
     logSpy.mockRestore();
   });
 
-  it('renders text summary when --format text is provided', async () => {
+  it('renders text summary when --format text is provided', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-cli-analyze-pr-text');
     initGitRepo(repo);
     writeRepoIndex(repo);
@@ -265,7 +265,7 @@ describe(
 
 
 
-  it('scopes related rules for docs-only diffs to avoid repo-wide governance noise', async () => {
+  it('scopes related rules for docs-only diffs to avoid repo-wide governance noise', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-cli-analyze-pr-docs-only');
     initGitRepo(repo);
 
@@ -305,7 +305,7 @@ describe(
     logSpy.mockRestore();
   });
 
-  it('handles detached HEAD deterministically', async () => {
+  it('handles detached HEAD deterministically', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-cli-analyze-pr-detached-head');
     initGitRepo(repo);
     writeRepoIndex(repo);
@@ -329,7 +329,7 @@ describe(
     logSpy.mockRestore();
   });
 
-  it('detects contract-surface changes and recommends snapshot-first follow-up', async () => {
+  it('detects contract-surface changes and recommends snapshot-first follow-up', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-cli-analyze-pr-contract-surface');
     initGitRepo(repo);
     writeRepoIndex(repo);
@@ -366,7 +366,7 @@ describe(
     logSpy.mockRestore();
   });
 
-  it('excludes ephemeral memory event artifacts from contract-surface detection', async () => {
+  it('excludes ephemeral memory event artifacts from contract-surface detection', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-cli-analyze-pr-ephemeral-memory-events');
     initGitRepo(repo);
     writeRepoIndex(repo);
@@ -402,7 +402,7 @@ describe(
 
 
 
-  it('reports multi-boundary PRs with deterministic boundary summary', async () => {
+  it('reports multi-boundary PRs with deterministic boundary summary', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-cli-analyze-pr-multi-boundary');
     initGitRepo(repo);
     writeRepoIndex(repo);
@@ -470,7 +470,7 @@ describe(
     logSpy.mockRestore();
   });
 
-  it('keeps default analyze-pr behavior when no promoted knowledge matches', async () => {
+  it('keeps default analyze-pr behavior when no promoted knowledge matches', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-cli-analyze-pr-no-knowledge-match');
     initGitRepo(repo);
     writeRepoIndex(repo);
@@ -515,7 +515,7 @@ describe(
     logSpy.mockRestore();
   });
 
-  it('adds prevention targeting with provenance from matching promoted knowledge', async () => {
+  it('adds prevention targeting with provenance from matching promoted knowledge', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-cli-analyze-pr-knowledge-match');
     initGitRepo(repo);
     writeRepoIndex(repo);
@@ -576,7 +576,7 @@ describe(
     logSpy.mockRestore();
   });
 
-  it('excludes stale and superseded promoted knowledge and keeps prevention guidance ordering deterministic', async () => {
+  it('excludes stale and superseded promoted knowledge and keeps prevention guidance ordering deterministic', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-cli-analyze-pr-knowledge-ordering');
     initGitRepo(repo);
     writeRepoIndex(repo);

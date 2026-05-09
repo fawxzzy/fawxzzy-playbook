@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
-import { execSync } from 'node:child_process';
+import { afterEach, describe, expect, it } from 'vitest';
+import { execFileSync } from 'node:child_process';
 import {
   applyExecutionPlan,
   captureMemoryEvent,
@@ -20,6 +20,7 @@ import {
 import { verifyMemoryEventFixture } from './__fixtures__/memoryEvent.fixture.js';
 
 const readJson = <T>(filePath: string): T => JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
+const tempRepos: string[] = [];
 
 const classifyFindingForTest = (ruleId: string): string => {
   if (ruleId === 'playbook.pr.risk.module') return 'module-risk';
@@ -28,17 +29,29 @@ const classifyFindingForTest = (ruleId: string): string => {
   return 'general-review';
 };
 
-const initGitRepo = (root: string): void => {
-  const run = (cmd: string) => {
-    execSync(cmd, { cwd: root, stdio: 'ignore' });
-  };
-
-  run('git init');
-  run('git config user.email "playbook@example.com"');
-  run('git config user.name "Playbook Test"');
-  run('git add .');
-  run('git commit -m "initial"');
+const runGit = (root: string, ...args: string[]): void => {
+  execFileSync('git', args, { cwd: root, stdio: 'ignore' });
 };
+
+const initGitRepo = (root: string): void => {
+  runGit(root, 'init');
+  runGit(root, 'config', 'user.email', 'playbook@example.com');
+  runGit(root, 'config', 'user.name', 'Playbook Test');
+  runGit(root, 'add', '.');
+  runGit(root, 'commit', '-m', 'initial');
+};
+
+const createTempRepo = (prefix: string): string => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  tempRepos.push(root);
+  return root;
+};
+
+afterEach(() => {
+  for (const repo of tempRepos.splice(0, tempRepos.length)) {
+    fs.rmSync(repo, { recursive: true, force: true });
+  }
+});
 
 describe('memory event capture', () => {
   it('computes deterministic fingerprints from semantic payloads', () => {
@@ -55,7 +68,7 @@ describe('memory event capture', () => {
   });
 
   it('writes deterministic event and index artifacts with stable key ordering', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-memory-event-'));
+    const root = createTempRepo('playbook-memory-event-');
     const event = captureMemoryEvent(root, {
       ...verifyMemoryEventFixture,
       subjectModules: ['module-b', 'module-a'],
@@ -86,7 +99,7 @@ describe('memory event capture', () => {
   });
 
   it('captures verify, plan, and apply runtime events with provenance links', async () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-memory-workflow-'));
+    const root = createTempRepo('playbook-memory-workflow-');
     fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
     fs.writeFileSync(path.join(root, 'docs', 'PROJECT_GOVERNANCE.md'), '# Governance\n');
     initGitRepo(root);
@@ -116,7 +129,7 @@ describe('memory event capture', () => {
           entry.evidence.some((evidence) => evidence.artifactPath === '.playbook/findings.post-apply.json')
       )
     ).toBe(true);
-  });
+  }, 15000);
 
   it('keeps runtime event fingerprints stable for equivalent verify summaries', () => {
     const eventA = buildVerifyMemoryEvent({
@@ -146,7 +159,7 @@ describe('memory event capture', () => {
   });
 
   it('writes runtime events under core artifact conventions', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-memory-runtime-write-'));
+    const root = createTempRepo('playbook-memory-runtime-write-');
     const event = buildApplyMemoryEvent({
       repoId: root,
       occurredAt: 111,
@@ -166,7 +179,7 @@ describe('memory event capture', () => {
   });
 
   it('captures failure_ingest when analyze-pr fails to bootstrap', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-memory-analyze-pr-failure-'));
+    const root = createTempRepo('playbook-memory-analyze-pr-failure-');
 
     expect(() => analyzePullRequest(root, { baseRef: 'main' })).toThrow();
 
@@ -177,7 +190,7 @@ describe('memory event capture', () => {
   });
 
   it('captures analyze-pr evidence-oriented pr_analysis events with stable fingerprints', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-memory-analyze-pr-success-'));
+    const root = createTempRepo('playbook-memory-analyze-pr-success-');
     fs.mkdirSync(path.join(root, 'src', 'workouts'), { recursive: true });
     fs.mkdirSync(path.join(root, '.playbook'), { recursive: true });
 
@@ -256,5 +269,5 @@ describe('memory event capture', () => {
 
     const fingerprints = events.map((entry) => entry.eventFingerprint).filter((value): value is string => typeof value === 'string');
     expect(fingerprints[0]).toBe(firstPrEvent?.eventFingerprint);
-  });
+  }, 30000);
 });

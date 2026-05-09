@@ -113,6 +113,38 @@ const REQUIRED_EXECUTION_STATE = [
 
 const isObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 
+const isBareCommand = (command: string): boolean =>
+  !path.isAbsolute(command) &&
+  !command.includes('/') &&
+  !command.includes('\\') &&
+  path.extname(command).length === 0;
+
+const resolveWindowsCommand = (command: string): string | null => {
+  if (process.platform !== 'win32' || !isBareCommand(command)) {
+    return null;
+  }
+
+  const pathValue = process.env.Path ?? process.env.PATH ?? '';
+  const pathEntries = pathValue.split(path.delimiter).filter((entry) => entry.length > 0);
+  const extensions = (process.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD')
+    .split(';')
+    .filter((entry) => entry.length > 0);
+
+  for (const entry of pathEntries) {
+    for (const extension of extensions) {
+      const candidate = path.join(entry, `${command}${extension}`);
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
+    }
+  }
+
+  return null;
+};
+
+const quoteWindowsShellArgument = (value: string): string =>
+  /[\s"]/u.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+
 const readJsonIfValid = (artifactPath: string): { ok: boolean; diagnostic?: string } => {
   if (!fs.existsSync(artifactPath)) {
     return { ok: false, diagnostic: `missing artifact: ${artifactPath}` };
@@ -153,7 +185,20 @@ const inspectArtifact = (
 };
 
 const defaultRunCommand: RunCommand = (command, args, cwd) => {
-  const result: SpawnSyncReturns<string> = spawnSync(command, args, { cwd, encoding: 'utf8' });
+  let result: SpawnSyncReturns<string> = spawnSync(command, args, { cwd, encoding: 'utf8' });
+  const commandError = result.error as NodeJS.ErrnoException | undefined;
+  if (commandError?.code === 'ENOENT') {
+    const resolvedCommand = resolveWindowsCommand(command);
+    if (resolvedCommand) {
+      const extension = path.extname(resolvedCommand).toLowerCase();
+      if (extension === '.cmd' || extension === '.bat') {
+        const commandLine = [quoteWindowsShellArgument(resolvedCommand), ...args.map(quoteWindowsShellArgument)].join(' ');
+        result = spawnSync(commandLine, { cwd, encoding: 'utf8', shell: true });
+      } else {
+        result = spawnSync(resolvedCommand, args, { cwd, encoding: 'utf8' });
+      }
+    }
+  }
   return {
     ok: result.status === 0 && !result.error,
     status: result.status,

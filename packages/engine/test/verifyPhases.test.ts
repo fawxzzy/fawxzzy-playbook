@@ -1,4 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const loadConfig = vi.fn();
 const resolveDiffBase = vi.fn();
@@ -21,6 +24,21 @@ vi.mock('../src/rules/coreRules.js', () => ({ getCoreRules }));
 vi.mock('../src/compaction/compactPatterns.js', () => ({ compactPatterns }));
 vi.mock('../src/memory/runtimeEvents.js', () => ({ captureMemoryRuntimeEventSafe, buildVerifyMemoryEvent }));
 
+const tempRoots: string[] = [];
+
+const createTempRepoRoot = (): string => {
+  const repoRoot = mkdtempSync(path.join(tmpdir(), 'playbook-verify-phases-'));
+  tempRoots.push(repoRoot);
+  return repoRoot;
+};
+
+afterEach(() => {
+  for (const repoRoot of tempRoots.splice(0)) {
+    rmSync(repoRoot, { recursive: true, force: true });
+  }
+  vi.clearAllMocks();
+});
+
 describe('verifyRepo phase/rule selection', () => {
   it('runs only preflight release governance rules when phase=preflight', async () => {
     const releaseRule = {
@@ -41,7 +59,8 @@ describe('verifyRepo phase/rule selection', () => {
     getRegisteredRules.mockImplementation(() => [releaseRule, protectedDocRule]);
 
     const { verifyRepo } = await import('../src/verify/index.js');
-    const report = verifyRepo('/repo', { phase: 'preflight' });
+    const repoRoot = createTempRepoRoot();
+    const report = verifyRepo(repoRoot, { phase: 'preflight' });
 
     expect(report.summary.phase).toBe('preflight');
     expect(report.failures).toEqual([
@@ -76,7 +95,8 @@ describe('verifyRepo phase/rule selection', () => {
     getRegisteredRules.mockImplementation(() => [releaseRule, protectedDocRule]);
 
     const { verifyRepo } = await import('../src/verify/index.js');
-    const report = verifyRepo('/repo', { ruleIds: ['protected-doc.governance'] });
+    const repoRoot = createTempRepoRoot();
+    const report = verifyRepo(repoRoot, { ruleIds: ['protected-doc.governance'] });
 
     expect(report.summary.ruleIds).toEqual(['protected-doc.governance']);
     expect(report.failures).toEqual([

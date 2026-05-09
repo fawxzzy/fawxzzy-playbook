@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { runBootstrapProof } from '../src/adoption/bootstrapProof.js';
+import { resolveBootstrapCliAvailability, runBootstrapProof } from '../src/adoption/bootstrapProof.js';
 
 const repos: string[] = [];
 
@@ -147,5 +147,37 @@ describe('runBootstrapProof', () => {
     expect(result.current_state).toBe('cli_blocked');
     expect(result.diagnostics.failing_stage).toBe('cli');
     expect(result.diagnostics.failing_category).toBe('binary_resolution_failed');
+  });
+
+  it('resolves bare Windows .cmd commands through PATH and PATHEXT fallback', () => {
+    if (process.platform !== 'win32') {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const repo = createRepo();
+    writeReadyRepo(repo);
+    const originalPath = process.env.Path;
+    const originalPathext = process.env.PATHEXT;
+    const binDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-bootstrap-proof-bin-'));
+    const commandName = 'playbook-bootstrap-proof-fake-runtime';
+    const commandPath = path.join(binDir, `${commandName}.cmd`);
+    fs.writeFileSync(commandPath, '@echo off\r\necho 9.0.0\r\n');
+
+    process.env.Path = [binDir, originalPath ?? process.env.PATH ?? ''].filter(Boolean).join(path.delimiter);
+    process.env.PATHEXT = '.CMD;.EXE';
+
+    try {
+      const result = resolveBootstrapCliAvailability(repo, {
+        commands: [{ label: `${commandName} --version`, command: commandName, args: ['--version'] }]
+      });
+
+      expect(result.success?.command).toBe(commandName);
+      expect(result.diagnostics).toEqual(['9.0.0']);
+    } finally {
+      process.env.Path = originalPath;
+      process.env.PATHEXT = originalPathext;
+      fs.rmSync(binDir, { recursive: true, force: true });
+    }
   });
 });

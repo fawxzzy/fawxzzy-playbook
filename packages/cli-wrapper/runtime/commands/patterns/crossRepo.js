@@ -1,0 +1,149 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { computeCrossRepoPatternLearning, readCrossRepoPatternsArtifact, writeCrossRepoPatternsArtifact } from '@zachariahredfield/playbook-engine';
+import { emitJsonOutput } from '../../lib/jsonArtifact.js';
+import { ExitCode } from '../../lib/cliContract.js';
+const readOptionValue = (args, optionName) => {
+    const index = args.indexOf(optionName);
+    return index >= 0 ? args[index + 1] ?? null : null;
+};
+const readObserverRepos = (cwd) => {
+    const registryPath = path.join(cwd, '.playbook', 'observer', 'repos.json');
+    if (!fs.existsSync(registryPath))
+        return [];
+    try {
+        const parsed = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+        return (parsed.repos ?? []).map((repo) => ({ id: String(repo.id ?? ''), repoPath: String(repo.root ?? '') })).filter((repo) => repo.id && repo.repoPath);
+    }
+    catch {
+        return [];
+    }
+};
+const parseRepoArgs = (cwd, commandArgs) => {
+    const repos = [];
+    for (let i = 0; i < commandArgs.length; i += 1) {
+        if (commandArgs[i] === '--repo' && commandArgs[i + 1])
+            repos.push({ id: path.basename(commandArgs[i + 1]), repoPath: path.resolve(cwd, commandArgs[i + 1]) });
+    }
+    if (repos.length)
+        return repos;
+    const observerRepos = readObserverRepos(cwd);
+    if (observerRepos.length)
+        return observerRepos;
+    return [{ id: path.basename(cwd), repoPath: cwd }];
+};
+const isRecord = (value) => typeof value === 'object' && value !== null;
+const isAggregateSummary = (value) => isRecord(value) && typeof value.pattern_id === 'string';
+const isComparison = (value) => isRecord(value) && typeof value.left_repo_id === 'string' && typeof value.right_repo_id === 'string' && Array.isArray(value.repo_deltas);
+const isRepoSummary = (value) => isRecord(value) && typeof value.id === 'string' && Array.isArray(value.patterns);
+const isRepoDeltaPatternEntry = (value) => isRecord(value) && typeof value.pattern_id === 'string';
+const candidatePatternsFromArtifact = (artifact) => {
+    if (Array.isArray(artifact.candidate_patterns))
+        return artifact.candidate_patterns;
+    if (Array.isArray(artifact.aggregates)) {
+        return artifact.aggregates.filter(isAggregateSummary).map((entry) => ({
+            id: entry.pattern_id,
+            status: 'candidate_read_only',
+            portability: { score: Number(entry.portability_score ?? 0), factors: [] },
+            evidence: [],
+            promotion: { mode: 'manual_only' }
+        }));
+    }
+    return [];
+};
+const computeRepoDelta = (artifact, leftRepo, rightRepo) => {
+    if (Array.isArray(artifact.comparisons)) {
+        const pair = artifact.comparisons.filter(isComparison).find((entry) => (entry.left_repo_id === leftRepo && entry.right_repo_id === rightRepo) || (entry.left_repo_id === rightRepo && entry.right_repo_id === leftRepo));
+        if (pair)
+            return pair.repo_deltas ?? [];
+    }
+    const left = artifact.repositories?.filter(isRepoSummary).find((repo) => repo.id === leftRepo);
+    const right = artifact.repositories?.filter(isRepoSummary).find((repo) => repo.id === rightRepo);
+    if (!left || !right)
+        throw new Error(`playbook patterns repo-delta: repositories must exist in artifact (got: ${leftRepo}, ${rightRepo})`);
+    const rightPatterns = (right.patterns ?? []).filter(isRepoDeltaPatternEntry);
+    const rightByPattern = new Map(rightPatterns.map((entry) => [entry.pattern_id, entry]));
+    const leftPatterns = (left.patterns ?? []).filter(isRepoDeltaPatternEntry);
+    return leftPatterns
+        .filter(isRepoDeltaPatternEntry)
+        .filter((entry) => rightByPattern.has(entry.pattern_id))
+        .map((entry) => {
+        const rhs = rightByPattern.get(entry.pattern_id);
+        return {
+            pattern_id: entry.pattern_id,
+            left_repo: leftRepo,
+            right_repo: rightRepo,
+            strength_delta: Number(((entry.strength ?? 0) - (rhs.strength ?? 0)).toFixed(2)),
+            attractor_delta: Number(((entry.attractor ?? 0) - (rhs.attractor ?? 0)).toFixed(2)),
+            fitness_delta: Number(((entry.fitness ?? 0) - (rhs.fitness ?? 0)).toFixed(2))
+        };
+    });
+};
+export const runPatternsCrossRepo = (cwd, commandArgs, options) => {
+    const repositories = parseRepoArgs(cwd, commandArgs.slice(1));
+    const artifact = computeCrossRepoPatternLearning(repositories);
+    writeCrossRepoPatternsArtifact(cwd, artifact);
+    const payload = {
+        schemaVersion: '1.0',
+        command: 'patterns',
+        action: 'cross-repo',
+        mode: artifact.mode,
+        source_repos: artifact.source_repos,
+        comparisons: artifact.comparisons,
+        candidate_patterns: artifact.candidate_patterns,
+        aggregates: artifact.aggregates
+    };
+    if (options.format === 'json') {
+        emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+        return ExitCode.Success;
+    }
+    if (!options.quiet)
+        console.log(JSON.stringify(payload, null, 2));
+    return ExitCode.Success;
+};
+export const runPatternsPortability = (cwd, commandArgs, options) => {
+    const artifact = readCrossRepoPatternsArtifact(cwd);
+    const patternId = readOptionValue(commandArgs, '--pattern');
+    const portability = candidatePatternsFromArtifact(artifact)
+        .filter((entry) => !patternId || entry.id === patternId)
+        .map((entry) => ({ pattern_id: entry.id, portability_score: entry.portability.score }));
+    const payload = { schemaVersion: '1.0', command: 'patterns', action: 'portability', portability };
+    if (options.format === 'json') {
+        emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+        return ExitCode.Success;
+    }
+    if (!options.quiet)
+        console.log(JSON.stringify(payload, null, 2));
+    return ExitCode.Success;
+};
+export const runPatternsGeneralized = (cwd, options) => {
+    const artifact = readCrossRepoPatternsArtifact(cwd);
+    const generalized = candidatePatternsFromArtifact(artifact)
+        .filter((entry) => Number(entry.portability.score ?? 0) >= 0.85)
+        .map((entry) => ({ ...entry, pattern_id: entry.id }));
+    const payload = { schemaVersion: '1.0', command: 'patterns', action: 'generalized', generalized };
+    if (options.format === 'json') {
+        emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+        return ExitCode.Success;
+    }
+    if (!options.quiet)
+        console.log(JSON.stringify(payload, null, 2));
+    return ExitCode.Success;
+};
+export const runPatternsRepoDelta = (cwd, commandArgs, options) => {
+    const leftRepo = readOptionValue(commandArgs, '--left') ?? commandArgs[1];
+    const rightRepo = readOptionValue(commandArgs, '--right') ?? commandArgs[2];
+    if (!leftRepo || !rightRepo)
+        throw new Error('playbook patterns repo-delta: requires --left <repoId> --right <repoId>.');
+    const artifact = readCrossRepoPatternsArtifact(cwd);
+    const deltas = computeRepoDelta(artifact, leftRepo, rightRepo);
+    const payload = { schemaVersion: '1.0', command: 'patterns', action: 'repo-delta', leftRepo, rightRepo, deltas };
+    if (options.format === 'json') {
+        emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+        return ExitCode.Success;
+    }
+    if (!options.quiet)
+        console.log(JSON.stringify(payload, null, 2));
+    return ExitCode.Success;
+};
+//# sourceMappingURL=crossRepo.js.map

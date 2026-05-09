@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fawxzzy.dev/schemas/playbook.convergence.source-inventory.v1.json",
+  "title": "Playbook Convergence Source Inventory v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "sources"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "playbook.convergence.source-inventory.v1"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "sourceCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "migrationCandidateCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "referenceOnlyCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "repo",
+          "path",
+          "classification",
+          "migrationDecision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "repo": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classification": {
+            "enum": [
+              "owner_contract",
+              "repo_adoption_evidence",
+              "repo_verification_report",
+              "root_projection",
+              "execution_boundary",
+              "domain_truth",
+              "external_pack",
+              "production_observation",
+              "mission_context",
+              "architecture_boundary",
+              "initiative_memory"
+            ]
+          },
+          "migrationDecision": {
+            "enum": [
+              "migrate",
+              "template",
+              "reference_only",
+              "stay_owner_repo",
+              "future_adapter",
+              "reject"
+            ]
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "targetSurface": {
+            "type": "string"
+          },
+          "guardrail": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

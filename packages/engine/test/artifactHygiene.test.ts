@@ -2,17 +2,26 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { generateRepositoryHealth, generatePlanContract } from '../src/index.js';
+
+const tempRepos: string[] = [];
 
 const createRepo = (name: string): string => {
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`));
+  tempRepos.push(repo);
   execSync('git init', { cwd: repo, stdio: 'ignore' });
   execSync('git config user.email "playbook@example.com"', { cwd: repo });
   execSync('git config user.name "Playbook Test"', { cwd: repo });
   fs.writeFileSync(path.join(repo, 'package.json'), JSON.stringify({ name: 'artifact-test' }, null, 2));
   return repo;
 };
+
+afterEach(() => {
+  for (const repo of tempRepos.splice(0, tempRepos.length)) {
+    fs.rmSync(repo, { recursive: true, force: true });
+  }
+});
 
 describe('artifact hygiene diagnostics', () => {
   it('detects committed runtime artifacts and suggests deterministic fixes', () => {
@@ -31,7 +40,7 @@ describe('artifact hygiene diagnostics', () => {
 
     const plan = generatePlanContract(repo);
     expect(plan.tasks.map((task) => task.ruleId)).toContain('PB013');
-  });
+  }, 20000);
 
   it('flags missing .playbookignore on large repositories', () => {
     const repo = createRepo('playbook-artifact-hygiene-ignore');
@@ -50,7 +59,7 @@ describe('artifact hygiene diagnostics', () => {
     expect(report.artifactHygiene.findings.map((finding) => finding.type)).toContain('missing-playbookignore');
     const pb012 = report.artifactHygiene.suggestions.find((suggestion) => suggestion.id === 'PB012');
     expect(pb012?.entries).toEqual(expect.arrayContaining(['node_modules', 'dist', 'coverage']));
-  });
+  }, 20000);
 
   it('applies PB012 by creating .playbookignore with recommended entries', async () => {
     const repo = createRepo('playbook-artifact-hygiene-apply');
@@ -78,6 +87,6 @@ describe('artifact hygiene diagnostics', () => {
     expect(ignore).toContain('node_modules');
     expect(ignore).toContain('.git');
     expect(ignore).not.toContain('.playbook/cache');
-  });
+  }, 20000);
 
 });

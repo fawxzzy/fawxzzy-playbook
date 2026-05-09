@@ -4,11 +4,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 
 import { resolveReleaseVersionContext } from '../../scripts/pack-release-fallback-asset.mjs';
+import {
+  createPatchedNodeArgs,
+  createScriptEnv as createBaseScriptEnv,
+  nodeCommand,
+  repoRootFromImportMeta
+} from './helpers/runtime-test-utils.mjs';
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const repoRoot = repoRootFromImportMeta(import.meta.url);
 const updateSnapshotsScript = path.join(repoRoot, 'scripts', 'update-contract-snapshots.mjs');
 const releaseAssetScript = path.join(repoRoot, 'scripts', 'pack-release-fallback-asset.mjs');
 const committedSnapshotPath = path.join(repoRoot, 'tests', 'contracts', 'ai-context.snapshot.json');
@@ -21,11 +26,11 @@ const createScriptEnv = (overrides = {}) => {
   delete env.GITHUB_REF;
   delete env.GITHUB_REF_NAME;
   delete env.GITHUB_REF_TYPE;
-  return { ...env, ...overrides };
+  return createBaseScriptEnv({ ...env, ...overrides });
 };
 
 const runNode = (scriptPath, env = {}) =>
-  spawnSync('node', [scriptPath], {
+  spawnSync(nodeCommand, createPatchedNodeArgs(scriptPath), {
     cwd: repoRoot,
     encoding: 'utf8',
     env: createScriptEnv(env)

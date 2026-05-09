@@ -95,11 +95,11 @@ export const verifyRepo = (repoRoot: string, options: VerifyRepoOptions = {}): V
     report.summary.warnings = report.warnings.length;
   }
 
+  const findingState = deriveVerifyFindingState(repoRoot, {
+    baselineRef,
+    findings: buildVerifyFindingObservations(report)
+  });
   if (options.baselineRef?.trim()) {
-    const findingState = deriveVerifyFindingState(repoRoot, {
-      baselineRef,
-      findings: buildVerifyFindingObservations(report)
-    });
     report.findingState = {
       artifactPath: path.join(repoRoot, VERIFY_FINDING_STATE_RELATIVE_PATH),
       ...findingState

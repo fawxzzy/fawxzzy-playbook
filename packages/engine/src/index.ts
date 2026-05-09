@@ -1,6 +1,12 @@
 export { analyzeRepo } from './analyze/index.js';
 export { VERIFY_PHASE_RULES, verifyRepo } from './verify/index.js';
 export type { VerifyPhase, VerifyRepoOptions } from './verify/index.js';
+export {
+  VERIFY_FINDING_STATE_RELATIVE_PATH,
+  VERIFY_FINDING_STATE_SCHEMA_VERSION,
+  buildVerifyFindingObservations,
+  deriveVerifyFindingState
+} from './verification/findingState.js';
 export { resolveLocalVerificationCommand, runLocalVerification } from './verification/localVerification.js';
 export type { LocalVerificationExecutionResult } from './verification/localVerification.js';
 export { formatHuman, formatJson } from './report/format.js';
@@ -46,6 +52,47 @@ export type { FleetExecutionOutcomeInput, ExecutionPromptOutcomeInput, FleetExec
 export { buildFleetUpdatedAdoptionState } from './adoption/executionUpdatedState.js';
 export type { FleetUpdatedAdoptionState, ReconciledRepoState, ReconciliationStatus } from './adoption/executionUpdatedState.js';
 export { deriveNextAdoptionQueueFromUpdatedState } from './adoption/updatedStateQueue.js';
+export {
+  buildConvergenceSourceInventoryReport,
+  CONVERGENCE_SOURCE_ID_PATTERN,
+  CONVERGENCE_SOURCE_INVENTORY_REPORT_SCHEMA_VERSION,
+  normalizeConvergenceSourceClass,
+  normalizeConvergenceSourceDecision,
+  validateConvergenceSourceId
+} from './convergence/index.js';
+export type {
+  ConvergenceSourceInventoryDecision,
+  ConvergenceSourceInventoryInputClassification,
+  ConvergenceSourceInventoryInputDecision,
+  ConvergenceSourceInventoryIssue,
+  ConvergenceSourceInventoryIssueCode,
+  ConvergenceSourceInventoryReport,
+  ConvergenceSourceInventoryReportRow,
+  ConvergenceSourceInventorySourceClass,
+  ConvergenceSourceInventorySourceRowInput,
+  ConvergenceSourceInventoryStatus
+} from './convergence/index.js';
+export {
+  buildRepoScorecardReport,
+  deriveRepoScorecardGrade,
+  REPO_SCORECARD_ID_PATTERN,
+  REPO_SCORECARD_REPORT_SCHEMA_VERSION,
+  scoreRepoScorecardDimensionStatus,
+  validateRepoScorecardId
+} from './scorecard/index.js';
+export type {
+  RepoScorecardDimensionId,
+  RepoScorecardDimensionInput,
+  RepoScorecardDimensionReportRow,
+  RepoScorecardGrade,
+  RepoScorecardInput,
+  RepoScorecardIssue,
+  RepoScorecardIssueCode,
+  RepoScorecardReport,
+  RepoScorecardReportStatus,
+  RepoScorecardRole,
+  RepoScorecardStatus
+} from './scorecard/index.js';
 
 export { generateRepositoryIndex } from './indexer/repoIndexer.js';
 export type {

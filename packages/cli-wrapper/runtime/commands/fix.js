@@ -1,0 +1,156 @@
+import { applyExecutionPlan, generateExecutionPlan } from '@zachariahredfield/playbook-engine';
+import { ExitCode } from '../lib/cliContract.js';
+import { collectVerifyReport } from './verify.js';
+import { loadVerifyRules } from '../lib/loadVerifyRules.js';
+const parseOnlyFilter = (only) => {
+    if (!only) {
+        return undefined;
+    }
+    const ids = only
+        .split(',')
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0);
+    return ids.length > 0 ? new Set(ids) : undefined;
+};
+const outputText = (options, applied, skipped, reverify) => {
+    if (options.quiet && applied.length === 0 && skipped.length === 0 && (!reverify || reverify.ok)) {
+        return;
+    }
+    console.log(options.dryRun ? 'Planned fixes:' : 'Applied fixes:');
+    if (applied.length === 0) {
+        console.log('  (none)');
+    }
+    else {
+        for (const fix of applied) {
+            const mode = options.dryRun ? 'would apply' : 'applied';
+            console.log(`  - ${fix.findingId}: ${mode}; ${fix.summary}`);
+            if (options.explain) {
+                for (const file of fix.filesChanged) {
+                    console.log(`    file: ${file}`);
+                }
+            }
+        }
+    }
+    console.log('Skipped findings:');
+    if (skipped.length === 0) {
+        console.log('  (none)');
+    }
+    else {
+        for (const entry of skipped) {
+            console.log(`  - ${entry.findingId}: ${entry.reason}`);
+        }
+    }
+    if (reverify) {
+        console.log('Re-verify:');
+        console.log(`  - ok: ${reverify.ok}`);
+        console.log(`  - failures: ${reverify.failures}`);
+        console.log(`  - warnings: ${reverify.warnings}`);
+        console.log(`  - exitCode: ${reverify.exitCode}`);
+    }
+};
+const outputJson = (result) => {
+    console.log(JSON.stringify(result, null, 2));
+};
+export const runFix = async (cwd, options) => {
+    try {
+        const verifyRules = await loadVerifyRules(cwd);
+        const onlyFilter = parseOnlyFilter(options.only);
+        const generatedPlan = generateExecutionPlan(cwd);
+        const tasks = generatedPlan.tasks.filter((task) => {
+            if (!onlyFilter) {
+                return true;
+            }
+            return onlyFilter.has(task.ruleId);
+        });
+        const handlers = Object.fromEntries(tasks.map((task) => {
+            const pluginRule = verifyRules.find((rule) => rule.id === task.ruleId);
+            return [task.ruleId, pluginRule?.fix];
+        }));
+        const applied = [];
+        const skipped = [];
+        if (!options.dryRun && !options.yes && !options.ci && tasks.length > 0) {
+            const reason = 'Interactive prompts are not available; re-run with --yes to apply fixes.';
+            const fullSkipped = skipped.concat(tasks.map((entry) => ({ findingId: entry.ruleId, reason })));
+            const result = {
+                schemaVersion: '1.0',
+                command: 'fix',
+                ok: false,
+                exitCode: ExitCode.Failure,
+                dryRun: options.dryRun,
+                applied: [],
+                skipped: fullSkipped,
+                summary: reason
+            };
+            if (options.format === 'json') {
+                outputJson(result);
+            }
+            else {
+                outputText(options, [], fullSkipped, undefined);
+                console.log(reason);
+            }
+            return ExitCode.Failure;
+        }
+        const execution = await applyExecutionPlan(cwd, tasks, { dryRun: options.dryRun, handlers });
+        for (const resultItem of execution.results) {
+            if (resultItem.status === 'applied') {
+                applied.push({
+                    findingId: resultItem.ruleId,
+                    filesChanged: resultItem.file ? [resultItem.file] : [],
+                    summary: resultItem.action
+                });
+                continue;
+            }
+            skipped.push({
+                findingId: resultItem.ruleId,
+                reason: resultItem.message ?? `Task ${resultItem.status}.`
+            });
+        }
+        const reverify = options.dryRun
+            ? undefined
+            : await collectVerifyReport(cwd).then((report) => ({
+                ok: report.ok,
+                failures: report.failures.length,
+                warnings: report.warnings.length,
+                exitCode: report.ok ? ExitCode.Success : ExitCode.PolicyFailure
+            }));
+        const exitCode = options.dryRun ? ExitCode.Success : (reverify?.exitCode ?? ExitCode.Success);
+        const result = {
+            schemaVersion: '1.0',
+            command: 'fix',
+            ok: exitCode === ExitCode.Success,
+            exitCode,
+            dryRun: options.dryRun,
+            applied,
+            skipped,
+            reverify,
+            summary: options.dryRun ? 'Dry-run completed.' : 'Fix command completed.'
+        };
+        if (options.format === 'json') {
+            outputJson(result);
+        }
+        else {
+            outputText(options, applied, skipped, reverify);
+        }
+        return exitCode;
+    }
+    catch (error) {
+        if (options.format === 'json') {
+            outputJson({
+                schemaVersion: '1.0',
+                command: 'fix',
+                ok: false,
+                exitCode: ExitCode.Failure,
+                dryRun: options.dryRun,
+                applied: [],
+                skipped: [],
+                summary: String(error)
+            });
+        }
+        else {
+            console.error('playbook fix failed with an internal error.');
+            console.error(String(error));
+        }
+        return ExitCode.Failure;
+    }
+};
+//# sourceMappingURL=fix.js.map

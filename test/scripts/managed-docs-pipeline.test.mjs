@@ -3,20 +3,19 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { repoRootFromImportMeta, nodeCommand, createScriptEnv } from './helpers/runtime-test-utils.mjs';
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const repoRoot = repoRootFromImportMeta(import.meta.url);
 const pipelineScript = path.join(repoRoot, 'scripts', 'managed-docs-pipeline.mjs');
 const normalizeLineEndings = (value) => value.replace(/\r\n/g, '\n');
 
 const runPipeline = (args = []) =>
-  spawnSync('node', [pipelineScript, ...args], {
+  spawnSync(nodeCommand, [pipelineScript, ...args], {
     cwd: repoRoot,
     encoding: 'utf8',
-    env: {
-      ...process.env,
+    env: createScriptEnv({
       PLAYBOOK_MANAGED_DOCS_REPO_ROOT: repoRoot
-    }
+    })
   });
 
 test('docs pipeline regenerates stale managed docs before validating in check mode', { concurrency: false }, () => {

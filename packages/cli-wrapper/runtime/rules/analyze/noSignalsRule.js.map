@@ -1,0 +1,1 @@
+{"version":3,"file":"noSignalsRule.js","sourceRoot":"","sources":["../../../src/rules/analyze/noSignalsRule.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,MAAM,aAAa,GAAgB;IACxC,EAAE,EAAE,oBAAoB;IACxB,WAAW,EAAE,gEAAgE;IAC7E,KAAK,EAAE,CAAC,EAAE,cAAc,EAAE,EAAE,EAAE,CAAC,cAAc,CAAC,EAAE,KAAK,oBAAoB;CAC1E,CAAC"}

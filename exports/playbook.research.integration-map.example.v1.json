@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "playbook.research.integration-map.v1",
+  "entries": [
+    {
+      "id": "playbook-research-artifact-contract",
+      "project": "Playbook",
+      "adoption": "Research artifact contract foundation",
+      "architectureFit": "Fits beside existing contracts, exports, and deterministic validator/report surfaces.",
+      "improvesOrReplaces": "Ad hoc external-research notes and one-off planning documents.",
+      "minimalImplementation": "Publish four schemas and examples with a fail-closed validator and root script test."
+    },
+    {
+      "id": "fitness-guided-activation",
+      "project": "Fitness",
+      "adoption": "Guided activation wizard",
+      "architectureFit": "Fits the install-first onboarding seam and existing server-action write boundary.",
+      "improvesOrReplaces": "Cold-start ambiguity during goal, schedule, and equipment setup.",
+      "minimalImplementation": "Add a five-step wizard that writes profile intent and an initial routine draft."
+    },
+    {
+      "id": "lifeline-runtime-readiness",
+      "project": "Lifeline",
+      "adoption": "Manifest healthcheck and dependency contract",
+      "architectureFit": "Fits existing validate, resolve, up, and receipt boundaries without widening Lifeline into a control plane.",
+      "improvesOrReplaces": "Weak startup certainty and restart behavior based only on process launch success.",
+      "minimalImplementation": "Add optional healthcheck, startupBudget, and dependsOn manifest fields with bounded retries and receipt output."
+    }
+  ]
+}

@@ -5,6 +5,15 @@
 - Repository: `https://github.com/ZachariahRedfield/fawxzzy-fitness`
 - Pilot role: **Primary external pilot target** for validating Playbook as an external deterministic runtime.
 
+## Current product direction snapshot
+
+- Monetization target: subscription model.
+- Expected monetization-era stack: Vercel deployment surface, Supabase database/auth/persistence, Stripe for web-first billing, and Supabase-backed entitlement state.
+- Startup expectation: refresh entitlement state before loading gated premium surfaces.
+- Lapsed access posture: preserve user-owned data and gate future premium actions instead of deleting history or saved records.
+- Native app-store billing remains an unresolved decision and needs Apple/Google policy review before any native subscription implementation is finalized.
+- Product sequence: finish remaining App Theme hookups and cleanup work, complete the exercise/stretch foundation pass, then build the curated workout engine as the likely core premium value surface.
+
 ## Why this is the primary external pilot
 
 Fawxzzy Fitness is the strongest near-term external proving ground because it already has real-world governance/runtime behavior and a substantial legacy Playbook surface in active repository structure and scripts.

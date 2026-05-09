@@ -1,0 +1,165 @@
+import { bucketCompactionCandidates, extractCompactionCandidates, readPatternCards, recordImprovementCandidate, safeRecordRepositoryEvent, toExistingPatternTargets } from '@zachariahredfield/playbook-engine';
+import { emitJsonOutput } from '../../../lib/jsonArtifact.js';
+import { ExitCode } from '../../../lib/cliContract.js';
+import { runPatternsCandidatesCrossRepo } from '../candidatesCrossRepo.js';
+import { runPatternsCandidatesGeneralized } from '../candidatesGeneralized.js';
+import { runPatternsCandidatesPortability } from '../candidatesPortability.js';
+const toInspectionRecord = (candidate) => ({
+    candidateId: candidate.candidateId,
+    sourceKind: candidate.sourceKind,
+    subjectKind: candidate.subjectKind,
+    subjectRef: candidate.subjectRef,
+    trigger: candidate.trigger,
+    mechanism: candidate.mechanism,
+    response: candidate.response,
+    fingerprint: candidate.canonical.fingerprint
+});
+const byCandidateId = (left, right) => left.candidateId.localeCompare(right.candidateId);
+const emitError = (cwd, options, message) => {
+    if (options.format === 'json') {
+        emitJsonOutput({
+            cwd,
+            command: 'patterns',
+            payload: { schemaVersion: '1.0', command: 'patterns', action: 'candidates', error: message },
+            outFile: options.outFile
+        });
+    }
+    else {
+        console.error(message);
+    }
+    return ExitCode.Failure;
+};
+const loadCandidateContext = (cwd) => {
+    const rawCandidates = extractCompactionCandidates({ repoRoot: cwd });
+    const candidates = rawCandidates.map(toInspectionRecord).sort(byCandidateId);
+    const existingTargets = toExistingPatternTargets(readPatternCards(cwd));
+    const links = bucketCompactionCandidates({ candidates: rawCandidates, existingTargets })
+        .map((entry) => ({
+        candidateId: entry.candidateId,
+        bucket: entry.bucket,
+        targetId: entry.targetId,
+        targetOrigin: entry.targetOrigin,
+        relationKind: entry.relation.relationKind,
+        similarityScore: Number(entry.relation.similarityScore.toFixed(4)),
+        reason: entry.reason,
+        deferredGeneralizationCandidate: entry.deferredGeneralizationCandidate
+    }))
+        .sort(byCandidateId);
+    return { candidates, links };
+};
+const printCandidates = (candidates) => {
+    console.log('Compaction candidates');
+    console.log('─────────────────────');
+    if (candidates.length === 0) {
+        console.log('none');
+        return;
+    }
+    for (const candidate of candidates) {
+        console.log(`${candidate.candidateId} (${candidate.sourceKind}/${candidate.subjectKind})`);
+    }
+};
+const printShowCandidate = (candidate, link) => {
+    console.log(`Candidate ${candidate.candidateId}`);
+    console.log('────────────────────────');
+    console.log(`Source: ${candidate.sourceKind}`);
+    console.log(`Subject: ${candidate.subjectKind} ${candidate.subjectRef}`);
+    console.log(`Trigger: ${candidate.trigger}`);
+    console.log(`Mechanism: ${candidate.mechanism}`);
+    console.log(`Response: ${candidate.response}`);
+    console.log(`Fingerprint: ${candidate.fingerprint}`);
+    if (link) {
+        console.log(`Bucket: ${link.bucket}`);
+        console.log(`Relation: ${link.relationKind} (${link.similarityScore})`);
+        console.log(`Target: ${link.targetId ?? 'none'}`);
+    }
+};
+const printLinks = (links) => {
+    console.log('Candidate links');
+    console.log('───────────────');
+    if (links.length === 0) {
+        console.log('none');
+        return;
+    }
+    for (const link of links) {
+        console.log(`${link.candidateId}: ${link.bucket} -> ${link.targetId ?? 'unmatched'} (${link.relationKind}/${link.similarityScore})`);
+    }
+};
+export const runPatternsCandidates = (cwd, commandArgs, options) => {
+    const action = commandArgs[0] ?? 'list';
+    const { candidates, links } = loadCandidateContext(cwd);
+    if (action === 'list') {
+        safeRecordRepositoryEvent(() => {
+            for (const candidate of candidates) {
+                recordImprovementCandidate(cwd, {
+                    candidate_id: candidate.candidateId,
+                    source: 'patterns.candidates',
+                    summary: `${candidate.sourceKind}/${candidate.subjectKind}: ${candidate.trigger} -> ${candidate.response}`,
+                    related_artifacts: [{ path: '.playbook/pattern-candidate-links.json', kind: 'candidate_links' }]
+                });
+            }
+        });
+        const payload = { schemaVersion: '1.0', command: 'patterns', action: 'candidates', candidates };
+        if (options.format === 'json') {
+            emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+        }
+        else {
+            printCandidates(candidates);
+        }
+        return ExitCode.Success;
+    }
+    if (action === 'show') {
+        const id = commandArgs[1];
+        if (!id) {
+            return emitError(cwd, options, 'playbook patterns candidates show: requires <id>.');
+        }
+        const candidate = candidates.find((entry) => entry.candidateId === id);
+        if (!candidate) {
+            return emitError(cwd, options, `playbook patterns candidates show: candidate not found: ${id}`);
+        }
+        const link = links.find((entry) => entry.candidateId === id);
+        const payload = { schemaVersion: '1.0', command: 'patterns', action: 'candidates-show', candidate, link: link ?? null };
+        if (options.format === 'json') {
+            emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+        }
+        else {
+            printShowCandidate(candidate, link);
+        }
+        return ExitCode.Success;
+    }
+    if (action === 'unmatched') {
+        const unmatched = candidates.filter((candidate) => {
+            const link = links.find((entry) => entry.candidateId === candidate.candidateId);
+            return !link?.targetId;
+        });
+        const payload = { schemaVersion: '1.0', command: 'patterns', action: 'candidates-unmatched', candidates: unmatched };
+        if (options.format === 'json') {
+            emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+        }
+        else {
+            printCandidates(unmatched);
+        }
+        return ExitCode.Success;
+    }
+    if (action === 'link') {
+        const linked = links.filter((entry) => Boolean(entry.targetId));
+        const payload = { schemaVersion: '1.0', command: 'patterns', action: 'candidates-link', links: linked };
+        if (options.format === 'json') {
+            emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+        }
+        else {
+            printLinks(linked);
+        }
+        return ExitCode.Success;
+    }
+    if (action === 'cross-repo') {
+        return runPatternsCandidatesCrossRepo(cwd, options);
+    }
+    if (action === 'generalized') {
+        return runPatternsCandidatesGeneralized(cwd, options);
+    }
+    if (action === 'portability') {
+        return runPatternsCandidatesPortability(cwd, options);
+    }
+    return emitError(cwd, options, 'playbook patterns candidates: unsupported subcommand. Use show <id>, unmatched, link, cross-repo, generalized, or portability.');
+};
+//# sourceMappingURL=index.js.map

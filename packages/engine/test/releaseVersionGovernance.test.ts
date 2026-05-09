@@ -2,10 +2,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { assessReleaseSync, verifyReleaseGovernance } from '../src/release/index.js';
 
 const BREAKING_CHANGE_MARKER = ['BREAKING', 'CHANGE'].join(' ');
+const createdRepos: string[] = [];
 const GIT_FIXTURE_TEST_TIMEOUT_MS = 60_000;
 let baselineTemplateRoot: string | null = null;
 
@@ -55,9 +56,16 @@ const createRepo = (): { repoRoot: string; baseSha: string } => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-release-verify-'));
   fs.rmSync(repoRoot, { recursive: true, force: true });
   fs.cpSync(templateRoot, repoRoot, { recursive: true });
+  createdRepos.push(repoRoot);
   const baseSha = run(repoRoot, 'rev-parse', 'HEAD');
   return { repoRoot, baseSha };
 };
+
+afterEach(() => {
+  for (const repoRoot of createdRepos.splice(0, createdRepos.length)) {
+    fs.rmSync(repoRoot, { recursive: true, force: true });
+  }
+});
 
 describe('verifyReleaseGovernance', () => {
   it('fails when public contract expansion lands without version governance updates', () => {

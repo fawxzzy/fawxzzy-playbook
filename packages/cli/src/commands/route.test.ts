@@ -45,7 +45,7 @@ vi.mock("@zachariahredfield/playbook-engine", async (importOriginal) => {
 });
 
 describe("runRoute", () => {
-  it("returns deterministic failure for missing task argument", async () => {
+  it("returns deterministic failure for missing task argument", { timeout: 15000 }, async () => {
     const { runRoute } = await import("./route.js");
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
 

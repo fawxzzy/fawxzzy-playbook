@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fawxzzy.dev/schemas/playbook.research.pattern-set.v1.json",
+  "title": "Playbook Research Pattern Set v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "scope",
+    "patterns"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "playbook.research.pattern-set.v1"
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "patterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "classification",
+          "finding",
+          "whyItWorks",
+          "whereItFails",
+          "whenToUseIt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "classification": {
+            "enum": [
+              "Pattern",
+              "Rule",
+              "Failure Mode"
+            ]
+          },
+          "finding": {
+            "type": "string",
+            "minLength": 1
+          },
+          "whyItWorks": {
+            "type": "string",
+            "minLength": 1
+          },
+          "whereItFails": {
+            "type": "string",
+            "minLength": 1
+          },
+          "whenToUseIt": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bestFitProjects": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

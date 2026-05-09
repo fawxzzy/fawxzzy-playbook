@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "playbook.research.pattern-set.v1",
+  "scope": "wave-one-playbook-fitness-lifeline",
+  "patterns": [
+    {
+      "id": "catalog-before-orchestration",
+      "classification": "Pattern",
+      "finding": "Catalog before orchestration.",
+      "whyItWorks": "Metadata becomes reviewable and reusable before automation starts mutating surrounding systems.",
+      "whereItFails": "A catalog becomes stale busywork when ownership and remediation paths are not explicit.",
+      "whenToUseIt": "Use when Playbook needs to standardize repo truth across multiple consumer repos.",
+      "bestFitProjects": [
+        "Playbook"
+      ]
+    },
+    {
+      "id": "contracts-before-command-surfaces",
+      "classification": "Rule",
+      "finding": "Contracts before command surfaces.",
+      "whyItWorks": "Schemas, examples, and validators lock the artifact boundary before CLI behavior expands.",
+      "whereItFails": "Command-first rollouts reverse-engineer artifacts later and drift under pressure.",
+      "whenToUseIt": "Use for research, scorecard, template, and Lifeline manifest additions."
+    },
+    {
+      "id": "portal-first-evidence-later",
+      "classification": "Failure Mode",
+      "finding": "Portal first, evidence later.",
+      "whyItWorks": "It does not; it only creates adoption theater around an untrusted shell.",
+      "whereItFails": "The UI arrives before scoreable evidence, reusable contracts, or stable remediation hooks.",
+      "whenToUseIt": "Avoid this when deciding whether to add a Playbook research command before contract truth exists."
+    }
+  ]
+}

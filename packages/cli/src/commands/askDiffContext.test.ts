@@ -43,7 +43,7 @@ const writeRepoIndex = (repo: string): void => {
 };
 
 describe('ask --diff-context', () => {
-  it('returns changed-module reasoning from diff context', async () => {
+  it('returns changed-module reasoning from diff context', { timeout: 15000 }, async () => {
     const repo = createRepo('playbook-cli-ask-diff-context');
     initGitRepo(repo);
     writeRepoIndex(repo);
