@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "playbook.workflow-pack.environment-bridge.report.v1",
+  "workflowPackId": "playbook.workflow-pack.reuse.v1",
+  "environmentName": "protected_production",
+  "summary": {
+    "status": "ok",
+    "overview": "protected_production bridges playbook.workflow-pack.reuse.v1 through local_and_promotion_required verification, protected_environment approval, publish_after_verification publish, and receipt_only deployment.",
+    "verificationGateStatus": "declared",
+    "approvalPolicyStatus": "declared",
+    "publishPosture": "publish_after_verification",
+    "deploymentPosture": "receipt_only",
+    "secretRefSafety": "refs_only",
+    "receiptRefStatus": "complete",
+    "consumerRuleStatus": "present",
+    "warningCount": 0,
+    "blockerCount": 0
+  },
+  "verificationGate": {
+    "mode": "local_and_promotion_required",
+    "requiredEvidenceRefs": [
+      ".playbook/local-verification-receipt.json",
+      ".playbook/promotion-receipt.json"
+    ],
+    "failurePolicy": "block"
+  },
+  "approvalPolicy": {
+    "mode": "protected_environment",
+    "requiredApprovals": 1,
+    "approverRoles": [
+      "release_owner"
+    ]
+  },
+  "publishMode": "publish_after_verification",
+  "deploymentMode": "receipt_only",
+  "requiredSecrets": [
+    "ref://github/environment/PLAYBOOK_PUBLISH_TOKEN",
+    "ref://lifeline/secret/PLAYBOOK_RECEIPT_SIGNING_KEY"
+  ],
+  "receiptRefs": [
+    ".playbook/local-verification-receipt.json",
+    ".playbook/promotion-receipt.json"
+  ],
+  "consumerRules": [
+    "Treat environment gates as approval and publish boundaries, not as verification truth.",
+    "Reference secrets through provider-neutral refs instead of embedding raw values.",
+    "Keep downstream projections read-only and preserve refs back to owner receipts."
+  ],
+  "warnings": [],
+  "blockers": []
+}

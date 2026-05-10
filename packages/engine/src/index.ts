@@ -93,6 +93,32 @@ export type {
   RepoScorecardRole,
   RepoScorecardStatus
 } from './scorecard/index.js';
+export {
+  buildWorkflowPackEnvironmentBridgeReport,
+  WORKFLOW_PACK_ENVIRONMENT_BRIDGE_REPORT_SCHEMA_VERSION
+} from './workflowPack/index.js';
+export type {
+  WorkflowPackEnvironmentBridgeApprovalPolicyMode,
+  WorkflowPackEnvironmentBridgeApprovalPolicyStatus,
+  WorkflowPackEnvironmentBridgeConsumerRuleStatus,
+  WorkflowPackEnvironmentBridgeDeploymentMode,
+  WorkflowPackEnvironmentBridgeInput,
+  WorkflowPackEnvironmentBridgeIssue,
+  WorkflowPackEnvironmentBridgeIssueCode,
+  WorkflowPackEnvironmentBridgePublishMode,
+  WorkflowPackEnvironmentBridgeReceiptRefStatus,
+  WorkflowPackEnvironmentBridgeReport,
+  WorkflowPackEnvironmentBridgeReportApprovalPolicyMode,
+  WorkflowPackEnvironmentBridgeReportDeploymentMode,
+  WorkflowPackEnvironmentBridgeReportPublishMode,
+  WorkflowPackEnvironmentBridgeReportStatus,
+  WorkflowPackEnvironmentBridgeReportVerificationFailurePolicy,
+  WorkflowPackEnvironmentBridgeReportVerificationMode,
+  WorkflowPackEnvironmentBridgeSecretRefSafety,
+  WorkflowPackEnvironmentBridgeVerificationFailurePolicy,
+  WorkflowPackEnvironmentBridgeVerificationGateStatus,
+  WorkflowPackEnvironmentBridgeVerificationMode
+} from './workflowPack/index.js';
 
 export { generateRepositoryIndex } from './indexer/repoIndexer.js';
 export type {

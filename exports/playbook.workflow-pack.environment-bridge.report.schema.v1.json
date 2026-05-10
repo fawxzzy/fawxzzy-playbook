@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fawxzzy.dev/schemas/playbook.workflow-pack.environment-bridge.report.v1.json",
+  "title": "Playbook Workflow Pack Environment Bridge Report v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "workflowPackId",
+    "environmentName",
+    "summary",
+    "verificationGate",
+    "approvalPolicy",
+    "publishMode",
+    "deploymentMode",
+    "requiredSecrets",
+    "receiptRefs",
+    "consumerRules",
+    "warnings",
+    "blockers"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "playbook.workflow-pack.environment-bridge.report.v1"
+    },
+    "workflowPackId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environmentName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "status",
+        "overview",
+        "verificationGateStatus",
+        "approvalPolicyStatus",
+        "publishPosture",
+        "deploymentPosture",
+        "secretRefSafety",
+        "receiptRefStatus",
+        "consumerRuleStatus",
+        "warningCount",
+        "blockerCount"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "ok",
+            "warning",
+            "blocked"
+          ]
+        },
+        "overview": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verificationGateStatus": {
+          "enum": [
+            "declared",
+            "missing",
+            "receipt_gap"
+          ]
+        },
+        "approvalPolicyStatus": {
+          "enum": [
+            "declared",
+            "missing"
+          ]
+        },
+        "publishPosture": {
+          "enum": [
+            "publish_after_verification",
+            "promotion_only",
+            "unknown"
+          ]
+        },
+        "deploymentPosture": {
+          "enum": [
+            "receipt_only",
+            "external_consumer_handoff",
+            "unknown"
+          ]
+        },
+        "secretRefSafety": {
+          "enum": [
+            "refs_only",
+            "mixed_or_invalid",
+            "raw_secret_detected"
+          ]
+        },
+        "receiptRefStatus": {
+          "enum": [
+            "complete",
+            "missing",
+            "verification_gap",
+            "consumer_handoff_gap"
+          ]
+        },
+        "consumerRuleStatus": {
+          "enum": [
+            "present",
+            "missing"
+          ]
+        },
+        "warningCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blockerCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "verificationGate": {
+      "type": "object",
+      "required": [
+        "mode",
+        "requiredEvidenceRefs",
+        "failurePolicy"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "local_verification_required",
+            "local_and_promotion_required",
+            "unknown"
+          ]
+        },
+        "requiredEvidenceRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "failurePolicy": {
+          "enum": [
+            "block",
+            "unknown"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "approvalPolicy": {
+      "type": "object",
+      "required": [
+        "mode",
+        "requiredApprovals",
+        "approverRoles"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "protected_environment",
+            "manual_release_gate",
+            "unknown"
+          ]
+        },
+        "requiredApprovals": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "approverRoles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "publishMode": {
+      "enum": [
+        "publish_after_verification",
+        "promotion_only",
+        "unknown"
+      ]
+    },
+    "deploymentMode": {
+      "enum": [
+        "receipt_only",
+        "external_consumer_handoff",
+        "unknown"
+      ]
+    },
+    "requiredSecrets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "receiptRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "consumerRules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/issue"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/issue"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "issue": {
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "absolute-path",
+            "command-availability-claim",
+            "consumer-handoff-receipt-gap",
+            "invalid-value",
+            "missing-field",
+            "raw-secret-value",
+            "secret-refs-only-violation",
+            "unstable-timestamp",
+            "verification-receipt-gap"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
