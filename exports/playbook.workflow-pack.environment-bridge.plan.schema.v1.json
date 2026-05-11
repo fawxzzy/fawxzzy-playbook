@@ -1,0 +1,352 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fawxzzy.dev/schemas/playbook.workflow-pack.environment-bridge.plan.v1.json",
+  "title": "Playbook Workflow Pack Environment Bridge Plan v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "workflowPackId",
+    "environmentName",
+    "status",
+    "summary",
+    "sourceReport",
+    "implementationSteps",
+    "requiredApprovals",
+    "requiredSecretRefs",
+    "requiredReceiptRefs",
+    "consumerRuleActions",
+    "warnings",
+    "blockers",
+    "boundaries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "playbook.workflow-pack.environment-bridge.plan.v1"
+    },
+    "workflowPackId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environmentName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "blocked",
+        "needs_review"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "overview",
+        "sourceReportStatus",
+        "stepCount",
+        "warningCount",
+        "blockerCount"
+      ],
+      "properties": {
+        "overview": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceReportStatus": {
+          "enum": [
+            "ok",
+            "warning",
+            "blocked"
+          ]
+        },
+        "stepCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warningCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blockerCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "sourceReport": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "status",
+        "verificationGateStatus",
+        "approvalPolicyStatus",
+        "publishMode",
+        "deploymentMode",
+        "warningCount",
+        "blockerCount"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "playbook.workflow-pack.environment-bridge.report.v1"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "warning",
+            "blocked"
+          ]
+        },
+        "verificationGateStatus": {
+          "enum": [
+            "declared",
+            "missing",
+            "receipt_gap"
+          ]
+        },
+        "approvalPolicyStatus": {
+          "enum": [
+            "declared",
+            "missing"
+          ]
+        },
+        "publishMode": {
+          "enum": [
+            "publish_after_verification",
+            "promotion_only",
+            "unknown"
+          ]
+        },
+        "deploymentMode": {
+          "enum": [
+            "receipt_only",
+            "external_consumer_handoff",
+            "unknown"
+          ]
+        },
+        "warningCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blockerCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "implementationSteps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    },
+    "requiredApprovals": {
+      "type": "object",
+      "required": [
+        "mode",
+        "minimumApprovals",
+        "approverRoles"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "protected_environment",
+            "manual_release_gate",
+            "unknown"
+          ]
+        },
+        "minimumApprovals": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "approverRoles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "requiredSecretRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "requiredReceiptRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "consumerRuleActions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/consumerRuleAction"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/issue"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/issue"
+      }
+    },
+    "boundaries": {
+      "type": "object",
+      "required": [
+        "mutationSurface",
+        "forbids"
+      ],
+      "properties": {
+        "mutationSurface": {
+          "const": "read_only_planner"
+        },
+        "forbids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "step": {
+      "type": "object",
+      "required": [
+        "id",
+        "phase",
+        "title",
+        "description",
+        "actionType",
+        "dependsOn",
+        "evidenceRefs",
+        "blockedBy"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "phase": {
+          "enum": [
+            "verification_gate",
+            "approval_policy",
+            "secret_refs",
+            "receipt_refs",
+            "publish_mode",
+            "deployment_mode",
+            "consumer_rules"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actionType": {
+          "enum": [
+            "document",
+            "configure",
+            "verify",
+            "review"
+          ]
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "blockedBy": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "consumerRuleAction": {
+      "type": "object",
+      "required": [
+        "rule",
+        "stepId",
+        "action"
+      ],
+      "properties": {
+        "rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stepId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "issue": {
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "absolute-path",
+            "command-availability-claim",
+            "consumer-handoff-receipt-gap",
+            "generated-runtime-path",
+            "invalid-value",
+            "missing-field",
+            "raw-secret-value",
+            "secret-refs-only-violation",
+            "unstable-timestamp",
+            "verification-receipt-gap"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
