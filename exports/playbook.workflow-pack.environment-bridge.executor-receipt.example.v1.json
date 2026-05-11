@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "playbook.workflow-pack.environment-bridge.executor-receipt.v1",
+  "kind": "playbook.workflow-pack.environment-bridge.executor-receipt",
+  "executorId": "workflow-pack-environment-bridge.future-executor",
+  "sourcePlanRef": "exports/playbook.workflow-pack.environment-bridge.plan.example.v1.json",
+  "executionMode": "dry_run",
+  "status": "dry_run_complete",
+  "completedSteps": [
+    "preflight-verification-gate",
+    "preflight-approval-policy",
+    "preflight-secret-refs",
+    "preflight-receipt-refs",
+    "review-consumer-projection-targets",
+    "review-environment-gate-configuration",
+    "review-receipt-reference-manifest",
+    "validate-executor-receipt-contract"
+  ],
+  "skippedSteps": [],
+  "blockers": [],
+  "warnings": [],
+  "evidenceRefs": [
+    "exports/playbook.workflow-pack.environment-bridge.executor.example.v1.json",
+    "exports/playbook.workflow-pack.environment-bridge.plan.example.v1.json",
+    ".playbook/local-verification-receipt.json",
+    ".playbook/promotion-receipt.json"
+  ],
+  "mutationSummary": {
+    "attempted": false,
+    "appliedTargets": [],
+    "skippedTargets": [
+      "consumer_repo.environment_bridge_projection",
+      "consumer_repo.environment_gate_configuration",
+      "consumer_repo.receipt_reference_manifest"
+    ],
+    "appliedCount": 0
+  },
+  "receiptRefs": [
+    "exports/playbook.workflow-pack.environment-bridge.executor.example.v1.json",
+    "exports/playbook.workflow-pack.environment-bridge.plan.example.v1.json",
+    ".playbook/local-verification-receipt.json",
+    ".playbook/promotion-receipt.json"
+  ]
+}

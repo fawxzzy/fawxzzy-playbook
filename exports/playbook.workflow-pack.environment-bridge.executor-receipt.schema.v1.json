@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fawxzzy.dev/schemas/playbook.workflow-pack.environment-bridge.executor-receipt.v1.json",
+  "title": "Playbook Workflow Pack Environment Bridge Executor Receipt v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "executorId",
+    "sourcePlanRef",
+    "executionMode",
+    "status",
+    "completedSteps",
+    "skippedSteps",
+    "blockers",
+    "warnings",
+    "evidenceRefs",
+    "mutationSummary",
+    "receiptRefs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "playbook.workflow-pack.environment-bridge.executor-receipt.v1"
+    },
+    "kind": {
+      "const": "playbook.workflow-pack.environment-bridge.executor-receipt"
+    },
+    "executorId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourcePlanRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "executionMode": {
+      "enum": [
+        "dry_run",
+        "plan_only",
+        "apply_requested"
+      ]
+    },
+    "status": {
+      "enum": [
+        "not_run",
+        "blocked",
+        "dry_run_complete",
+        "applied"
+      ]
+    },
+    "completedSteps": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "skippedSteps": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/issue"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/issue"
+      }
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "mutationSummary": {
+      "type": "object",
+      "required": [
+        "attempted",
+        "appliedTargets",
+        "skippedTargets",
+        "appliedCount"
+      ],
+      "properties": {
+        "attempted": {
+          "type": "boolean"
+        },
+        "appliedTargets": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "skippedTargets": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "appliedCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "receiptRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "issue": {
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "absolute-path",
+            "command-availability-claim",
+            "explicit-receipt-requirements",
+            "invalid-value",
+            "missing-approval",
+            "raw-secret-value",
+            "unstable-timestamp",
+            "wildcard-mutation-target",
+            "workflow-availability-claim"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

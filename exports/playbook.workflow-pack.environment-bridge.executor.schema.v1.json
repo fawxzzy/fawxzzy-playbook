@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fawxzzy.dev/schemas/playbook.workflow-pack.environment-bridge.executor.v1.json",
+  "title": "Playbook Workflow Pack Environment Bridge Executor Contract v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "workflowPackId",
+    "environmentName",
+    "sourcePlanRef",
+    "executionMode",
+    "mutationPolicy",
+    "approvalRequired",
+    "allowedMutationTargets",
+    "forbiddenMutationTargets",
+    "requiredSecretRefs",
+    "requiredReceiptRefs",
+    "preflightChecks",
+    "executionSteps",
+    "rollbackPlan",
+    "receiptRequirements",
+    "boundaries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "playbook.workflow-pack.environment-bridge.executor.v1"
+    },
+    "workflowPackId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environmentName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourcePlanRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "executionMode": {
+      "enum": [
+        "dry_run",
+        "plan_only",
+        "apply_requested"
+      ]
+    },
+    "mutationPolicy": {
+      "type": "object",
+      "required": [
+        "mode",
+        "allowApply",
+        "requireExplicitTargets",
+        "requireReceiptEvidence"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "review_gated_apply",
+            "dry_run_only",
+            "plan_projection_only"
+          ]
+        },
+        "allowApply": {
+          "type": "boolean"
+        },
+        "requireExplicitTargets": {
+          "type": "boolean"
+        },
+        "requireReceiptEvidence": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "approvalRequired": {
+      "type": "boolean"
+    },
+    "allowedMutationTargets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "forbiddenMutationTargets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "requiredSecretRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "requiredReceiptRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "preflightChecks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/preflightCheck"
+      }
+    },
+    "executionSteps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/executionStep"
+      }
+    },
+    "rollbackPlan": {
+      "type": "object",
+      "required": [
+        "strategy",
+        "steps"
+      ],
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "receiptRequirements": {
+      "type": "object",
+      "required": [
+        "requiredStatuses",
+        "requiredFields",
+        "requiredEvidenceRefs",
+        "requiredReceiptRefs"
+      ],
+      "properties": {
+        "requiredStatuses": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "not_run",
+              "blocked",
+              "dry_run_complete",
+              "applied"
+            ]
+          }
+        },
+        "requiredFields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requiredEvidenceRefs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requiredReceiptRefs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "boundaries": {
+      "type": "object",
+      "required": [
+        "mutationSurface",
+        "forbids"
+      ],
+      "properties": {
+        "mutationSurface": {
+          "const": "contract_only_executor_definition"
+        },
+        "forbids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "preflightCheck": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "required",
+        "evidenceRefs",
+        "blocksApply"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "blocksApply": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "executionStep": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "intent",
+        "mutationTarget",
+        "appliesInModes",
+        "dependsOn",
+        "evidenceRefs"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "intent": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mutationTarget": {
+          "type": "string",
+          "minLength": 1
+        },
+        "appliesInModes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "dry_run",
+              "plan_only",
+              "apply_requested"
+            ]
+          }
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
