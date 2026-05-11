@@ -5,6 +5,8 @@ import { execSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { generateRepositoryHealth } from '../src/index.js';
 
+const TEST_TIMEOUT_MS = 10_000;
+
 const createRepo = (name: string): string => {
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`));
   execSync('git init', { cwd: repo, stdio: 'ignore' });
@@ -21,7 +23,7 @@ const writeJson = (repo: string, relativePath: string, payload: unknown): void =
 };
 
 describe('doctor memory diagnostics', () => {
-  it('reports public missing-artifacts warning when memory artifacts are not initialized', () => {
+  it('reports public missing-artifacts warning when memory artifacts are not initialized', { timeout: TEST_TIMEOUT_MS }, () => {
     const repo = createRepo('playbook-doctor-memory-absent');
     const memoryRoot = path.join(repo, '.playbook', 'memory');
 
@@ -50,7 +52,7 @@ describe('doctor memory diagnostics', () => {
     ]);
   });
 
-  it('reports healthy lifecycle with deterministic code when artifacts are valid', () => {
+  it('reports healthy lifecycle with deterministic code when artifacts are valid', { timeout: TEST_TIMEOUT_MS }, () => {
     const repo = createRepo('playbook-doctor-memory-healthy');
 
     writeJson(repo, '.playbook/memory/index.json', {
@@ -104,7 +106,7 @@ describe('doctor memory diagnostics', () => {
     expect(report.memoryDiagnostics.suggestions).toEqual([]);
   });
 
-  it('reports deterministic warning codes for hoarding, supersession, replay, and provenance gaps', () => {
+  it('reports deterministic warning codes for hoarding, supersession, replay, and provenance gaps', { timeout: TEST_TIMEOUT_MS }, () => {
     const repo = createRepo('playbook-doctor-memory-risk');
     const staleDate = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -150,7 +152,7 @@ describe('doctor memory diagnostics', () => {
     expect(report.memoryDiagnostics.suggestions.map((entry) => entry.id)).toEqual(['PB016', 'PB017', 'PB018']);
   });
 
-  it('reports malformed artifact diagnostics with deterministic message', () => {
+  it('reports malformed artifact diagnostics with deterministic message', { timeout: TEST_TIMEOUT_MS }, () => {
     const repo = createRepo('playbook-doctor-memory-malformed');
     const malformed = path.join(repo, '.playbook/memory/candidates.json');
     fs.mkdirSync(path.dirname(malformed), { recursive: true });

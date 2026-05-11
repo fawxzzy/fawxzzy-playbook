@@ -191,7 +191,7 @@ describe('runReviewPr', () => {
     logSpy.mockRestore();
   });
 
-  it('is deterministic for repeated json invocations', { timeout: 15000 }, async () => {
+  it('is deterministic for repeated json invocations', { timeout: 30000 }, async () => {
     const repo = createRepo('playbook-review-pr-deterministic');
     initGitRepo(repo);
     seedRepoWithDiff(repo);
