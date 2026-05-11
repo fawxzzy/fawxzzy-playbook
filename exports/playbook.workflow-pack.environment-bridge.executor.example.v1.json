@@ -1,0 +1,195 @@
+{
+  "schemaVersion": "playbook.workflow-pack.environment-bridge.executor.v1",
+  "workflowPackId": "playbook.workflow-pack.reuse.v1",
+  "environmentName": "protected_production",
+  "sourcePlanRef": "exports/playbook.workflow-pack.environment-bridge.plan.example.v1.json",
+  "executionMode": "dry_run",
+  "mutationPolicy": {
+    "mode": "review_gated_apply",
+    "allowApply": false,
+    "requireExplicitTargets": true,
+    "requireReceiptEvidence": true
+  },
+  "approvalRequired": true,
+  "allowedMutationTargets": [
+    "consumer_repo.environment_bridge_projection",
+    "consumer_repo.environment_gate_configuration",
+    "consumer_repo.receipt_reference_manifest"
+  ],
+  "forbiddenMutationTargets": [
+    "raw_secret_values",
+    "secret_materialization",
+    "runtime_state",
+    "lifeline_execution",
+    "local_absolute_paths"
+  ],
+  "requiredSecretRefs": [
+    "ref://github/environment/PLAYBOOK_PUBLISH_TOKEN",
+    "ref://lifeline/secret/PLAYBOOK_RECEIPT_SIGNING_KEY"
+  ],
+  "requiredReceiptRefs": [
+    ".playbook/local-verification-receipt.json",
+    ".playbook/promotion-receipt.json"
+  ],
+  "preflightChecks": [
+    {
+      "id": "preflight-verification-gate",
+      "title": "Verify required bridge receipt evidence remains present",
+      "required": true,
+      "evidenceRefs": [
+        ".playbook/local-verification-receipt.json",
+        ".playbook/promotion-receipt.json"
+      ],
+      "blocksApply": true
+    },
+    {
+      "id": "preflight-approval-policy",
+      "title": "Confirm approval policy remains explicit before any apply request",
+      "required": true,
+      "evidenceRefs": [
+        "exports/playbook.workflow-pack.environment-bridge.plan.example.v1.json"
+      ],
+      "blocksApply": true
+    },
+    {
+      "id": "preflight-secret-refs",
+      "title": "Confirm provider-neutral secret refs remain refs only",
+      "required": true,
+      "evidenceRefs": [
+        "ref://github/environment/PLAYBOOK_PUBLISH_TOKEN",
+        "ref://lifeline/secret/PLAYBOOK_RECEIPT_SIGNING_KEY"
+      ],
+      "blocksApply": true
+    },
+    {
+      "id": "preflight-receipt-refs",
+      "title": "Confirm receipt references remain explicit and repo-relative",
+      "required": true,
+      "evidenceRefs": [
+        ".playbook/local-verification-receipt.json",
+        ".playbook/promotion-receipt.json"
+      ],
+      "blocksApply": true
+    }
+  ],
+  "executionSteps": [
+    {
+      "id": "review-consumer-projection-targets",
+      "title": "Review consumer projection targets before any future executor implementation",
+      "intent": "Keep target surfaces explicit and reviewable before any environment bridge projection exists.",
+      "mutationTarget": "consumer_repo.environment_bridge_projection",
+      "appliesInModes": [
+        "dry_run",
+        "plan_only",
+        "apply_requested"
+      ],
+      "dependsOn": [
+        "preflight-verification-gate",
+        "preflight-secret-refs"
+      ],
+      "evidenceRefs": [
+        "exports/playbook.workflow-pack.environment-bridge.plan.example.v1.json"
+      ]
+    },
+    {
+      "id": "review-environment-gate-configuration",
+      "title": "Review environment gate configuration boundaries",
+      "intent": "Preserve approval and gate semantics as explicit contract truth instead of hidden provider behavior.",
+      "mutationTarget": "consumer_repo.environment_gate_configuration",
+      "appliesInModes": [
+        "dry_run",
+        "plan_only",
+        "apply_requested"
+      ],
+      "dependsOn": [
+        "preflight-verification-gate",
+        "preflight-approval-policy"
+      ],
+      "evidenceRefs": [
+        ".playbook/local-verification-receipt.json",
+        ".playbook/promotion-receipt.json"
+      ]
+    },
+    {
+      "id": "review-receipt-reference-manifest",
+      "title": "Review downstream receipt-reference preservation requirements",
+      "intent": "Keep receipt ownership explicit in any future projection layer.",
+      "mutationTarget": "consumer_repo.receipt_reference_manifest",
+      "appliesInModes": [
+        "dry_run",
+        "plan_only",
+        "apply_requested"
+      ],
+      "dependsOn": [
+        "preflight-receipt-refs"
+      ],
+      "evidenceRefs": [
+        ".playbook/local-verification-receipt.json",
+        ".playbook/promotion-receipt.json"
+      ]
+    },
+    {
+      "id": "validate-executor-receipt-contract",
+      "title": "Validate the executor receipt contract before any future apply surface exists",
+      "intent": "Make receipt semantics inspectable before executor implementation is introduced.",
+      "mutationTarget": "consumer_repo.receipt_reference_manifest",
+      "appliesInModes": [
+        "dry_run",
+        "plan_only",
+        "apply_requested"
+      ],
+      "dependsOn": [
+        "review-consumer-projection-targets",
+        "review-environment-gate-configuration",
+        "review-receipt-reference-manifest"
+      ],
+      "evidenceRefs": [
+        "exports/playbook.workflow-pack.environment-bridge.executor-receipt.example.v1.json"
+      ]
+    }
+  ],
+  "rollbackPlan": {
+    "strategy": "Restore the last committed consumer projection and preserve all owner receipts if a future apply-requested run is rejected or rolled back.",
+    "steps": [
+      "Preserve the source plan and owner receipt refs before any future mutation.",
+      "Restore the last committed consumer projection if a future apply-requested run is rejected.",
+      "Record rollback evidence in a future executor receipt instead of mutating owner truth."
+    ]
+  },
+  "receiptRequirements": {
+    "requiredStatuses": [
+      "blocked",
+      "dry_run_complete",
+      "applied"
+    ],
+    "requiredFields": [
+      "status",
+      "completedSteps",
+      "skippedSteps",
+      "mutationSummary",
+      "receiptRefs"
+    ],
+    "requiredEvidenceRefs": [
+      "exports/playbook.workflow-pack.environment-bridge.plan.example.v1.json",
+      ".playbook/local-verification-receipt.json",
+      ".playbook/promotion-receipt.json"
+    ],
+    "requiredReceiptRefs": [
+      ".playbook/local-verification-receipt.json",
+      ".playbook/promotion-receipt.json"
+    ]
+  },
+  "boundaries": {
+    "mutationSurface": "contract_only_executor_definition",
+    "forbids": [
+      "no_executor_implementation",
+      "no_cli_command",
+      "no_docs_commands",
+      "no_github_actions_mutation",
+      "no_workflow_yaml_generation",
+      "no_lifeline_execution_changes",
+      "no_runtime_writes",
+      "no_secret_materialization"
+    ]
+  }
+}

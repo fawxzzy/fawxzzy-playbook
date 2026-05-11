@@ -2137,6 +2137,43 @@
       ]
     },
     {
+      "feature_id": "PB-V10-WORKFLOW-PACK-ENVIRONMENT-BRIDGE-EXECUTOR-CONTRACT-001",
+      "version": "v1.0",
+      "title": "Workflow-pack environment bridge executor contract foundation",
+      "goal": "Define the commandless executor and executor-receipt contracts for workflow-pack environment bridges so future dry-run and apply layers must obey explicit mutation, approval, secret-ref, and receipt-ref boundaries before any implementation surface exists.",
+      "commands": [],
+      "contracts": [
+        "docs/contracts/PLAYBOOK_WORKFLOW_PACK_ENVIRONMENT_BRIDGE_EXECUTOR_CONTRACT.md",
+        "exports/playbook.workflow-pack.environment-bridge.executor.schema.v1.json",
+        "exports/playbook.workflow-pack.environment-bridge.executor.example.v1.json",
+        "exports/playbook.workflow-pack.environment-bridge.executor-receipt.schema.v1.json",
+        "exports/playbook.workflow-pack.environment-bridge.executor-receipt.example.v1.json"
+      ],
+      "tests": [
+        "test/scripts/validate-workflow-pack-environment-bridge-executor.test.mjs"
+      ],
+      "docs": [
+        "docs/contracts/PLAYBOOK_WORKFLOW_PACK_ENVIRONMENT_BRIDGE_EXECUTOR_CONTRACT.md",
+        "exports/README.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "dependencies": [
+        "PB-V10-WORKFLOW-PACK-ENVIRONMENT-BRIDGE-PLANNER-001"
+      ],
+      "verification_commands": [
+        "node scripts/validate-workflow-pack-environment-bridge-executor.mjs",
+        "node --test test/scripts/validate-workflow-pack-environment-bridge-executor.test.mjs",
+        "node scripts/validate-roadmap-contract.mjs --ci",
+        "pnpm playbook docs audit --json",
+        "pnpm docs:check",
+        "pnpm test"
+      ],
+      "status": "implemented-hardening",
+      "package_ownership": [
+        "@fawxzzy/playbook"
+      ]
+    },
+    {
       "feature_id": "PB-V10-WINDOWS-ROOT-SCRIPT-TEST-HARDENING-001",
       "version": "v1.0",
       "title": "Windows root-script test spawn/path hardening",
@@ -2309,6 +2346,7 @@
       "PB-V10-WORKFLOW-PACK-ENVIRONMENT-BRIDGE-001",
       "PB-V10-WORKFLOW-PACK-ENVIRONMENT-BRIDGE-ENGINE-001",
       "PB-V10-WORKFLOW-PACK-ENVIRONMENT-BRIDGE-PLANNER-001",
+      "PB-V10-WORKFLOW-PACK-ENVIRONMENT-BRIDGE-EXECUTOR-CONTRACT-001",
       "PB-V10-ENGINE-PACKAGE-LOAD-TIMEOUT-HARDENING-001"
     ],
     "nextBuildableSlicesInOrder": [
