@@ -95,6 +95,8 @@ export type {
 } from './scorecard/index.js';
 export {
   buildWorkflowPackEnvironmentBridgeReport,
+  buildWorkflowPackEnvironmentBridgePlan,
+  WORKFLOW_PACK_ENVIRONMENT_BRIDGE_PLAN_SCHEMA_VERSION,
   WORKFLOW_PACK_ENVIRONMENT_BRIDGE_REPORT_SCHEMA_VERSION
 } from './workflowPack/index.js';
 export type {
@@ -105,6 +107,18 @@ export type {
   WorkflowPackEnvironmentBridgeInput,
   WorkflowPackEnvironmentBridgeIssue,
   WorkflowPackEnvironmentBridgeIssueCode,
+  WorkflowPackEnvironmentBridgePlan,
+  WorkflowPackEnvironmentBridgePlanActionType,
+  WorkflowPackEnvironmentBridgePlanApprovalRequirement,
+  WorkflowPackEnvironmentBridgePlanBoundaries,
+  WorkflowPackEnvironmentBridgePlanConsumerRuleAction,
+  WorkflowPackEnvironmentBridgePlanInput,
+  WorkflowPackEnvironmentBridgePlanIssue,
+  WorkflowPackEnvironmentBridgePlanIssueCode,
+  WorkflowPackEnvironmentBridgePlanPhase,
+  WorkflowPackEnvironmentBridgePlanSourceReport,
+  WorkflowPackEnvironmentBridgePlanStatus,
+  WorkflowPackEnvironmentBridgePlanStep,
   WorkflowPackEnvironmentBridgePublishMode,
   WorkflowPackEnvironmentBridgeReceiptRefStatus,
   WorkflowPackEnvironmentBridgeReport,

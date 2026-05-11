@@ -2096,6 +2096,47 @@
       ]
     },
     {
+      "feature_id": "PB-V10-WORKFLOW-PACK-ENVIRONMENT-BRIDGE-PLANNER-001",
+      "version": "v1.0",
+      "title": "Workflow-pack environment bridge planner artifact",
+      "goal": "Turn the stable workflow-pack environment bridge report into a deterministic, commandless implementation plan artifact so downstream consumer repos can review next actions before any workflow or execution surface exists.",
+      "commands": [],
+      "contracts": [
+        "docs/contracts/PLAYBOOK_WORKFLOW_PACK_ENVIRONMENT_BRIDGE_CONTRACT.md",
+        "exports/playbook.workflow-pack.environment-bridge.report.schema.v1.json",
+        "exports/playbook.workflow-pack.environment-bridge.report.example.v1.json",
+        "exports/playbook.workflow-pack.environment-bridge.plan.schema.v1.json",
+        "exports/playbook.workflow-pack.environment-bridge.plan.example.v1.json"
+      ],
+      "tests": [
+        "packages/engine/test/workflowPackEnvironmentBridgePlanner.test.ts",
+        "packages/engine/test/workflowPackEnvironmentBridgePlanContract.test.ts"
+      ],
+      "docs": [
+        "exports/README.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "dependencies": [
+        "PB-V10-WORKFLOW-PACK-ENVIRONMENT-BRIDGE-ENGINE-001"
+      ],
+      "verification_commands": [
+        "pnpm -C packages/engine test -- workflowPackEnvironmentBridgePlanner",
+        "pnpm -C packages/engine test -- workflowPackEnvironmentBridgePlanContract",
+        "pnpm -C packages/engine test",
+        "pnpm test",
+        "node scripts/validate-workflow-pack-environment-bridge.mjs",
+        "node --test test/scripts/validate-workflow-pack-environment-bridge.test.mjs",
+        "node scripts/validate-roadmap-contract.mjs --ci",
+        "pnpm playbook docs audit --json",
+        "pnpm docs:check"
+      ],
+      "status": "implemented-hardening",
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine"
+      ]
+    },
+    {
       "feature_id": "PB-V10-WINDOWS-ROOT-SCRIPT-TEST-HARDENING-001",
       "version": "v1.0",
       "title": "Windows root-script test spawn/path hardening",
@@ -2267,6 +2308,7 @@
       "PB-V10-GOLDEN-PATH-TEMPLATE-REGISTRY-001",
       "PB-V10-WORKFLOW-PACK-ENVIRONMENT-BRIDGE-001",
       "PB-V10-WORKFLOW-PACK-ENVIRONMENT-BRIDGE-ENGINE-001",
+      "PB-V10-WORKFLOW-PACK-ENVIRONMENT-BRIDGE-PLANNER-001",
       "PB-V10-ENGINE-PACKAGE-LOAD-TIMEOUT-HARDENING-001"
     ],
     "nextBuildableSlicesInOrder": [

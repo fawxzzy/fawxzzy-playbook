@@ -37,6 +37,8 @@ Canonical commandless workflow-pack environment bridge exports now also include:
 - `exports/playbook.workflow-pack.environment-bridge.example.v1.json`
 - `exports/playbook.workflow-pack.environment-bridge.report.schema.v1.json`
 - `exports/playbook.workflow-pack.environment-bridge.report.example.v1.json`
+- `exports/playbook.workflow-pack.environment-bridge.plan.schema.v1.json`
+- `exports/playbook.workflow-pack.environment-bridge.plan.example.v1.json`
 
 Draft/review exports may also appear here when new contract surfaces are being proposed. Those files are advisory until the corresponding contract/docs surface is promoted.
 
