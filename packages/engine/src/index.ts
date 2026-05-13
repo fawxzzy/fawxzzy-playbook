@@ -96,14 +96,28 @@ export type {
 export {
   buildWorkflowPackEnvironmentBridgeReport,
   buildWorkflowPackEnvironmentBridgePlan,
+  buildWorkflowPackEnvironmentBridgeDryRunReceipt,
+  WORKFLOW_PACK_ENVIRONMENT_BRIDGE_DRY_RUN_EXECUTOR_ID,
+  WORKFLOW_PACK_ENVIRONMENT_BRIDGE_EXECUTOR_CONTRACT_REF,
+  WORKFLOW_PACK_ENVIRONMENT_BRIDGE_EXECUTOR_RECEIPT_KIND,
+  WORKFLOW_PACK_ENVIRONMENT_BRIDGE_EXECUTOR_RECEIPT_SCHEMA_VERSION,
+  WORKFLOW_PACK_ENVIRONMENT_BRIDGE_EXECUTOR_SCHEMA_VERSION,
   WORKFLOW_PACK_ENVIRONMENT_BRIDGE_PLAN_SCHEMA_VERSION,
   WORKFLOW_PACK_ENVIRONMENT_BRIDGE_REPORT_SCHEMA_VERSION
 } from './workflowPack/index.js';
 export type {
+  WorkflowPackEnvironmentBridgeDryRunExecutorOptions,
   WorkflowPackEnvironmentBridgeApprovalPolicyMode,
   WorkflowPackEnvironmentBridgeApprovalPolicyStatus,
   WorkflowPackEnvironmentBridgeConsumerRuleStatus,
   WorkflowPackEnvironmentBridgeDeploymentMode,
+  WorkflowPackEnvironmentBridgeExecutorContract,
+  WorkflowPackEnvironmentBridgeExecutorMode,
+  WorkflowPackEnvironmentBridgeExecutorMutationPolicyMode,
+  WorkflowPackEnvironmentBridgeExecutorReceipt,
+  WorkflowPackEnvironmentBridgeExecutorReceiptIssue,
+  WorkflowPackEnvironmentBridgeExecutorReceiptIssueCode,
+  WorkflowPackEnvironmentBridgeExecutorReceiptStatus,
   WorkflowPackEnvironmentBridgeInput,
   WorkflowPackEnvironmentBridgeIssue,
   WorkflowPackEnvironmentBridgeIssueCode,

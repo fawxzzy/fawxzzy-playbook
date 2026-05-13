@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(import.meta.dirname, '..', '..', '..');
 const cliEntry = path.join(repoRoot, 'packages', 'cli', 'dist', 'main.js');
@@ -57,7 +57,8 @@ function buildPnpmBlockedEnv(): { env: NodeJS.ProcessEnv; shimDir: string } {
   return {
     env: {
       ...process.env,
-      PATH: [shimDir, process.env.PATH ?? ''].filter(Boolean).join(path.delimiter)
+      PATH: shimDir,
+      Path: shimDir
     },
     shimDir
   };
@@ -67,17 +68,19 @@ describe('external repo bootstrap', () => {
   let fixtureRepo = '';
   const tempDirs: string[] = [];
 
-  beforeAll(() => {
+  beforeEach(() => {
     fixtureRepo = createFixtureRepo();
   });
 
-  afterAll(() => {
+  afterEach(() => {
     if (fixtureRepo) {
       fs.rmSync(fixtureRepo, { recursive: true, force: true });
+      fixtureRepo = '';
     }
     for (const tempDir of tempDirs) {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
+    tempDirs.length = 0;
   });
 
   it('supports running commands against a target repo with --repo', { timeout: 45000 }, () => {
@@ -111,6 +114,12 @@ describe('external repo bootstrap', () => {
     tempDirs.push(shimDir);
     const before = fs.existsSync(path.join(fixtureRepo, '.playbook', 'policy-apply-result.json'));
     expect(before).toBe(false);
+
+    const index = runCli(['--repo', fixtureRepo, 'index', '--json']);
+    expect(index.status).toBe(0);
+
+    const verify = runCli(['--repo', fixtureRepo, 'verify', '--json']);
+    expect(verify.status).toBe(0);
 
     const plan = runCli([`--repo=${fixtureRepo}`, 'plan', '--json']);
     expect(plan.status).toBe(0);

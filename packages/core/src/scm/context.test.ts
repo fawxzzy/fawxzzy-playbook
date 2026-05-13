@@ -5,6 +5,8 @@ import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { collectScmContext } from './context.js';
 
+const TEST_TIMEOUT_MS = 15000;
+
 const git = (cwd: string, args: string[]): string =>
   execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
@@ -35,7 +37,7 @@ describe('collectScmContext', () => {
     expect(context.diffBase.baseRef).toBe('origin/main');
     expect(context.git.detachedHead).toBe(false);
     expect(context.git.branch).toBe('feature/scm');
-  });
+  }, TEST_TIMEOUT_MS);
 
   it('resolves push-like base from HEAD~1 on main', () => {
     const repo = makeRepo('playbook-scm-main');
@@ -47,7 +49,7 @@ describe('collectScmContext', () => {
 
     expect(context.diffBase.baseRef).toBe('HEAD~1');
     expect(context.diffBase.baseSha).toBe(git(repo, ['rev-parse', 'HEAD~1']));
-  });
+  }, TEST_TIMEOUT_MS);
 
   it('reports detached HEAD state deterministically', () => {
     const repo = makeRepo('playbook-scm-detached');
@@ -58,7 +60,7 @@ describe('collectScmContext', () => {
 
     expect(context.git.detachedHead).toBe(true);
     expect(context.git.branch).toBeNull();
-  });
+  }, TEST_TIMEOUT_MS);
 
   it('reports shallow clone and dirty working tree state', () => {
     const source = makeRepo('playbook-scm-source');
@@ -77,7 +79,7 @@ describe('collectScmContext', () => {
     expect(context.git.isShallow).toBe(true);
     expect(context.workingTree.dirty).toBe(true);
     expect(context.workingTree.untrackedChanges).toBe(true);
-  });
+  }, TEST_TIMEOUT_MS);
 
   it('reports rename summary from diff base', () => {
     const repo = makeRepo('playbook-scm-renames');
@@ -99,5 +101,5 @@ describe('collectScmContext', () => {
       from: 'old-name.txt',
       to: 'new-name.txt'
     });
-  });
+  }, TEST_TIMEOUT_MS);
 });

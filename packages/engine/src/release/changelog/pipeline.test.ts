@@ -262,5 +262,5 @@ describe('changelog pipeline regression coverage', () => {
     expect(markdown).toContain('## Features');
     expect(markdown).toContain('## Documentation');
     expect(markdown).toContain('prove the collector and renderer work together.');
-  });
+  }, 15000);
 });

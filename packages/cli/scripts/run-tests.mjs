@@ -4,6 +4,7 @@ const rawArgs = process.argv.slice(2);
 const args = rawArgs[0] === '--' ? rawArgs.slice(1) : rawArgs;
 const observerTarget = 'src/commands/observer.test.ts';
 const hasExplicitFileParallelism = args.some((arg) => arg.startsWith('--fileParallelism'));
+const hasExplicitPool = args.some((arg) => arg.startsWith('--pool'));
 
 const run = (command, commandArgs) => spawnSync(command, commandArgs, {
   stdio: 'inherit',
@@ -30,6 +31,10 @@ if (shouldRunDefaultVitest) {
   // Windows CLI tests are git- and filesystem-heavy; serial file execution avoids worker timeout noise.
   if (process.platform === 'win32' && !hasExplicitFileParallelism) {
     defaultVitestArgs.push('--fileParallelism=false');
+  }
+
+  if (process.platform === 'win32' && !hasExplicitPool) {
+    defaultVitestArgs.push('--pool=threads');
   }
 
   const defaultResult = run('vitest', defaultVitestArgs);

@@ -1,0 +1,66 @@
+{
+  "contract_version": "atlas.qa.scenario.v1",
+  "scenario_id": "playbook.docs-governance",
+  "title": "Playbook docs governance smoke",
+  "summary": "Root-owned QA contract for Playbook managed-docs governance.",
+  "repo_id": "playbook",
+  "repo_path": "repos/fawxzzy-playbook",
+  "adapter_id": "playbook.docs",
+  "criticality": "medium",
+  "tags": [
+    "playbook",
+    "docs",
+    "governance"
+  ],
+  "entrypoint": {
+    "path": "docs:governance"
+  },
+  "proof": {
+    "lens_manifest_ref": "ops/atlas/qa/lenses/atlas-default-web.v1.json",
+    "pr_lenses": [
+      "desktop.chromium.emulated"
+    ],
+    "certify_lenses": [],
+    "real_device_strategy": "manual_only"
+  },
+  "required_artifacts": [
+    {
+      "artifact_key": "execution",
+      "artifact_kind": "executable_report",
+      "step_id": "docs",
+      "required_lenses": [
+        "desktop.chromium.emulated"
+      ]
+    }
+  ],
+  "execution": {
+    "preflight_command_sequence": [
+      "lint"
+    ],
+    "pr_command_sequence": [
+      "docs_verify"
+    ],
+    "certify_command_sequence": []
+  },
+  "test_evidence": [
+    {
+      "evidence_id": "playbook.docs-check",
+      "kind": "contract",
+      "runner": "custom",
+      "command_ref": "docs_verify",
+      "required_for": [
+        "promotion"
+      ]
+    }
+  ],
+  "promotion": {
+    "require_executable_truth": true,
+    "require_pr_artifacts": true,
+    "require_real_device_on": "never",
+    "allow_manual_certification": false,
+    "max_flaky_lenses": 0,
+    "blocking_artifact_kinds": [
+      "executable_report"
+    ]
+  }
+}

@@ -41,7 +41,6 @@ export type PatternTransferImportResult = {
 
 const stableStringify = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
 const slugify = (value: string): string => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'pattern';
-const toSafeFileName = (value: string): string => value.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '-');
 const uniqueSorted = (values: string[]): string[] => [...new Set(values.filter((v) => v.trim().length > 0))].sort((a, b) => a.localeCompare(b));
 const fingerprint = (value: unknown): string => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const toPortablePackageFilename = (packageId: string): string =>

@@ -6,8 +6,7 @@ import {
   type WorkflowPackEnvironmentBridgeReportApprovalPolicyMode,
   type WorkflowPackEnvironmentBridgeReportDeploymentMode,
   type WorkflowPackEnvironmentBridgeReportPublishMode,
-  type WorkflowPackEnvironmentBridgeReportStatus,
-  type WorkflowPackEnvironmentBridgeReportVerificationMode
+  type WorkflowPackEnvironmentBridgeReportStatus
 } from './environmentBridge.js';
 
 export const WORKFLOW_PACK_ENVIRONMENT_BRIDGE_PLAN_SCHEMA_VERSION =
