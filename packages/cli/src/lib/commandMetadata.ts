@@ -465,7 +465,7 @@ export const commandMetadata: CommandMetadata[] = [
   {
     name: "contracts",
     description:
-      "Emit deterministic contract registry for schemas, artifacts, and roadmap status",
+      "Emit deterministic contract registry for schemas, artifacts, and tracked lifecycle state",
     category: "Repository tools",
     role: "utility",
     lifecycle: "utility",
@@ -709,7 +709,7 @@ export const commandMetadata: CommandMetadata[] = [
   },
   {
     name: "story",
-    description: "Manage the canonical repo-local story backlog state",
+    description: "Manage the canonical repo-local story state registry",
     category: "Repository tools",
     role: "remediation",
     lifecycle: "canonical",

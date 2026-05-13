@@ -141,22 +141,6 @@ When command/workflow state changes, keep these aligned in the same change (or i
 - demo docs/contracts
 - `docs/CHANGELOG.md`
 
-Copy-pastable governance bullets:
-
-- Pattern: Managed AGENTS.md sections should be generated from shared command metadata rather than hand-maintained.
-- Rule: AGENTS.md is the canonical AI operating contract for the Playbook repository.
-- Rule: Playbook command outputs are authoritative over ad-hoc repository inference when command coverage exists.
-- Pattern: Shared command metadata should feed command registry and AI-facing command inventory to reduce drift.
-- Failure Mode: AI Contract Drift occurs when new commands are added without refreshing AGENTS.md managed sections.
-
-- Pattern: `pnpm playbook ai-context` is the preferred agent bootstrap command for Playbook-aware AI workflows.
-- Rule: AI agents should prefer Playbook commands over broad repository inference when command coverage exists.
-- Rule: Inside the Playbook repo, use local built CLI entrypoints to reflect current branch behavior.
-- Pattern: `.playbook/ai-contract.json` is the canonical AI-operability handshake artifact for Playbook-enabled repositories.
-- Pattern: `ai-context -> ai-contract -> context -> index/query/explain/ask --repo-context -> verify/plan/apply` is the preferred AI operating ladder.
-- Failure Mode: Agent drift occurs when AI tools bypass Playbook command outputs and reason directly from stale or incomplete file inspection.
-- Pattern: AI working inside the Playbook repo should run docs audit alongside other branch-accurate local CLI validations.
-
 ## Managed command surface
 
 The following section is generated from shared command metadata.
@@ -229,7 +213,7 @@ Do not hand-edit entries inside the managed markers.
   - Example: `pnpm playbook interop health --json`
 - `ignore`: Suggest and safely apply ranked .playbookignore recommendations
   - Example: `pnpm playbook ignore suggest --repo ../target-repo --json`
-- `contracts`: Emit deterministic contract registry for schemas, artifacts, and roadmap status
+- `contracts`: Emit deterministic contract registry for schemas, artifacts, and tracked lifecycle state
   - Example: `pnpm playbook contracts --json`
 - `changelog`: Generate, validate, and safely append deterministic WHAT/WHY changelog entries
   - Example: `pnpm playbook changelog generate --base HEAD~1 --format markdown`
@@ -239,7 +223,7 @@ Do not hand-edit entries inside the managed markers.
   - Example: `pnpm playbook architecture verify --json`
 - `promote`: Promote reviewed repo-local stories and reusable pattern candidates into canonical artifacts
   - Example: `pnpm playbook promote story repo/<repo-id>/story-candidates/<candidate-id> --json`
-- `story`: Manage the canonical repo-local story backlog state
+- `story`: Manage the canonical repo-local story state registry
   - Example: `pnpm playbook story list --json`
 - `observer`: Manage deterministic local observer registry and read-only local API server
   - Example: `pnpm playbook observer serve --port 4300`

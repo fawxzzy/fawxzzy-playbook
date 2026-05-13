@@ -80,3 +80,21 @@ Rule: Upgrade must be scoped to managed artifacts only; repo-owned files are imm
 Pattern: A safe framework upgrade system separates Playbook-managed surfaces from repo-local product truth.
 Pattern: Repo-local `AGENT.md` is the consumer repo’s execution identity layer.
 Failure Mode: Upgrade flows that cannot distinguish managed from local files eventually overwrite product intent and make external consumers distrust framework updates.
+
+---
+
+### 6) AI operating contract maintenance follow-on
+
+- Keep managed `AGENTS.md` sections generated from shared command metadata rather than hand-maintained.
+- Keep shared command metadata feeding both the command registry and AI-facing command inventory so the contract does not drift from the product surface.
+- Treat `.playbook/ai-contract.json` as the canonical AI-operability handshake artifact for Playbook-enabled repositories.
+- Preserve the preferred operating ladder for Playbook-aware AI workflows: `ai-context -> ai-contract -> context -> index/query/explain/ask --repo-context -> verify/plan/apply`.
+- Keep branch-accurate AI validation running docs audit alongside the other local CLI checks when AI-facing command or contract surfaces change.
+
+Rule: AGENTS.md should stay an operating contract, not a planning surface.
+Rule: Playbook command outputs are authoritative over ad-hoc repository inference when command coverage exists.
+Rule: AI agents should prefer Playbook commands over broad repository inference when command coverage exists.
+Rule: Inside the Playbook repo, use local built CLI entrypoints to reflect current branch behavior.
+Pattern: The AI operating contract should stay aligned with generated command metadata and deterministic bootstrap surfaces.
+Failure Mode: AI contract drift occurs when new commands land without refreshing managed AGENTS.md sections.
+Failure Mode: Agent drift occurs when AI tools bypass Playbook command outputs and reason directly from stale or incomplete file inspection.

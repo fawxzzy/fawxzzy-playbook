@@ -115,7 +115,7 @@ Do not hand-edit entries inside the managed markers.
 | `rendezvous` | Create/status/release-dry-run artifact rendezvous readiness from canonical remediation artifacts | canonical | remediation | secondary | Later | Current (implemented) | `pnpm playbook rendezvous create --json` |
 | `interop` | Inspect and run remediation-first Playbook↔Lifeline interop contracts from rendezvous artifacts | canonical | remediation | secondary | Later | Current (implemented) | `pnpm playbook interop health --json` |
 | `ignore` | Suggest and safely apply ranked .playbookignore recommendations | canonical | remediation | primary | P12 | Current (implemented) | `pnpm playbook ignore suggest --repo ../target-repo --json` |
-| `contracts` | Emit deterministic contract registry for schemas, artifacts, and roadmap status | utility | utility | secondary | Later | Current (implemented) | `pnpm playbook contracts --json` |
+| `contracts` | Emit deterministic contract registry for schemas, artifacts, and tracked lifecycle state | utility | utility | secondary | Later | Current (implemented) | `pnpm playbook contracts --json` |
 | `changelog` | Generate, validate, and safely append deterministic WHAT/WHY changelog entries | canonical | governance | secondary | Later | Current (implemented) | `pnpm playbook changelog generate --base HEAD~1 --format markdown` |
 | `release` | Plan deterministic installable release/version decisions from repo evidence | canonical | governance | secondary | Later | Current (implemented) | `pnpm playbook release plan --json --out .playbook/release-plan.json` |
 | `index` | Generate machine-readable repository intelligence index | canonical | repo-intelligence | primary | P4 | Current (implemented) | `pnpm playbook index --json` |
@@ -128,7 +128,7 @@ Do not hand-edit entries inside the managed markers.
 | `route` | Classify tasks and emit deterministic proposal-only execution plans for task-specific routing decisions | canonical | repo-intelligence | primary | Later | Current (implemented) | `pnpm playbook route "summarize current repo state" --json` |
 | `architecture` | Verify subsystem registry ownership and architecture mapping integrity | canonical | governance | secondary | Later | Current (implemented) | `pnpm playbook architecture verify --json` |
 | `promote` | Promote reviewed repo-local stories and reusable pattern candidates into canonical artifacts | canonical | remediation | primary | Later | Current (implemented) | `pnpm playbook promote story repo/<repo-id>/story-candidates/<candidate-id> --json` |
-| `story` | Manage the canonical repo-local story backlog state | canonical | remediation | primary | Later | Current (implemented) | `pnpm playbook story list --json` |
+| `story` | Manage the canonical repo-local story state registry | canonical | remediation | primary | Later | Current (implemented) | `pnpm playbook story list --json` |
 | `learn` | Draft deterministic knowledge candidates from local diff and repository intelligence | utility | utility | secondary | Later | Current (implemented) | `pnpm playbook learn draft --json --out .playbook/knowledge/candidates.json` |
 | `memory` | Inspect, review, and curate repository memory artifacts with explicit human-reviewed doctrine promotion | utility | utility | secondary | Later | Current (implemented) | `pnpm playbook memory events --json` |
 | `improve` | Generate deterministic improvement candidates from memory events and learning-state signals | utility | utility | secondary | Later | Current (implemented) | `pnpm playbook improve --json` |
