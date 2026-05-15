@@ -84,6 +84,13 @@ Pattern: Deterministic state should be compressible into deterministic narrative
 
 The first external pilot also exposed concrete product-engineering patterns that should govern future system work.
 
+### Discord verification gates
+
+- **Pattern**: App-session proof -> signed Discord interaction -> one-time token consume -> role grant.
+- **Definition**: When Discord access depends on another application, the source app remains the identity authority and Discord only consumes short-lived proof minted from an authenticated app session.
+- **Design implication**: Prefer a source-app-hosted signed HTTP interactions endpoint over email-only checks, persisted verification state, or local-only Gateway bot production flows.
+- **Reference**: [Discord verification gates](./PATTERNS/discord-verification-gates.md)
+
 ### Shared aggregation boundary for reads, targeted invalidation boundary for writes
 
 - **Pattern**: Shared aggregation boundary for reads, targeted invalidation boundary for writes.
