@@ -87,8 +87,10 @@ The first external pilot also exposed concrete product-engineering patterns that
 ### Discord verification gates
 
 - **Pattern**: App-session proof -> signed Discord interaction -> one-time token consume -> role grant.
-- **Definition**: When Discord access depends on another application, the source app remains the identity authority and Discord only consumes short-lived proof minted from an authenticated app session.
+- **Definition**: When Discord access or display state depends on another application, the source app remains the identity authority and Discord only consumes short-lived proof or source-app-owned display state minted from an authenticated app session.
 - **Design implication**: Prefer a source-app-hosted signed HTTP interactions endpoint over email-only checks, persisted verification state, or local-only Gateway bot production flows.
+- **Extension**: If Discord should show app-owned member numbers, persist a durable Discord/source-app link and treat nickname sync as display state, not identity proof.
+- **Extension**: If Discord should collect bug reports or publish release notes, route those flows through governed review or curation queues rather than writing directly into repo truth or dumping raw technical logs.
 - **Reference**: [Discord verification gates](./PATTERNS/discord-verification-gates.md)
 
 ### Shared aggregation boundary for reads, targeted invalidation boundary for writes
