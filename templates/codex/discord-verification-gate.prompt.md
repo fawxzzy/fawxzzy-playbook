@@ -92,15 +92,19 @@ Known Discord limitation:
 
 If the repo is also designing a Discord support or bug-report flow:
 
+- Keep setup and moderation commands admin-facing.
+- Prefer a persistent panel with buttons and modals for normal users.
 - Use a Discord modal or structured form, not free-form repo writes.
 - Store reports in a governed database queue, not direct commits into ATLAS or Git history.
 - Add rate limits and duplicate fingerprints.
 - Route reports through Playbook or another triage layer before promotion into issues, tasks, or doctrine.
 - Do not allow automatic code changes or automatic repo commits from Discord-originated user input.
+- Keep attachments externally hosted and bounded; store metadata only in the app database.
+- Make optional emoji or visual decoration fail soft.
 
 Desired pattern:
 
-- Discord modal -> structured queue -> governed triage -> reviewed issue or task
+- Setup slash command -> persistent panel -> buttons and modals -> bounded row -> forum thread -> governed triage -> reviewed issue or task
 
 ## Curated release announcement extension task
 
@@ -110,10 +114,14 @@ If the repo is also designing a Discord release bot:
 - Never dump raw changelog, infra, or migration noise directly into Discord.
 - It is acceptable to draw from a release ledger or PR set, but public copy still requires curation.
 - Keep the audience broad and non-technical unless a specialized channel explicitly expects engineering detail.
+- Use deployment metadata as trigger input, not as the final public body.
+- Start public updates with `@everyone` when the channel expects broadcast release posts.
+- Suppress embeds when the app link should stay secondary to the curated copy.
+- If migration history is drifted, repair the ledger only after proving the production schema effects already exist.
 
 Desired pattern:
 
-- Internal release truth -> curated public announcement
+- Production deployment event -> bounded draft -> curated `@everyone` public announcement
 
 ## Env vars
 
@@ -185,17 +193,27 @@ Do not hard-code secret values. Do not commit copied secrets.
 - Rule: Discord interaction requests must be signature-verified before parsing.
 - Rule: One-time verification tokens are ephemeral proof, not account data.
 - Rule: Production Gateway bots require persistent worker hosting.
+- Rule: Admin/setup commands are not normal-user UX.
 - Rule: User reports enter review queues before becoming repo truth.
+- Rule: Deployment metadata is input, not release copy.
+- Rule: Optional Discord decoration must fail soft.
+- Rule: Attachments stay bounded and externally hosted.
 - Rule: Release bots post curated user communication, not internal deployment logs.
 - Pattern: Authenticated app session -> one-time token -> Discord modal -> signed endpoint -> token consume -> role grant.
 - Pattern: Source-app profile number -> Discord link table -> nickname sync.
 - Pattern: Prototype with Gateway when speed matters; promote to HTTP interactions when availability and app ownership matter.
+- Pattern: Setup slash command -> persistent panel -> buttons and modals.
 - Pattern: Discord modal -> structured queue -> governed triage -> reviewed task.
-- Pattern: Internal release truth -> curated public announcement.
+- Pattern: Production deployment event -> bounded draft -> curated `@everyone` public announcement.
 - Failure Mode: Local-only bots make Discord verification unavailable when the process dies.
 - Failure Mode: Discord-side state drifts from source-app state.
 - Failure Mode: Auth middleware redirects make Discord endpoint verification fail before app logic runs.
 - Failure Mode: Owner or high-role users verify correctly but cannot be renamed by the bot.
 - Failure Mode: Unsigned request handling turns role grant into a public attack surface.
+- Failure Mode: Optional decoration causes visible false failures after successful posts.
+- Failure Mode: Unbounded attachment or log storage turns Discord intake into storage abuse.
 - Failure Mode: Direct Discord-to-repo writes create noisy or abusive history.
+- Failure Mode: Migration drift blocks normal DB workflow and forces surgical deploy paths.
+- Failure Mode: Scope creep into routine sharing muddies the community automation lane.
+- Failure Mode: Blind migration repair makes the migration ledger claim schema state that production does not actually have.
 - Failure Mode: Raw technical release posts are hostile to normal users.

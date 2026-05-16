@@ -90,7 +90,8 @@ The first external pilot also exposed concrete product-engineering patterns that
 - **Definition**: When Discord access or display state depends on another application, the source app remains the identity authority and Discord only consumes short-lived proof or source-app-owned display state minted from an authenticated app session.
 - **Design implication**: Prefer a source-app-hosted signed HTTP interactions endpoint over email-only checks, persisted verification state, or local-only Gateway bot production flows.
 - **Extension**: If Discord should show app-owned member numbers, persist a durable Discord/source-app link and treat nickname sync as display state, not identity proof.
-- **Extension**: If Discord should collect bug reports or publish release notes, route those flows through governed review or curation queues rather than writing directly into repo truth or dumping raw technical logs.
+- **Extension**: If Discord should collect bug reports, use a persistent panel plus buttons and modals, keep attachments bounded and externally hosted, and route reviewed output through governed queues rather than writing directly into repo truth.
+- **Extension**: If Discord should publish release notes, use production deployment events only as draft inputs, then publish curated `@everyone` community posts instead of raw technical logs.
 - **Reference**: [Discord verification gates](./PATTERNS/discord-verification-gates.md)
 
 ### Shared aggregation boundary for reads, targeted invalidation boundary for writes
@@ -118,6 +119,7 @@ The external fitness pilot promoted the following doctrine into repository-level
 - stabilize tooling surface before governed product work
 - first governed improvements should target correctness/performance seams with repeated logic and clear invariants
 - tooling migration incomplete until runtime + governance bootstrap proof passes
+- migration ledger repair should require schema evidence before history is marked applied
 
 Failure Mode: A repo can look integrated while still failing real governed consumption due to missing bootstrap/runtime/artifact guarantees.
 

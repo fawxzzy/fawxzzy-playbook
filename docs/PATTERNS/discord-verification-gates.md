@@ -158,6 +158,13 @@ Known Discord limit:
 
 Discord can be a structured intake surface, but it should not become repo truth by itself.
 
+- Reusable modules in this lane:
+  - verification gate
+  - member-number display sync
+  - feedback intake
+  - feedback attachments
+  - feedback forum, status, and withdraw cleanup
+  - curated production updates
 - Use a Discord modal or equivalent structured UI.
 - Store reports in a database queue owned by the source app or another governed intake service.
 - Add rate limits and duplicate fingerprints.
@@ -170,6 +177,11 @@ Rule:
 Pattern:
 - Discord modal -> structured queue -> governed triage -> reviewed issue or task
 
+Extended pattern:
+- setup slash command -> persistent panel -> buttons and modals
+- feedback modal -> bounded DB row -> forum thread -> status or withdraw sync
+- feedback export -> Playbook triage -> reviewed issue or task
+
 Failure Mode:
 - Direct Discord-to-repo writes create noisy, abusive history and fake authority.
 
@@ -181,12 +193,14 @@ Discord release posts should be user communication, not internal engineering exh
 - Include user-visible changes only.
 - Exclude raw migration, infra, and internal cleanup noise unless it changes user experience.
 - It is acceptable to draw from a release ledger or PR set, but the public message still needs curation.
+- Start public update posts with `@everyone` when the community channel expects broadcast release posts.
+- Suppress embeds when the app link should stay compact and secondary to the curated copy.
 
 Rule:
 - Release bots post curated user communication, not raw technical logs.
 
 Pattern:
-- Internal release truth -> curated public announcement
+- Production deployment event -> bounded draft -> admin-curated `@everyone` public announcement
 
 Failure Mode:
 - Raw technical release posts confuse users and leak irrelevant implementation detail.
@@ -204,22 +218,34 @@ Failure Mode:
 
 Rule: The source app owns identity; Discord consumes proof.
 Rule: Discord should display source-app truth, not create parallel truth.
+Rule: Discord is the community surface, not the source of engineering truth.
 Rule: Email knowledge is not identity proof.
 Rule: Discord interaction requests must be signature-verified before parsing.
 Rule: One-time verification tokens are ephemeral proof, not account data.
 Rule: Production Gateway bots require persistent worker hosting.
+Rule: Admin/setup commands are not normal-user UX.
 Rule: If public member numbers compact, document them as display slots rather than stable identity history.
 Rule: User reports enter review queues before becoming repo truth.
+Rule: Deployment metadata is input, not release copy.
+Rule: Optional Discord decoration must fail soft.
+Rule: Attachments stay bounded and externally hosted.
 Rule: Release bots post curated user communication, not internal deployment logs.
+Rule: Migration ledger repair requires schema evidence first.
 Pattern: Authenticated app session -> one-time token -> Discord modal -> signed endpoint -> token consume -> role grant.
 Pattern: Source-app profile number -> Discord link table -> nickname sync.
 Pattern: Prototype with Gateway when speed matters; promote to HTTP interactions when availability and app ownership matter.
+Pattern: Setup slash command -> persistent panel -> buttons and modals.
 Pattern: Discord modal -> structured queue -> governed triage -> reviewed task.
-Pattern: Internal release truth -> curated public announcement.
+Pattern: Production deployment event -> bounded draft -> curated `@everyone` public announcement.
 Failure Mode: Local-only bots make Discord verification unavailable when the process dies.
 Failure Mode: Discord-side state drifts from source-app state.
 Failure Mode: Auth middleware redirects make Discord endpoint verification fail before app logic runs.
 Failure Mode: Owner or high-role users verify correctly but cannot be renamed by the bot.
 Failure Mode: Unsigned request handling turns role grant into a public attack surface.
+Failure Mode: Unbounded attachment or log storage turns Discord intake into storage abuse.
+Failure Mode: Optional decoration causes visible false failures after successful posts.
 Failure Mode: Direct Discord-to-repo writes create noisy or abusive history.
+Failure Mode: Migration drift blocks normal DB workflow and forces surgical deploy paths.
+Failure Mode: Blind migration repair makes the migration ledger claim schema history that production does not actually have.
+Failure Mode: Scope creep into routine sharing or Discord workout editing muddies the community automation lane.
 Failure Mode: Raw technical release posts are hostile to normal users.
